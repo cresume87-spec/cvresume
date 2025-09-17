@@ -13,18 +13,14 @@ const MIN_AMOUNT = 5;
 const MAX_AMOUNT = 500;
 
 const FAQ_ITEMS = [
-  {
-    question: 'Do tokens expire?',
-    answer: 'No, tokens never expire. You can use them whenever you need to create invoices.'
-  },
-  {
-    question: 'Can I get a refund?',
-    answer: 'Yes, unused tokens within 14 days are refundable. Used tokens are non-refundable. See our Refund Policy for details.'
-  },
-  {
-    question: 'Where can I see my token history?',
-    answer: 'Check your Dashboard → Token history for a complete ledger of all token transactions and usage.'
-  }
+  { question: 'MOCK: How do tokens work?', answer: 'MOCK: Buy tokens and use them for document actions as needed.' },
+  { question: 'MOCK: Do tokens expire?', answer: 'MOCK: Tokens typically do not expire. Replace with your policy.' },
+  { question: 'MOCK: Can I get a refund?', answer: 'MOCK: Add your refund policy summary here.' },
+];
+
+const MOCK_EXAMPLES: Array<{ currency: Currency; amount: number }> = [
+  { currency: 'GBP', amount: 10 },
+  { currency: 'EUR', amount: 50 },
 ];
 
 export default function TokenCalculatorPage() {
@@ -144,17 +140,13 @@ export default function TokenCalculatorPage() {
           <h1 className="text-4xl font-bold text-slate-900 mb-4">
             Token Calculator
           </h1>
-          <p className="text-lg text-slate-600">
-            Calculate how many tokens you need and see the effective cost per invoice
-          </p>
+          <p className="text-lg text-slate-600">MOCK: Calculate tokens needed and see effective cost per document</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Controls */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-6">
-              Calculate Tokens
-            </h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-6">Calculate Tokens</h2>
             
             {/* Currency Toggle */}
             <div className="mb-6">
@@ -204,9 +196,7 @@ export default function TokenCalculatorPage() {
 
             {/* Invoices Needed Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Invoices needed
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-3">Documents needed</label>
               <Input
                 type="number"
                 min="1"
@@ -230,12 +220,7 @@ export default function TokenCalculatorPage() {
 
             {amount >= MAX_AMOUNT && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  Need more than {currency === 'GBP' ? '£' : '€'}{MAX_AMOUNT}? 
-                  <a href="/contact" className="ml-1 underline hover:no-underline">
-                    Contact us for bank transfer
-                  </a>
-                </p>
+                <p className="text-sm text-blue-800">Need more than {currency === 'GBP' ? '£' : '€'}{MAX_AMOUNT}? <a href="/contact" className="ml-1 underline hover:no-underline">Contact us for bank transfer</a></p>
               </div>
             )}
           </Card>
@@ -255,14 +240,14 @@ export default function TokenCalculatorPage() {
               </div>
               
               <div className="flex justify-between items-center py-3 border-b border-slate-200">
-                <span className="text-slate-600">≈ Invoices</span>
+                <span className="text-slate-600">≈ Documents</span>
                 <span className="text-2xl font-bold text-slate-900">
                   {calculatedInvoices}
                 </span>
               </div>
               
               <div className="flex justify-between items-center py-3 border-b border-slate-200">
-                <span className="text-slate-600">Effective cost per invoice</span>
+                <span className="text-slate-600">Effective cost per document</span>
                 <span className="text-2xl font-bold text-emerald-600">
                   {currency === 'GBP' ? '£' : '€'}{effectiveCostPerInvoice.toFixed(2)}
                 </span>
@@ -270,9 +255,7 @@ export default function TokenCalculatorPage() {
             </div>
 
             <div className="mb-6 p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600">
-                <strong>Note:</strong> Prices exclude VAT. VAT is calculated at checkout based on your location and VAT status.
-              </p>
+              <p className="text-sm text-slate-600"><strong>MOCK:</strong> Taxes and fees may apply. Replace with your billing notes.</p>
             </div>
 
             {/* CTAs */}
@@ -310,25 +293,20 @@ export default function TokenCalculatorPage() {
         {/* Examples */}
         <div className="mt-12">
           <h3 className="text-xl font-semibold text-slate-900 mb-6 text-center">
-            Popular Examples
+            MOCK: Popular Examples
           </h3>
           <div className="grid md:grid-cols-2 gap-6">
-            <ExampleCard
-              currency="GBP"
-              amount={10}
-              onSelect={() => {
-                setCurrency('GBP');
-                setAmount(10);
-              }}
-            />
-            <ExampleCard
-              currency="EUR"
-              amount={50}
-              onSelect={() => {
-                setCurrency('EUR');
-                setAmount(50);
-              }}
-            />
+            {MOCK_EXAMPLES.map((example) => (
+              <ExampleCard
+                key={`${example.currency}-${example.amount}`}
+                currency={example.currency}
+                amount={example.amount}
+                onSelect={() => {
+                  setCurrency(example.currency);
+                  setAmount(example.amount);
+                }}
+              />
+            ))}
           </div>
         </div>
 

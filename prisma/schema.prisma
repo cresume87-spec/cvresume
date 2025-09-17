@@ -38,6 +38,7 @@ model User {
   company  Company?
   invoices Invoice[]
   ledger   LedgerEntry[]
+  documents Document[]
 
   accounts Account[]
   sessions Session[]
@@ -139,4 +140,15 @@ model LedgerEntry {
   amount       Int?
   receiptUrl   String?
   invoiceNumber String?  // Invoice number for Invoice type entries
+}
+
+// Neutral document for PDF/email without invoice-specific fields
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  data      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

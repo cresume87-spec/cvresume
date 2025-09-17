@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +11,10 @@ import Pill from '@/components/policy/Pill';
 import Button from '@/components/ui/Button';
 import Segmented from '@/components/ui/Segmented';
 import { CC, VAT_RATES } from '@/lib/constants';
-import { Currency, pricingPlans } from '@/lib/plans';
+import { Currency } from '@/lib/plans';
+import { PRICING_PLANS } from '@/lib/data';
+import PlanCard from '@/components/pricing/PlanCard';
+import CustomPlanCard from '@/components/pricing/CustomPlanCard';
 
 const COUNTRIES = Object.keys(CC);
 
@@ -21,35 +23,7 @@ function money(n: number, currency: Currency) {
   return new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: n % 1 === 0 ? 0 : 2 }).format(n);
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs rounded-full px-2 py-1 text-blue-700 bg-blue-50 border border-blue-200">{children}</span>;
-}
-
-function Price({ amount, currency, vatRate }: { amount: number; currency: Currency; vatRate: number }) {
-  const monthlyTarget = amount;
-  const [display, setDisplay] = useState(0);
-  // Count-up 0 -> price (400ms)
-  useEffect(() => {
-    let raf: number;
-    const start = performance.now();
-    const duration = 400;
-    const animate = (t: number) => {
-      const p = Math.min(1, (t - start) / duration);
-      setDisplay(monthlyTarget * p);
-      if (p < 1) raf = requestAnimationFrame(animate);
-    };
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [monthlyTarget]);
-  const monthly = monthlyTarget;
-  const incVatTotal = monthly * (1 + vatRate/100);
-  return (
-    <div>
-      <div className="text-3xl font-bold">{money(display, currency)}<span className="text-base font-normal text-slate-500">/one-time</span></div>
-      <div className="text-[11px] text-slate-500 mt-1">Est. incl. VAT: {money(incVatTotal, currency)}</div>
-    </div>
-  );
-}
+// Unified PlanCard is used for all plan cards; no secondary card implementations here.
 
 export default function PricingClient() {
   const bcRef = useRef<BroadcastChannel | null>(null);
@@ -68,6 +42,12 @@ export default function PricingClient() {
     const rates = (VAT_RATES as Record<string, number[]>)[code] || [0,20];
     return rates[rates.length-1] || 20;
   }, [country]);
+
+  const formatPrice = (priceText: string) => {
+    const match = priceText.match(/([0-9]+(?:\.[0-9]+)?)/);
+    const amount = match ? match[1] : '0';
+    return `${currency} ${amount}`;
+  };
 
   useEffect(()=>{
     try {
@@ -137,49 +117,17 @@ export default function PricingClient() {
         </div>
 
         <div className="mt-10 grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {pricingPlans.map((plan) => {
-            const base = currency==='GBP'? plan.baseGBP : plan.baseEUR;
-            const invoices = Math.round(plan.tokens / 10);
-            const loading = isLoading === plan.id;
-
-            return (
-              <motion.div key={plan.id} className={`rounded-2xl bg-white border border-black/10 shadow-sm p-6 flex flex-col ${plan.popular ? 'md:-mt-4' : ''}`}
-                initial={plan.popular ? { scale: 1.02, opacity: 0, y: 16 } : { opacity: 0, y: 16 }}
-                whileInView={plan.popular ? { scale: 1, opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="text-lg font-semibold">{plan.name}</div>
-                  {plan.popular && <Badge>POPULAR</Badge>}
-                </div>
-                <div className="mt-3">
-                  <Price amount={base} currency={currency} vatRate={vatRate} />
-                </div>
-                <div className="mt-1 text-xs text-slate-600">= {plan.tokens} tokens (~{invoices} invoices)</div>
-                <ul className="mt-4 space-y-2 text-sm text-slate-700 list-disc pl-5">
-                  {plan.bullets.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-                <div className="mt-6">
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => handlePurchase(plan.id)}
-                    disabled={loading}
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : plan.cta}
-                  </Button>
-                </div>
-              </motion.div>
-            );
-          })}
-
-          <CustomPlanCard
-            currency={currency}
-            onPurchase={(amount, curr) => handlePurchase(null, amount)}
-          />
+          {PRICING_PLANS.map((plan) => (
+            <PlanCard
+              key={plan.name}
+              name={plan.name}
+              popular={plan.popular}
+              bullets={plan.points}
+              cta={plan.cta}
+              priceText={formatPrice(plan.price)}
+            />
+          ))}
+          <CustomPlanCard currency={currency} onPurchase={(amount, curr) => { /* MOCK: no-op */ }} />
         </div>
 
         <div className="mt-12 grid md:grid-cols-2 gap-6">
@@ -187,20 +135,20 @@ export default function PricingClient() {
             <h3 className="text-lg font-semibold">FAQ</h3>
             <div className="mt-4 space-y-4 text-sm text-slate-700">
               <div>
-                <div className="font-medium">Do prices include VAT?</div>
-                <p className="text-slate-600 mt-1">No. Prices exclude VAT. We calculate tax at checkout using your country and VAT ID. For eligible EU B2B customers with a valid VAT ID, reverse charge (0%) is applied.</p>
+                <div className="font-medium">MOCK: Do prices include taxes?</div>
+                <p className="text-slate-600 mt-1">MOCK: Taxes/fees may apply at checkout based on your country and status. Replace with your final policy.</p>
               </div>
               <div>
-                <div className="font-medium">Can I cancel anytime?</div>
-                <p className="text-slate-600 mt-1">Yes. You can cancel with one click. Your plan remains active until the end of the period.</p>
+                <div className="font-medium">MOCK: Can I cancel anytime?</div>
+                <p className="text-slate-600 mt-1">MOCK: Describe your cancellation/changes policy in one sentence.</p>
               </div>
               <div>
-                <div className="font-medium">Which payment methods do you accept?</div>
-                <p className="text-slate-600 mt-1">Cards and popular wallets. Bank transfer is available on Business.</p>
+                <div className="font-medium">MOCK: Which payment methods are supported?</div>
+                <p className="text-slate-600 mt-1">MOCK: Cards and popular wallets. Optional bank transfer on higher tiers.</p>
               </div>
               <div>
-                <div className="font-medium">Do you issue invoices?</div>
-                <p className="text-slate-600 mt-1">Yes. Invoices include your company details and VAT breakdown.</p>
+                <div className="font-medium">MOCK: Do you issue invoices/receipts?</div>
+                <p className="text-slate-600 mt-1">MOCK: Yes — add your company details and tax info as required.</p>
               </div>
             </div>
           </div>
@@ -208,20 +156,20 @@ export default function PricingClient() {
             <h3 className="text-lg font-semibold">Still not sure?</h3>
             <div className="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">UK & EU VAT-ready</div>
-                <p className="text-slate-600 mt-1">Correct tax, currencies, and number formats.</p>
+                <div className="font-medium">MOCK: Feature A</div>
+                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
               </div>
               <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">Exports & Sharing</div>
-                <p className="text-slate-600 mt-1">PDF, email sending, and public links.</p>
+                <div className="font-medium">MOCK: Feature B</div>
+                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
               </div>
               <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">Security</div>
-                <p className="text-slate-600 mt-1">Encryption, audit logs, and permissions on Business.</p>
+                <div className="font-medium">MOCK: Feature C</div>
+                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
               </div>
               <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">Support</div>
-                <p className="text-slate-600 mt-1">Community (Free), Email (Pro), Priority (Business).</p>
+                <div className="font-medium">MOCK: Feature D</div>
+                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
               </div>
             </div>
           </div>
@@ -241,48 +189,4 @@ export default function PricingClient() {
   );
 }
 
-function CustomPlanCard({ currency, onPurchase }: { currency: Currency; onPurchase: (amount: number, currency: Currency) => void; }) {
-  const [priceInput, setPriceInput] = useState<string>('5');
-  const TOKENS_PER_UNIT = 100;
-  const TOKENS_PER_INVOICE = 10;
-  const min = 5;
-  const numericPrice = parseFloat(priceInput || '0');
-  const validNumber = Number.isFinite(numericPrice);
-  const tokens = Math.max(0, Math.round((validNumber ? numericPrice : 0) * TOKENS_PER_UNIT));
-  const invoices = Math.round(tokens / TOKENS_PER_INVOICE);
-
-  const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    setPriceInput(e.target.value);
-  };
-
-  return (
-    <motion.div className="rounded-2xl bg-white border border-black/10 shadow-sm p-6 flex flex-col"
-      initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }}>
-      <div className="flex items-center justify-between">
-        <div className="text-lg font-semibold">Custom</div>
-        <span className="text-xs rounded-full px-2 py-1 bg-slate-100 border border-black/10 text-slate-700">EARLY / SUPPORTER</span>
-      </div>
-      <div className="mt-3 flex items-center gap-2">
-        <span className="text-3xl font-bold">{currency === 'GBP' ? '£' : '€'}</span>
-        <input type="number" step="any" value={priceInput}
-          onChange={onChange}
-          className="w-24 text-3xl font-bold bg-transparent border-b border-black/10 focus:outline-none focus:ring-0" aria-label="Custom price" />
-        <span className="text-base font-normal text-slate-500">/one-time</span>
-      </div>
-      {(!validNumber || numericPrice < min) && (
-        <div className="mt-1 text-[11px] text-red-600">Minimum amount is {currency === 'GBP' ? '£' : '€'}5.00</div>
-      )}
-      <div className="mt-1 text-xs text-slate-600">= {tokens} tokens (~{invoices} invoices)</div>
-      <ul className="mt-4 space-y-2 text-sm text-slate-700 list-disc pl-5">
-        <li>Top up your account</li>
-        <li>No subscription — pay what you need</li>
-        <li>Min {currency === 'GBP' ? '£5' : '€5'}</li>
-      </ul>
-      <div className="mt-6">
-        <Button className="w-full" size="lg" onClick={() => onPurchase(numericPrice, currency)} disabled={!validNumber || numericPrice < min}>
-          Buy tokens
-        </Button>
-      </div>
-    </motion.div>
-  );
-}
+// CustomPlanCard removed: use only the unified PlanCard across pages.

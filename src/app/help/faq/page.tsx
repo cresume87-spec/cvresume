@@ -18,104 +18,112 @@ type FAQItem = {
 };
 
 const FAQ_DATA: FAQItem[] = [
-  // Top Questions
+  // MOCK Top Questions
   {
-    id: 'pricing',
+    id: 'mock-pricing',
     question: 'How does pricing work?',
-    answer: 'Pay-as-you-go. 1 GBP/EUR = 100 tokens. Issuing an invoice costs 10 tokens. Tokens never expire.',
+    answer: 'MOCK: Pricing details placeholder. Replace with your product pricing rules.',
     category: 'tokens',
     top: true,
   },
   {
-    id: 'vat-modes',
+    id: 'mock-vat-modes',
     question: 'What VAT modes are supported?',
-    answer: 'Domestic, intra-EU 0% (reverse charge), UK↔EU cross-border, export.',
+    answer: 'MOCK: VAT modes placeholder. Example: domestic, reverse charge, cross‑border.',
     category: 'vat',
     top: true,
   },
   {
-    id: 'drafting-free',
+    id: 'mock-drafting',
     question: 'Is drafting free?',
-    answer: 'Yes. Tokens are only deducted when issuing (Issue / Send / Download final PDF).',
+    answer: 'MOCK: Drafting/billing behavior placeholder. Clarify when tokens/credits are used.',
     category: 'pdf',
     top: true,
   },
   {
-    id: 'data-storage',
+    id: 'mock-data-storage',
     question: 'Where is my data stored?',
-    answer: 'UK/EU cloud; encryption in transit and at rest.',
+    answer: 'MOCK: Data residency & encryption placeholder. E.g., EU region, encrypted at rest.',
     category: 'account',
     top: true,
   },
   {
-    id: 'reverse-charge',
+    id: 'mock-reverse-charge',
     question: 'How do I add a reverse charge note?',
-    answer: 'Choose "intra-EU 0%" or "UK↔EU cross-border"; note and breakdown appear automatically.',
+    answer: 'MOCK: Reverse charge instructions placeholder. Choose correct VAT mode to auto‑add note.',
     category: 'vat',
     top: true,
   },
   {
-    id: 'email-invoice',
+    id: 'mock-email-invoice',
     question: 'How do I email an invoice?',
-    answer: 'From preview: Email/Share. Read receipts on Pro/Business.',
+    answer: 'MOCK: Email/share flow placeholder. Mention preview page actions and receipts if any.',
     category: 'pdf',
     top: true,
   },
 
-  // Tokens & Billing
+  // MOCK Tokens & Billing
   {
-    id: 'balance-history',
+    id: 'mock-balance-history',
     question: 'Where can I see my balance and history?',
-    answer: 'Dashboard → Token history (ledger).',
+    answer: 'MOCK: Link to dashboard/ledger placeholder. Include filters and export options if relevant.',
     category: 'tokens',
   },
   {
-    id: 'vat-charges',
+    id: 'mock-vat-charges',
     question: 'Do you charge VAT on top-ups?',
-    answer: 'Yes, based on your country and VAT status. Reverse charge may apply for eligible EU B2B.',
+    answer: 'MOCK: VAT on purchases placeholder. Describe B2B reverse charge rules if applicable.',
     category: 'tokens',
   },
   {
-    id: 'refunds',
+    id: 'mock-refunds',
     question: 'Refunds?',
-    answer: 'Unused tokens within 14 days → refund; used tokens are non-refundable. See Refund Policy.',
+    answer: 'MOCK: Refund policy placeholder. Example: unused tokens refundable within 14 days.',
     category: 'tokens',
   },
 
-  // Invoicing & VAT
+  // MOCK Invoicing & VAT
   {
-    id: 'invoice-numbering',
+    id: 'mock-invoice-numbering',
     question: 'Can I set invoice numbering?',
-    answer: 'Yes: prefix and next number in Company settings.',
+    answer: 'MOCK: Numbering settings placeholder. Configure prefix and next sequence number.',
     category: 'vat',
   },
   {
-    id: 'multi-currency',
+    id: 'mock-multi-currency',
     question: 'Multi-currency?',
-    answer: 'GBP/EUR with correct number/date formats.',
+    answer: 'MOCK: Supported currencies placeholder. Confirm number/date formats and exchange rates.',
     category: 'vat',
   },
 
-  // PDF & Sharing
+  // MOCK PDF & Sharing
   {
-    id: 'logo-upload',
+    id: 'mock-logo-upload',
     question: 'Can I upload a logo?',
-    answer: 'On Pro/Business → Branding.',
+    answer: 'MOCK: Branding options placeholder. Indicate plan limits and image formats.',
     category: 'pdf',
   },
 
-  // Account & Security
+  // MOCK Account & Security
   {
-    id: 'card-numbers',
+    id: 'mock-card-numbers',
     question: 'Do you keep card numbers?',
-    answer: 'No. Payments handled by providers (e.g., Stripe).',
+    answer: 'MOCK: Payments handling placeholder. Cards stored by PSP (e.g., Stripe), not by us.',
     category: 'account',
   },
   {
-    id: 'delete-account',
+    id: 'mock-delete-account',
     question: 'How to delete my account?',
-    answer: 'Settings → Delete. We retain records where law requires (e.g., tax).',
+    answer: 'MOCK: Account deletion flow placeholder. Mention legal retention where applicable.',
     category: 'account',
+  },
+
+  // MOCK Integrations
+  {
+    id: 'mock-integrations',
+    question: 'Do you support integrations?',
+    answer: 'MOCK: Integrations placeholder. List planned CRMs/accounting tools and webhooks.',
+    category: 'integrations',
   },
 ];
 

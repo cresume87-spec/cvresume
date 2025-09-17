@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import Section from '@/components/layout/Section';
-import InvoiceForm from '@/components/generator/InvoiceForm';
+import DocumentForm from '@/components/generator/DocumentForm';
 
 export default function GeneratorPage() {
   const { status } = useSession();
@@ -43,7 +43,7 @@ export default function GeneratorPage() {
         )}
 
         <Section className="py-6">
-          <InvoiceForm signedIn={signedIn} />
+          <DocumentForm signedIn={signedIn} />
       </Section>
     </main>
   </motion.div>

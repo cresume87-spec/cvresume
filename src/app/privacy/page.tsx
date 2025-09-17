@@ -2,101 +2,42 @@ import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
 
 export const metadata = {
-  title: 'Privacy Policy - Invoicerly',
-  description: 'How we collect, use, and protect personal data.',
+  title: 'Privacy Policy - Skeleton',
+  description: 'MOCK: How we collect, use, and protect personal data.',
 };
 
 const sections: PolicySection[] = [
-  { id: 'intro', title: 'Introduction', body: `This policy explains how we collect, use, and protect personal data when you use Invoicerly (the “Service”). We built the product for UK & EU invoicing and keep data handling simple and transparent.
+  { id: 'intro', title: 'Introduction', body: `MOCK: This policy explains how we collect, use, and protect personal data when you use this Service.
 
-We do not sell personal data. We only process it to provide and improve the Service.` },
-  { id: 'scope', title: 'Scope & Region', body: `This policy applies to users in the UK and EU/EEA.
-Where we transfer data between the UK and EEA or to other countries, we use appropriate safeguards (e.g., Standard Contractual Clauses and the UK Addendum).
+MOCK: We do not sell personal data. We process it to provide and improve the Service.` },
+  { id: 'scope', title: 'Scope & Region', body: `MOCK: This policy applies to users in the UK and EU/EEA. Transfers use appropriate safeguards.
 
-The Service is not intended for children under 16.` },
-  { id: 'data', title: 'Data We Collect', body: `Account data: name, email, password hash, country, preferences.
+MOCK: The Service is not intended for children under 16.` },
+  { id: 'data', title: 'Data We Collect', body: `MOCK: Account data (name, email), settings, usage and device info.
 
-Company (seller) data: company name, VAT/registration numbers, address, IBAN/BIC, invoice numbering settings.
+MOCK: Content you submit (documents and related metadata).
 
-Customer (buyer) data you enter: client names, VAT/registration numbers, addresses, line items, notes, and PDFs you generate (“Customer Content”).
+MOCK: Billing/top-ups; no card numbers are stored on our servers.
 
-Billing & tokens: top-up amounts, currency (GBP/EUR), token balance and ledger (no card numbers on our servers).
+MOCK: Support messages sent to info@mail.com.
 
-Usage & device data: pages/actions, app settings, approximate location (from IP), device/browser info, crash/error logs.
+MOCK: Cookies & similar tech; see Cookie Policy.` },
+  { id: 'use', title: 'How We Use Data', body: `MOCK: We process data to:
 
-Support data: messages you send to info@mail.com, attachments you choose to share.
+• Provide the Service on your request.
+• Operate & secure the Service.
+• Handle billing & compliance.
+• Improve features and fix issues.
+• Send essential communications.
+• Meet legal obligations.` },
+  { id: 'rights', title: 'Your Rights', body: `MOCK: You may request access, rectification, deletion, restriction, portability, and withdraw consent where applicable.
 
-Cookies & similar tech: see Cookies below and our Cookie Policy.
-
-You can choose not to provide some data, but the Service may not work as expected.` },
-  { id: 'use', title: 'How We Use Data', body: `We process data to:
-
-• Provide the Service: create invoices/PDFs, store drafts, manage token balance, email/share invoices on your request.
-• Operate & secure: authentication, fraud/abuse prevention, rate limiting, backups, incident response.
-• Billing & compliance: process payments, keep accounting/tax records.
-• Improve the product: analytics, troubleshooting, feature development.
-• Communicate: service messages (e.g., receipts, invoice delivery status), product updates.
-• Legal reasons: handle claims, requests from authorities when lawfully required.
-
-We don’t use Customer Content for advertising or model training.` },
-  { id: 'legal', title: 'Legal Bases (EU/UK)', body: `We rely on:
-
-• Contract – to provide the Service you requested.
-• Legitimate interests – to run, secure, and improve the Service (balanced against your rights).
-• Consent – for non-essential cookies/analytics and optional marketing (you can withdraw anytime).
-• Legal obligation – tax, accounting, and compliance record-keeping.
-• Vital interests – only in rare, safety-related situations.
-
-We do not perform automated decision-making that produces legal or similarly significant effects.` },
-  { id: 'rights', title: 'Your Rights', body: `Subject to regional laws, you can:
-
-• Access your data and get a copy.
-• Rectify inaccurate data.
-• Erase data (“right to be forgotten”) where applicable.
-• Object to or restrict certain processing.
-• Port data you provided to us.
-• Withdraw consent (for things based on consent).
-• Complain to a supervisory authority: in the UK, the ICO; in the EEA, your local DPA.
-
-To exercise rights, email info@mail.com from your account email. We’ll respond within one month.` },
-  { id: 'security', title: 'Security', body: `We use technical and organizational measures including:
-
-• Encryption in transit (TLS) and at rest for core data.
-• Strict access controls, least-privilege, and audit logs.
-• Regular backups and disaster-recovery procedures.
-• Vulnerability management and incident response.
-
-No method is 100% secure, but we work to keep risk low and respond quickly to issues.` },
-  { id: 'retention', title: 'Retention', body: `We keep data only as long as needed for the purposes above:
-
-• Account & company settings: for your account lifetime; delete when you close your account.
-• Customer Content (invoices, clients, PDFs): until you delete it or your account is closed; some metadata may remain in backups for a limited time.
-• Billing & token ledger: retained to meet tax/accounting laws (typically 6 years in the UK; EU periods may vary).
-• Support emails/logs: for troubleshooting and audit, then deleted or anonymized.
-
-When retention ends, we delete or anonymize data.` },
-  { id: 'sharing', title: 'Sharing & Processors', body: `We share data only with:
-
-• Service providers (processors): cloud hosting & storage, email delivery, analytics, logging/monitoring, customer support, and PDF generation.
-• Payment processors: e.g., Stripe for card payments and potentially Wise for settlements—card details are processed by the provider and never stored on our servers.
-• Professional advisors (legal/accounting) and authorities when required by law.
-• Business transfers: if we undergo a merger, acquisition, or asset sale, we’ll notify you and continue to protect your data.
-
-We require processors to protect data, act only on our instructions, and sign appropriate data protection terms.` },
-  { id: 'cookies', title: 'Cookies', body: `We use:
-
-• Strictly necessary cookies – sign-in, security, load balancing.
-• Preferences – your language/region, UI settings.
-• Analytics – understand usage and improve (consent-based in the EU/UK).
-• Marketing – only if you opt in.
-
-You can manage preferences in the app and via browser settings. For details, see our Cookie Policy.` },
-  { id: 'contact', title: 'Contact', body: `Data controller: PREPARING BUSINESS LTD
-Email: info@mail.com
-
-Postal: Dept 6189, 43 Owston Road, Carcroft, Doncaster, UK, DN6 8DA
-
-If you have questions or want to exercise your rights, email us. We reply within one business day.` },
+MOCK: To exercise rights, email info@mail.com from your account email.` },
+  { id: 'security', title: 'Security', body: `MOCK: We use encryption, access controls, backups, and incident response. No method is 100% secure, but we work to reduce risk.` },
+  { id: 'retention', title: 'Retention', body: `MOCK: We keep data only as long as needed, then delete or anonymise it.` },
+  { id: 'sharing', title: 'Sharing', body: `MOCK: We share data with service providers under contract, payment processors, advisors, and authorities where required by law.` },
+  { id: 'cookies', title: 'Cookies', body: `MOCK: We use strictly necessary, preferences, analytics (consent-based), and optional marketing cookies. Manage preferences in-app and via your browser.` },
+  { id: 'contact', title: 'Contact', body: `MOCK: Email info@mail.com. We reply within one business day.` },
 ];
 
 export default function PrivacyPage() {

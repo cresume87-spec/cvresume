@@ -21,10 +21,7 @@ export default function Header() {
   const isTokenCalc = pathname === '/token-calculator';
   const isAbout = pathname === '/about';
   const isDashboard = pathname === '/dashboard';
-  const [currency, setCurrency] = useState<'GBP' | 'EUR'>(() => {
-    if (typeof window === 'undefined') return 'GBP';
-    try { return (localStorage.getItem('currency') as 'GBP'|'EUR') || 'GBP'; } catch { return 'GBP'; }
-  });
+  const [currency, setCurrency] = useState<'GBP' | 'EUR'>('GBP');
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
@@ -52,7 +49,14 @@ export default function Header() {
     return () => { try { bcRef.current?.close(); } catch {} };
   }, []);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    // Read saved currency client-side to avoid SSR hydration mismatch
+    try {
+      const saved = localStorage.getItem('currency');
+      if (saved === 'GBP' || saved === 'EUR') setCurrency(saved);
+    } catch {}
+  }, []);
 
   const onCurrencyChange = (next: 'GBP'|'EUR') => {
     setCurrency(next);
@@ -97,7 +101,7 @@ export default function Header() {
 
   return (
     <motion.header 
-      className="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-black/10"
+      className="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-[#E2E8F0]"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
@@ -111,38 +115,18 @@ export default function Header() {
               className="flex items-center gap-2"
             >
               <div className={`h-7 w-7 rounded-xl ${THEME.primary.bg}`}></div>
-              <span>Invoicerly</span>
+              <span>Skeleton</span>
             </motion.span>
           </Link>
           
           <nav className="hidden sm:flex items-center gap-2 text-sm relative">
-            <a href="/generator" className={`rounded-xl px-3 py-2 transition-colors ${isGenerator ? 'bg-black/5' : 'hover:bg-black/5'}`}>Invoice Generator</a>
+            <a href={signedIn ? '/generator' : '/auth/signin?mode=login'} className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-3 py-2 transition-colors">Create my CV</a>
+            <a href={signedIn ? '/generator' : '/auth/signin?mode=login'} className="rounded-xl border border-[#E2E8F0] hover:bg-[#E2E8F0] px-3 py-2 transition-colors">Create my resume</a>
             {signedIn && (
               <a href="/dashboard" className={`rounded-xl px-3 py-2 transition-colors ${isDashboard ? 'bg-black/5' : 'hover:bg-black/5'}`}>Dashboard</a>
             )}
             <a href="/pricing" className={`rounded-xl px-3 py-2 transition-colors ${isPricing ? 'bg-black/5' : 'hover:bg-black/5'}`}>Top-Up</a>
             <a href="/token-calculator" className={`rounded-xl px-3 py-2 transition-colors ${isTokenCalc ? 'bg-black/5' : 'hover:bg-black/5'}`}>Token Calculator</a>
-            <div className="relative">
-              <button
-                className={`rounded-xl px-3 py-2 transition-colors flex items-center gap-2 ${helpOpen ? 'bg-black/5' : 'hover:bg-black/5'}`}
-                aria-haspopup="menu"
-                aria-expanded={helpOpen}
-                onClick={toggleHelp}
-                onKeyDown={onKeyDownHelp}
-              >
-                <span>Help</span>
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-label="Status ok" />
-              </button>
-              {helpOpen && (
-                <div className="absolute left-0 mt-2 w-56 rounded-xl border border-black/10 bg-white shadow-lg z-50" role="menu" onMouseLeave={closeHelp}>
-                  <a href="/help/faq" className="block px-3 py-2 text-sm hover:bg-slate-50" role="menuitem">FAQ</a>
-                  <a href="/help/getting-started" className="block px-3 py-2 text-sm hover:bg-slate-50" role="menuitem">Getting Started</a>
-                  <a href="/help/billing-tokens" className="block px-3 py-2 text-sm hover:bg-slate-50" role="menuitem">Billing & Tokens</a>
-                  <a href="/help/troubleshooting" className="block px-3 py-2 text-sm hover:bg-slate-50" role="menuitem">Troubleshooting</a>
-                </div>
-              )}
-            </div>
-            <a href="/about" className={`rounded-xl px-3 py-2 transition-colors ${isAbout ? 'bg-black/5' : 'hover:bg-black/5'}`}>About</a>
           </nav>
         </div>
         
@@ -158,23 +142,23 @@ export default function Header() {
             <>
               <Link
                 href="/auth/signin?mode=login"
-                className="rounded-xl bg-slate-900 hover:bg-black text-white px-4 py-2 text-sm transition-colors"
+                className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-4 py-2 text-sm transition-colors"
               >
                 Log in
               </Link>
               <Link
                 href="/auth/signin?mode=signup"
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm transition-colors"
+                className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-4 py-2 text-sm transition-colors"
               >
                 Sign up
               </Link>
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm text-slate-700">
+              <div className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm text-slate-700">
                 Tokens: {typeof tokens === 'number' ? tokens : ((session?.user as any)?.tokenBalance ?? 0)}
               </div>
-              <Link href="/pricing" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-sm transition-colors">Top-Up</Link>
+              <Link href="/pricing" className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-3 py-1.5 text-sm transition-colors">Top-Up</Link>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="rounded-xl bg-slate-900 hover:bg-black text-white px-4 py-2 text-sm transition-colors"
@@ -189,7 +173,7 @@ export default function Header() {
         <div className="sm:hidden">
           <button
             aria-label="Open menu"
-            className="rounded-xl border border-black/10 bg-white p-2 text-slate-700 hover:bg-slate-50"
+            className="rounded-xl border border-[#E2E8F0] bg-white p-2 text-slate-700 hover:bg-slate-50"
             onClick={toggleMobile}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -214,7 +198,7 @@ export default function Header() {
                 onClick={closeMobile}
               />
               <motion.aside
-                className="fixed right-0 top-0 z-[101] h-full w-80 max-w-[90%] bg-white border-l border-black/10 shadow-xl flex flex-col"
+                className="fixed right-0 top-0 z-[101] h-full w-80 max-w-[90%] bg-white border-l border-[#E2E8F0] shadow-xl flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 initial={{ x: '100%' }}
@@ -222,7 +206,7 @@ export default function Header() {
                 exit={{ x: '100%' }}
                 transition={{ type: 'tween', duration: 0.25 }}
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[#E2E8F0]">
                   <div className="text-sm font-semibold">Menu</div>
                   <button aria-label="Close menu" onClick={closeMobile} className="rounded-xl p-2 hover:bg-slate-50">
                     <svg className="h-5 w-5 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -234,42 +218,13 @@ export default function Header() {
 
                 <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
                   <nav className="grid gap-1">
-                    <Link href="/generator" className={`rounded-xl px-3 py-2 hover:bg-slate-50 ${isGenerator ? 'bg-black/5' : ''}`} onClick={closeMobile}>Invoice Generator</Link>
+                    <Link href={signedIn ? '/generator' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my CV</Link>
+                    <Link href={signedIn ? '/generator' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my resume</Link>
                     {signedIn && (
                       <Link href="/dashboard" className={`rounded-xl px-3 py-2 hover:bg-slate-50 ${isDashboard ? 'bg-black/5' : ''}`} onClick={closeMobile}>Dashboard</Link>
                     )}
                     <Link href="/pricing" className={`rounded-xl px-3 py-2 hover:bg-slate-50 ${isPricing ? 'bg-black/5' : ''}`} onClick={closeMobile}>Top-Up</Link>
                     <Link href="/token-calculator" className={`rounded-xl px-3 py-2 hover:bg-slate-50 ${isTokenCalc ? 'bg-black/5' : ''}`} onClick={closeMobile}>Token Calculator</Link>
-
-                    <button
-                      className={`mt-1 rounded-xl px-3 py-2 text-left flex items-center justify-between hover:bg-slate-50 ${mobileHelpOpen ? 'bg-black/5' : ''}`}
-                      onClick={toggleMobileHelp}
-                      aria-expanded={mobileHelpOpen}
-                      aria-controls="mobile-help-group"
-                    >
-                      <span>Help</span>
-                      <svg className={`h-4 w-4 transition-transform ${mobileHelpOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-                    <AnimatePresence initial={false}>
-                      {mobileHelpOpen && (
-                        <motion.div
-                          id="mobile-help-group"
-                          className="ml-2 grid gap-1"
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                        >
-                          <Link href="/help/faq" className="rounded-xl px-3 py-2 hover:bg-slate-50" onClick={closeMobile}>FAQ</Link>
-                          <Link href="/help/getting-started" className="rounded-xl px-3 py-2 hover:bg-slate-50" onClick={closeMobile}>Getting Started</Link>
-                          <Link href="/help/billing-tokens" className="rounded-xl px-3 py-2 hover:bg-slate-50" onClick={closeMobile}>Billing & Tokens</Link>
-                          <Link href="/help/troubleshooting" className="rounded-xl px-3 py-2 hover:bg-slate-50" onClick={closeMobile}>Troubleshooting</Link>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <Link href="/about" className={`mt-1 rounded-xl px-3 py-2 hover:bg-slate-50 ${isAbout ? 'bg-black/5' : ''}`} onClick={closeMobile}>About</Link>
                   </nav>
 
                   <div className="mt-4">
@@ -284,15 +239,15 @@ export default function Header() {
                   <div className="mt-4 grid gap-2">
                     {!signedIn ? (
                       <>
-                        <Link href="/auth/signin?mode=login" className="rounded-xl bg-slate-900 hover:bg-black text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Log in</Link>
-                        <Link href="/auth/signin?mode=signup" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Sign up</Link>
+                        <Link href="/auth/signin?mode=login" className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Log in</Link>
+                        <Link href="/auth/signin?mode=signup" className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Sign up</Link>
                       </>
                     ) : (
                       <>
-                        <div className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-slate-700">
+                        <div className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-slate-700">
                           Tokens: {typeof tokens === 'number' ? tokens : ((session?.user as any)?.tokenBalance ?? 0)}
                         </div>
-                        <Link href="/pricing" className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Top-Up</Link>
+                        <Link href="/pricing" className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-4 py-2 text-sm text-center" onClick={closeMobile}>Top-Up</Link>
                         <button
                           onClick={() => { closeMobile(); signOut({ callbackUrl: '/' }); }}
                           className="rounded-xl bg-slate-900 hover:bg-black text-white px-4 py-2 text-sm"

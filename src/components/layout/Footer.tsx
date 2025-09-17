@@ -6,7 +6,7 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <motion.footer
-      className="py-10 border-t border-black/10 mt-10"
+      className="py-10 border-t border-[#E2E8F0] mt-10"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -17,7 +17,7 @@ export default function Footer() {
           <div>
             <div className="font-semibold mb-2">Product</div>
             <div className="grid gap-1 text-slate-700">
-              <Link href="/generator" className="hover:underline">Invoice Generator</Link>
+              <Link href="/generator" className="hover:underline">Generator</Link>
               <Link href="/pricing" className="hover:underline">Pricing</Link>
               <Link href="/token-calculator" className="hover:underline">Token Calculator</Link>
             </div>
@@ -48,7 +48,7 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <div className="font-semibold mb-2">Meta</div>
+            <div className="font-semibold mb-2">Socials</div>
             <div className="grid gap-2 text-slate-700">
               <div className="flex items-center gap-3">
                 <a href="#" aria-label="Instagram" className="h-8 w-8 rounded-full border border-black/10 flex items-center justify-center hover:bg-pink-50 transition-colors">
@@ -66,8 +66,8 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 flex items-center justify-between text-xs text-slate-600">
-          <div>(c) {new Date().getFullYear()} Invoicerly - All rights reserved</div>
-          <div>Made in UK</div>
+          <div>MOCK: © {new Date().getFullYear()} Skeleton — All rights reserved</div>
+          <div>MOCK: Location</div>
         </div>
       </section>
     </motion.footer>

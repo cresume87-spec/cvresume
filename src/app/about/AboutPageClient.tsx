@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Section from '@/components/layout/Section';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import DemoPreview from '@/components/demo/DemoPreview';
 import { THEME } from '@/lib/theme';
 
 export default function AboutPageClient() {
@@ -37,17 +36,8 @@ export default function AboutPageClient() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <motion.div
-            className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm bg-white/70 backdrop-blur border-black/10 shadow-sm mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <span>UK & EU VAT-ready</span>
-            <span>·</span>
-            <span>Pay-as-you-go</span>
-            <span>·</span>
-            <span>Privacy-first</span>
+          <motion.div className="mb-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}>
+            <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm bg-white/70 backdrop-blur border-[#E2E8F0] shadow-sm">MOCK</span>
           </motion.div>
 
           <motion.h1
@@ -56,7 +46,7 @@ export default function AboutPageClient() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            VAT-aware invoicing for the UK & EU
+            About Skeleton
           </motion.h1>
 
           <motion.p
@@ -65,8 +55,7 @@ export default function AboutPageClient() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            Simple, fast, and compliant invoice generation with token-based pricing. 
-            No subscriptions, no hidden fees, no data selling.
+            MOCK: Neutral, customizable document skeleton. Replace with your product story.
           </motion.p>
 
           <motion.div
@@ -75,12 +64,8 @@ export default function AboutPageClient() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            <Button href="/generator" size="lg">
-              Open invoice generator
-            </Button>
-            <Button variant="outline" href="/pricing" size="lg">
-              Top up tokens
-            </Button>
+            <Button href="/generator" size="lg">Get started</Button>
+            <Button variant="outline" href="/pricing" size="lg">View pricing</Button>
           </motion.div>
         </motion.div>
       </Section>
@@ -100,14 +85,14 @@ export default function AboutPageClient() {
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-[#DBEAFE] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-2">Single-column form</h3>
-                  <p className="text-slate-600 text-sm">Streamlined invoice creation with all fields in one place. No complex wizards or multiple steps.</p>
+                  <h3 className="font-semibold text-slate-900 mb-2">MOCK feature #1</h3>
+                  <p className="text-slate-600 text-sm">Short neutral description. Replace with your core value.</p>
                 </div>
               </div>
             </Card>
@@ -121,8 +106,8 @@ export default function AboutPageClient() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-2">Live PDF preview</h3>
-                  <p className="text-slate-600 text-sm">See exactly how your invoice will look before generating. Real-time updates as you type.</p>
+                  <h3 className="font-semibold text-slate-900 mb-2">MOCK feature #2</h3>
+                  <p className="text-slate-600 text-sm">Short neutral description. Replace with your core value.</p>
                 </div>
               </div>
             </Card>
@@ -135,8 +120,8 @@ export default function AboutPageClient() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-2">VAT modes</h3>
-                  <p className="text-slate-600 text-sm">Built-in support for UK and EU VAT calculations. Automatic rate detection and compliance.</p>
+                  <h3 className="font-semibold text-slate-900 mb-2">MOCK feature #3</h3>
+                  <p className="text-slate-600 text-sm">Short neutral description. Replace with your core value.</p>
                 </div>
               </div>
             </Card>
@@ -149,8 +134,8 @@ export default function AboutPageClient() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-2">Token system</h3>
-                  <p className="text-slate-600 text-sm">Pay only for what you use. No monthly subscriptions, no hidden fees, tokens never expire.</p>
+                  <h3 className="font-semibold text-slate-900 mb-2">MOCK feature #4</h3>
+                  <p className="text-slate-600 text-sm">Short neutral description. Replace with your core value.</p>
                 </div>
               </div>
             </Card>
@@ -168,23 +153,19 @@ export default function AboutPageClient() {
           viewport={{ once: true }}
         >
           <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold ${THEME.text} mb-4`}>
-              Why tokens (no subscriptions)
-            </h2>
-            <p className={`text-lg ${THEME.muted}`}>
-              Traditional subscription models don't work for everyone. We believe in fair, transparent pricing.
-            </p>
+            <h2 className={`text-3xl font-bold ${THEME.text} mb-4`}>Our approach</h2>
+            <p className={`text-lg ${THEME.muted}`}>MOCK: Explain your philosophy briefly and neutrally.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-[#DBEAFE] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#2563EB]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Pay-as-you-go</h3>
-              <p className="text-slate-600 text-sm">Only pay for invoices you actually create. No monthly commitments or unused credits.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK pillar A</h3>
+              <p className="text-slate-600 text-sm">Short neutral description.</p>
             </div>
 
             <div className="text-center">
@@ -193,8 +174,8 @@ export default function AboutPageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Scale up/down</h3>
-              <p className="text-slate-600 text-sm">Buy more tokens when busy, use fewer when quiet. Your usage, your control.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK pillar B</h3>
+              <p className="text-slate-600 text-sm">Short neutral description.</p>
             </div>
 
             <div className="text-center">
@@ -203,8 +184,8 @@ export default function AboutPageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Never expire</h3>
-              <p className="text-slate-600 text-sm">Your tokens are yours forever. Use them today, next month, or next year.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK pillar C</h3>
+              <p className="text-slate-600 text-sm">Short neutral description.</p>
             </div>
           </div>
         </motion.div>
@@ -230,13 +211,13 @@ export default function AboutPageClient() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-[#2563EB] rounded-lg flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Accuracy</h3>
-              <p className="text-slate-600 text-sm">Every calculation is precise. Every VAT rate is current. Every invoice is compliant.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK value #1</h3>
+              <p className="text-slate-600 text-sm">Neutral one-liner.</p>
             </div>
 
             <div className="text-center">
@@ -245,8 +226,8 @@ export default function AboutPageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Speed</h3>
-              <p className="text-slate-600 text-sm">Create professional invoices in 30 seconds. No waiting, no delays, no complexity.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK value #2</h3>
+              <p className="text-slate-600 text-sm">Neutral one-liner.</p>
             </div>
 
             <div className="text-center">
@@ -255,8 +236,8 @@ export default function AboutPageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Privacy-by-design</h3>
-              <p className="text-slate-600 text-sm">Your data stays yours. We don't sell it, share it, or use it for advertising.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK value #3</h3>
+              <p className="text-slate-600 text-sm">Neutral one-liner.</p>
             </div>
 
             <div className="text-center">
@@ -265,8 +246,8 @@ export default function AboutPageClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h3 className="font-semibold text-slate-900 mb-2">Simplicity</h3>
-              <p className="text-slate-600 text-sm">Clean interface, clear pricing, straightforward features. No bloat, no confusion.</p>
+              <h3 className="font-semibold text-slate-900 mb-2">MOCK value #4</h3>
+              <p className="text-slate-600 text-sm">Neutral one-liner.</p>
             </div>
           </div>
         </motion.div>
@@ -463,7 +444,7 @@ export default function AboutPageClient() {
         </motion.div>
       </Section>
 
-      {/* 30-second demo */}
+      {/* Demo */}
       <Section className="py-16 bg-slate-50/50">
         <motion.div
           className="max-w-6xl mx-auto"
@@ -473,17 +454,10 @@ export default function AboutPageClient() {
           viewport={{ once: true }}
         >
           <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold ${THEME.text} mb-4`}>
-              30-second demo
-            </h2>
-            <p className={`text-lg ${THEME.muted}`}>
-              See how easy it is to create professional invoices
-            </p>
+            <h2 className={`text-3xl font-bold ${THEME.text} mb-4`}>Demo</h2>
+            <p className={`text-lg ${THEME.muted}`}>MOCK: Embed your product demo or screenshots here.</p>
           </div>
-
-          <Card className="p-8">
-            <DemoPreview />
-          </Card>
+          <Card className="p-8 text-sm text-slate-600 text-center">Demo placeholder</Card>
         </motion.div>
       </Section>
 
@@ -503,12 +477,8 @@ export default function AboutPageClient() {
             Get in touch with our team for support, partnerships, or media inquiries
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button href="mailto:info@invoicerly.co.uk" size="lg">
-              Contact us
-            </Button>
-            <Button variant="outline" href="/contact" size="lg">
-              Contact form
-            </Button>
+            <Button href="/contact" size="lg">Contact us</Button>
+            <Button variant="outline" href="/pricing" size="lg">View pricing</Button>
           </div>
         </motion.div>
       </Section>

@@ -1,46 +1,43 @@
 import { prisma } from '@/lib/prisma';
-import InvoiceA4 from '@/components/pdf/InvoiceA4';
+import DocumentA4 from '@/components/pdf/DocumentA4';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PrintInvoicePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams?: Promise<{ due?: string }> }) {
+export default async function PrintDocumentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sp = (await (searchParams || Promise.resolve({}))) as any;
-  const invoice = await prisma.invoice.findUnique({ where: { id }, include: { items: true, user: { include: { company: true } } } });
-  if (!invoice) return <div className="p-6">Not found.</div>;
-  const dueStr = (sp?.due as string) || (invoice.due ? new Date(invoice.due as any).toISOString().slice(0,10) : '');
+  const doc = await prisma.document.findUnique({ where: { id }, include: { user: { include: { company: true } } } });
+  if (!doc) return <div className="p-6">Not found.</div>;
+  const data = (doc.data || {}) as any;
 
   return (
     <div className="bg-white min-h-screen">
       <main className="max-w-none p-0 m-0">
-        <InvoiceA4
-          currency={invoice.currency}
-          items={invoice.items.map(it => ({ desc: it.description, qty: it.quantity, rate: Number(it.rate), tax: it.tax })) as any}
-          subtotal={Number(invoice.subtotal)}
-          taxTotal={Number(invoice.tax)}
-          total={Number(invoice.total)}
+        <DocumentA4
+          title={doc.title}
+          documentNo={data.documentNo}
+          documentDate={data.documentDate}
           sender={{
-            company: invoice.user.company?.name || '',
-            vat: invoice.user.company?.vat || '',
-            address: invoice.user.company?.address1 || '',
-            city: invoice.user.company?.city || '',
-            country: invoice.user.company?.country || '',
-            iban: invoice.user.company?.iban || '',
-            bankName: (invoice.user.company as any)?.bankName || undefined,
-            bic: invoice.user.company?.bic || undefined,
+            company: doc.user.company?.name || '',
+            vat: doc.user.company?.vat || '',
+            address: doc.user.company?.address1 || '',
+            city: doc.user.company?.city || '',
+            country: doc.user.company?.country || '',
+            iban: doc.user.company?.iban || '',
+            bankName: (doc.user.company as any)?.bankName || undefined,
+            bic: doc.user.company?.bic || undefined,
+            logoUrl: (doc.user.company as any)?.logoUrl || undefined,
           }}
-          logoUrl={(invoice.user.company as any)?.logoUrl || undefined}
-          client={{
-            name: invoice.client,
-            vat: (invoice as any).clientMeta?.vat || '',
-            address: (invoice as any).clientMeta?.address || '',
-            city: (invoice as any).clientMeta?.city || '',
-            country: (invoice as any).clientMeta?.country || '',
+          recipient={{
+            company: data.recipient?.company,
+            name: data.recipient?.name,
+            email: data.recipient?.email,
+            address: data.recipient?.address,
+            city: data.recipient?.city,
+            country: data.recipient?.country,
           }}
-          invoiceNo={invoice.number}
-          invoiceDate={new Date(invoice.date).toISOString().slice(0, 10)}
-          invoiceDue={dueStr}
-          notes={''}
+          content={Array.isArray(data.content) ? data.content : undefined}
+          notes={data.notes}
+          footerText={data.footerText}
         />
       </main>
     </div>

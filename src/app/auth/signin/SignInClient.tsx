@@ -65,8 +65,8 @@ export default function SignInClient() {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen">
-      <Section className="py-10 max-w-md">
+    <main className="bg-[#F8FAFC]">
+      <Section className="pt-6 pb-0 max-w-md">
         <Card className="p-6">
           <h1 className="text-xl font-semibold">{mode === 'signup' ? 'Create Account' : 'Log in'}</h1>
           <p className="text-sm text-slate-600 mt-1">

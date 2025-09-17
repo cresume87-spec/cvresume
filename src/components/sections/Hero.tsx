@@ -1,96 +1,134 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Section from '@/components/layout/Section';
 import Button from '@/components/ui/Button';
-import DemoPreview from '@/components/demo/DemoPreview';
 import { THEME } from '@/lib/theme';
+import { useSession } from 'next-auth/react';
+
+const PHRASES = ['hired faster', 'a remote job', 'paid more', 'promoted'];
+
+type Phase = 'typing' | 'pausing' | 'deleting';
 
 export default function Hero() {
+  const { status } = useSession();
+  const signedIn = status === 'authenticated';
+  const primaryHref = signedIn ? '/generator' : '/auth/signin?mode=login';
+  const secondaryHref = signedIn ? '/generator' : '/auth/signin?mode=login';
+
+  // Typewriter state
+  const [index, setIndex] = useState(0); // which phrase
+  const [subIndex, setSubIndex] = useState(0); // how many chars
+  const [phase, setPhase] = useState<Phase>('typing');
+  const [blink, setBlink] = useState(true);
+  const current = PHRASES[index % PHRASES.length];
+
+  // Caret blink (slower, smoother)
+  useEffect(() => {
+    const t = setInterval(() => setBlink((b) => !b), 650);
+    return () => clearInterval(t);
+  }, []);
+
+  // Typing/Deleting loop
+  useEffect(() => {
+    const TYPING_SPEED = 85; // slower typing
+    const DELETING_SPEED = 55; // slower deleting
+    const PAUSE_MS = 3500; // keep visible for 3.5s
+
+    if (phase === 'typing') {
+      if (subIndex < current.length) {
+        const t = setTimeout(() => setSubIndex(subIndex + 1), TYPING_SPEED);
+        return () => clearTimeout(t);
+      } else {
+        const t = setTimeout(() => setPhase('deleting'), PAUSE_MS);
+        return () => clearTimeout(t);
+      }
+    }
+
+    if (phase === 'deleting') {
+      if (subIndex > 0) {
+        const t = setTimeout(() => setSubIndex(subIndex - 1), DELETING_SPEED);
+        return () => clearTimeout(t);
+      } else {
+        setPhase('typing');
+        setIndex((i) => (i + 1) % PHRASES.length);
+      }
+    }
+  }, [phase, subIndex, current.length]);
+
+  useEffect(() => {
+    // When current phrase changes, restart typing
+    setSubIndex(0);
+    setPhase('typing');
+  }, [index]);
+
   return (
     <div className="relative overflow-hidden">
-      <Section className="pt-10 pb-16">
-        <div className="flex flex-col lg:flex-row items-center gap-10">
-          <motion.div
-            className="w-full lg:w-1/2"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.div
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm bg-white/70 backdrop-blur border-black/10 shadow-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <span>UK & EU VAT-ready</span>
-              <span>·</span>
-              <span>UK GDPR</span>
-              <span>·</span>
-              <span>PDF Export</span>
-            </motion.div>
-
+      {/* Left-to-right gradient blending toward image tone (stronger) */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0e1f4d]/15 via-slate-50/95 to-[#0e1f4d]/20" />
+      <Section className="pt-12 pb-18 relative">
+        <div className="grid md:grid-cols-2 items-center gap-10">
+          {/* Left: Copy */}
+          <div className="max-w-xl">
             <motion.h1
-              className={`mt-5 text-4xl sm:text-5xl font-bold leading-[1.1] ${THEME.text}`}
+              className={`text-4xl sm:text-5xl font-bold leading-[1.1] ${THEME.text}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
             >
-              Create invoices in 30 seconds. Simple. Fast. Compliant.
+              <span className="block">Create a perfect CV.</span>
+              <span className="block">Our builder gets you</span>
+              <span className="block h-[1.1em] text-blue-700">
+                {current.slice(0, subIndex)}
+                <span className={`inline-block w-[1ch] ${blink ? 'opacity-100' : 'opacity-0'}`}>|</span>
+              </span>
             </motion.h1>
 
             <motion.p
-              className={`mt-4 text-lg ${THEME.muted}`}
+              className={`mt-3 max-w-xl text-lg ${THEME.muted}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
             >
-              VAT-aware templates, multi-currency, live preview, and one-click sending.
+              Pick a template, add your experience — get a clean, ATS‑friendly CV in minutes. Export to PDF or DOCX.
             </motion.p>
 
             <motion.div
               className="mt-6 flex flex-col sm:flex-row gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
+              transition={{ delay: 0.25, duration: 0.8, ease: 'easeOut' }}
             >
-              <Button href="#why-us" size="lg">
-                Why choose us
+              <Button href={primaryHref} size="lg" variant="primary" className="hover:animate-pulse">
+                Create my CV
               </Button>
-              <Button variant="outline" href="#pricing" size="lg">
-                Pricing & Comparison
+              <Button variant="outline" href={secondaryHref} size="lg" className="hover:animate-pulse">
+                Create my resume
               </Button>
             </motion.div>
+          </div>
 
-            <motion.div
-              className={`mt-6 grid grid-cols-3 gap-4 text-sm ${THEME.muted}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-            >
-              <div className="flex items-center gap-2">
-                <span>SSL / UK GDPR</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>50+ currencies</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>UK & EU VAT</span>
-              </div>
-            </motion.div>
-          </motion.div>
-
+          {/* Right: Visual */}
           <motion.div
-            className="w-full lg:w-1/2"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            className="relative"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <DemoPreview />
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-black/10 shadow-sm bg-white">
+              <img
+                src="/image1.webp"
+                alt="Person creating a CV on a laptop"
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+              {/* stronger soft gradient overlay from image side */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-transparent to-[#0e1f4d]/25" />
+            </div>
           </motion.div>
         </div>
       </Section>
     </div>
   );
 }
-

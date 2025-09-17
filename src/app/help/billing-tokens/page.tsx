@@ -164,10 +164,10 @@ export default function BillingTokensPage() {
                     </div>
                   ))}
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <div className="text-blue-600 font-semibold text-sm">💡 Custom amounts</div>
-                    <p className="text-blue-800 text-sm">
+                    <p className="text-[#1E40AF] text-sm">
                       You can top up any amount from {selectedCurrency}5 to {selectedCurrency}10,000.
                     </p>
                   </div>

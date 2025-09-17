@@ -1,6 +1,7 @@
 'use client';
 
 import InvoiceA4 from '@/components/pdf/InvoiceA4';
+import DocumentA4 from '@/components/pdf/DocumentA4';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import LogoUploader from '@/components/ui/LogoUploader';
@@ -285,113 +286,48 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
     }
     setBusy('download');
     setBanner(null);
-    let createdInvoiceId: string | null = null;
     try {
       // Sync seller company details first
       try {
         await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: sender.company, vat: sender.vat, address1: sender.address, city: sender.city, country: sender.country, iban: sender.iban, logoUrl: logo || undefined, bankName: sender.bankName, bic: sender.bic }) });
       } catch {}
-      
-      // Create Ready invoice directly (charges 10 tokens)
-      const res = await fetch('/api/invoices', {
+
+      // Create neutral document (charges 10 tokens)
+      const createRes = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currency,
-          client: client.name,
-          subtotal: Math.round(subtotal),
-          tax: Math.round(taxTotal),
-          total: Math.round(total),
-          due: invoiceMeta.due,
-          clientMeta: {
-            vat: client.vat,
-            address: client.address,
-            city: client.city,
-            country: client.country,
-            email: client.email,
-            iban: client.iban,
-            bankName: client.bankName,
-            bic: client.bic,
-          },
-          items: items.map((it) => ({
-            description: it.desc,
-            quantity: it.qty,
-            rate: it.rate,
-            tax: it.tax,
-          })),
-        }),
+          title: 'Document',
+          data: {
+            documentNo: invoiceMeta.number,
+            documentDate: invoiceMeta.date,
+            recipient: { name: client.name, email: client.email, address: client.address, city: client.city, country: client.country },
+            content: [ { heading: 'Summary', text: `Total ${currency} ${(subtotal + taxTotal).toFixed(2)}` } ],
+            notes,
+          }
+        })
       });
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create invoice');
+      if (!createRes.ok) throw new Error('Failed to create document');
+      const { document: doc, tokenBalance: newBalance } = await createRes.json();
+      if (typeof newBalance === 'number') {
+        setTokenBalance(newBalance);
+        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: newBalance }); } catch {}
       }
-      
-      const { invoice, tokenBalance } = await res.json();
-      createdInvoiceId = invoice.id as string;
-      if (!invoice || !invoice.id) {
-        throw new Error("Could not create invoice for download.");
-      }
-      
-      // Update token balance
-      if (typeof tokenBalance === 'number') {
-        setTokenBalance(tokenBalance);
-        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance }); } catch {}
-      }
-      
-      // Update invoice meta
-      try {
-        setInvoiceMeta((prev) => ({ ...prev, number: String(invoice.number || prev.number), date: new Date(invoice.date).toISOString().slice(0, 10) }));
-      } catch {}
 
-      // Generate downloadable PDF from the hidden print area
-      const el = document.getElementById('print-area');
-      if (!el) throw new Error('Print area not found');
-      const prevDisplay = el.style.display;
-      const prevPos = (el.style as any).position;
-      const prevLeft = (el.style as any).left;
-      (el.style as any).display = 'block';
-      (el.style as any).position = 'absolute';
-      (el.style as any).left = '-10000px';
-
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(el as HTMLElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-
-      (el.style as any).display = prevDisplay;
-      (el.style as any).position = prevPos;
-      (el.style as any).left = prevLeft;
-
-      const imgData = canvas.toDataURL('image/png');
-      try {
-        const res = await fetch(`/api/pdf/${invoice.id}?due=${encodeURIComponent(invoiceMeta.due || '')}`);
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `Invoice - ${invoiceMeta.number || 'XXXXXX'}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-          setBanner({ type: 'success', msg: 'PDF downloaded.' });
-        } else {
-          throw new Error('Server PDF failed');
-        }
-      } catch {
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
-        const fname = `Invoice - ${invoiceMeta.number || 'XXXXXX'}.pdf`;
-        pdf.save(fname);
-        setBanner({ type: 'success', msg: 'PDF downloaded.' });
-      }
+      // Download server-rendered PDF
+      const res = await fetch(`/api/pdf/${doc.id}`);
+      if (!res.ok) throw new Error('Server PDF failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${doc.title || 'Document'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setBanner({ type: 'success', msg: 'PDF downloaded.' });
     } catch (e: any) {
-      if (createdInvoiceId) {
-        try { await fetch(`/api/invoices/${createdInvoiceId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Error' }) }); } catch {}
-      }
       setBanner({ type: 'error', msg: e.message || 'PDF download failed.' });
     } finally {
       setBusy(null);
@@ -430,74 +366,7 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
 
 
 const saveInvoice = async (isDraft: boolean) => {
-    try {
-      // Sync seller company details
-      await fetch('/api/company', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: sender.company,
-          vat: sender.vat,
-          address1: sender.address,
-          city: sender.city,
-          country: sender.country,
-          iban: sender.iban,
-          logoUrl: logo || undefined,
-          bankName: sender.bankName,
-          bic: sender.bic,
-        }),
-      });
-    } catch {}
-    try {
-      // Save draft or ready invoice
-      const res = await fetch('/api/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currency,
-          client: client.name,
-          subtotal: Math.round(subtotal),
-          tax: Math.round(taxTotal),
-          total: Math.round(total),
-          due: invoiceMeta.due,
-          clientMeta: {
-            vat: client.vat,
-            address: client.address,
-            city: client.city,
-            country: client.country,
-            email: client.email,
-            iban: client.iban,
-            bankName: client.bankName,
-            bic: client.bic,
-          },
-          items: items.map((it) => ({
-            description: it.desc,
-            quantity: it.qty,
-            rate: it.rate,
-            tax: it.tax,
-          })),
-        }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({ error: 'Failed' }))).error || 'Failed to save invoice');
-      const { invoice } = await res.json();
-      if (!isDraft) {
-        // Mark as Ready
-        await fetch(`/api/invoices/${invoice.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'Ready',
-            subtotal: Math.round(subtotal),
-            tax: Math.round(taxTotal),
-            total: Math.round(total),
-          }),
-        });
-      }
-      return invoice;
-    } catch (e: any) {
-      console.error('Save invoice error:', e);
-      throw new Error(e.message || 'Failed to save invoice');
-    }
+    throw new Error('Disabled in skeleton: invoice flow removed');
   };
 
 const sendEmail = async () => {
@@ -509,81 +378,43 @@ const sendEmail = async () => {
     setBusy('email');
     setBanner(null);
     try {
-      // 1. Создаем Ready инвойс напрямую через /api/invoices (списывает токены)
-      const res = await fetch('/api/invoices', {
+      // Create document first (charges 10 tokens)
+      const createRes = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currency,
-          client: client.name,
-          subtotal: Math.round(subtotal),
-          tax: Math.round(taxTotal),
-          total: Math.round(total),
-          due: invoiceMeta.due,
-          clientMeta: {
-            vat: client.vat,
-            address: client.address,
-            city: client.city,
-            country: client.country,
-            email: client.email,
-            iban: client.iban,
-            bankName: client.bankName,
-            bic: client.bic,
-          },
-          items: items.map((it) => ({
-            description: it.desc,
-            quantity: it.qty,
-            rate: it.rate,
-            tax: it.tax,
-          })),
-        }),
+          title: 'Document',
+          data: {
+            documentNo: invoiceMeta.number,
+            documentDate: invoiceMeta.date,
+            recipient: { name: client.name, email: client.email, address: client.address, city: client.city, country: client.country },
+            content: [ { heading: 'Summary', text: `Total ${currency} ${(subtotal + taxTotal).toFixed(2)}` } ],
+            notes,
+          }
+        })
       });
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create invoice');
+      if (!createRes.ok) throw new Error('Failed to create document');
+      const { document: doc, tokenBalance: newBalance } = await createRes.json();
+      if (typeof newBalance === 'number') {
+        setTokenBalance(newBalance);
+        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: newBalance }); } catch {}
       }
-      
-      const { invoice, tokenBalance } = await res.json();
-      if (!invoice || !invoice.id) {
-        throw new Error("Could not create invoice for sending.");
-      }
-      
-      // Update token balance
-      if (typeof tokenBalance === 'number') {
-        setTokenBalance(tokenBalance);
-        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance }); } catch {}
-      }
-      
-      // Update invoice meta
-      try {
-        setInvoiceMeta((prev) => ({ ...prev, number: String(invoice.number || prev.number), date: new Date(invoice.date).toISOString().slice(0, 10) }));
-      } catch {}
-      
-      const savedInvoice = invoice;
 
-      // 2. Проверяем email клиента
       if (!client.email) {
-        setBanner({ type: 'error', msg: 'Please enter client email address first.' });
+        setBanner({ type: 'error', msg: 'Please enter recipient email address first.' });
         setBusy(null);
         return;
       }
-      
-      const recipientEmail = client.email;
 
-      // 3. Отправляем на наш API
-      setBanner({ type: 'success', msg: 'Sending email...' });
-      const emailRes = await fetch(`/api/invoices/send`, {
+      const emailRes = await fetch(`/api/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: recipientEmail, invoiceId: savedInvoice.id }),
+        body: JSON.stringify({ email: client.email, documentId: doc.id }),
       });
-
       if (!emailRes.ok) {
         const data = await emailRes.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to send email.');
       }
-
       setBanner({ type: 'success', msg: 'Email sent successfully!' });
     } catch (e: any) {
       setBanner({ type: 'error', msg: e.message || 'Failed to queue email.' });
@@ -866,34 +697,13 @@ const sendEmail = async () => {
       </div>
 
       {/* Print-only A4 template (isolated on print) */}
-      <InvoiceA4
-        currency={currency}
-        zeroNote={zeroNote}
-        logoUrl={logo || undefined}
-        items={items}
-        subtotal={subtotal}
-        taxTotal={taxTotal}
-        total={total}
-        sender={{
-          company: sender.company,
-          vat: sender.vat,
-          address: sender.address,
-          city: sender.city,
-          country: sender.country,
-          iban: sender.iban,
-          bankName: sender.bankName,
-          bic: sender.bic,
-        }}
-        client={{
-          name: client.name,
-          vat: client.vat,
-          address: client.address,
-          city: client.city,
-          country: client.country,
-        }}
-        invoiceNo={invoiceMeta.number}
-        invoiceDate={invoiceMeta.date}
-        invoiceDue={invoiceMeta.due}
+      <DocumentA4
+        title={'Document'}
+        documentNo={invoiceMeta.number}
+        documentDate={invoiceMeta.date}
+        sender={{ company: sender.company, vat: sender.vat, address: sender.address, city: sender.city, country: sender.country, iban: sender.iban, bankName: sender.bankName, bic: sender.bic, logoUrl: logo || undefined }}
+        recipient={{ name: client.name, email: client.email, address: client.address, city: client.city, country: client.country }}
+        content={[{ heading: 'Summary', text: `Total ${currency} ${(subtotal + taxTotal).toFixed(2)}` }]}
         notes={notes}
       />
     </div>

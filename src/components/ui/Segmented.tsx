@@ -13,12 +13,12 @@ interface SegmentedProps {
 
 export default function Segmented({ options, value, onChange, className = '' }: SegmentedProps) {
   return (
-    <div className={`inline-flex rounded-xl border border-black/10 bg-white p-1 ${className}`}>
+    <div className={`inline-flex rounded-xl border border-[#E2E8F0] bg-white p-1 ${className}`}>
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={`px-3 py-1.5 text-sm rounded-lg ${value === o.value ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+          className={`px-3 py-1.5 text-sm rounded-lg ${value === o.value ? 'bg-[#2563EB] text-white' : 'text-[#475569] hover:bg-[#E2E8F0]'}`}
           type="button"
         >
           {o.label}
@@ -27,4 +27,3 @@ export default function Segmented({ options, value, onChange, className = '' }: 
     </div>
   );
 }
-

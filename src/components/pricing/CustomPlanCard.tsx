@@ -1,0 +1,51 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import Button from '@/components/ui/Button';
+import { useState } from 'react';
+import type { Currency } from '@/lib/plans';
+
+export default function CustomPlanCard({ currency, onPurchase }: { currency: Currency; onPurchase: (amount: number, currency: Currency) => void; }) {
+  const [priceInput, setPriceInput] = useState<string>('5');
+  const TOKENS_PER_UNIT = 1; // 10 GBP/EUR => 10 tokens
+  const min = 5;
+  const numericPrice = parseFloat(priceInput || '0');
+  const validNumber = Number.isFinite(numericPrice);
+
+  const tokens = Math.max(0, Math.round((validNumber ? numericPrice : 0) * TOKENS_PER_UNIT));
+
+  const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    setPriceInput(e.target.value);
+  };
+
+  return (
+    <motion.div className="rounded-2xl bg-white border border-[#E2E8F0] shadow-sm p-6 flex flex-col"
+      initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }}>
+      <div className="flex items-center justify-between">
+        <div className="text-lg font-semibold">Custom</div>
+        <span className="text-xs rounded-full px-2 py-1 bg-slate-100 border border-[#E2E8F0] text-slate-700">EARLY / SUPPORTER</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <span className="text-3xl font-bold">{currency === 'GBP' ? '£' : '€'}</span>
+        <input type="number" step="any" value={priceInput}
+          onChange={onChange}
+          className="w-24 text-3xl font-bold bg-transparent border-b border-[#E2E8F0] focus:outline-none focus:ring-0" aria-label="Custom price" />
+        <span className="text-base font-normal text-slate-500">/one-time</span>
+      </div>
+      {(!validNumber || numericPrice < min) && (
+        <div className="mt-1 text-[11px] text-red-600">Minimum amount is {currency === 'GBP' ? '£' : '€'}5.00</div>
+      )}
+      <div className="mt-1 text-xs text-slate-600">= {tokens} tokens</div>
+      <ul className="mt-4 space-y-2 text-sm text-slate-700 list-disc pl-5">
+        <li>Top up your account</li>
+        <li>No subscription — pay what you need</li>
+        <li>Min {currency === 'GBP' ? '£5' : '€5'}</li>
+      </ul>
+      <div className="mt-6">
+        <Button className="w-full" size="lg" onClick={() => onPurchase(numericPrice, currency)} disabled={!validNumber || numericPrice < min}>
+          Buy tokens
+        </Button>
+      </div>
+    </motion.div>
+  );
+}

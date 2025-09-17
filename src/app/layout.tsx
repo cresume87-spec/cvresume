@@ -5,25 +5,25 @@ import Footer from '@/components/layout/Footer';
 import AuthProvider from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Invoicerly - Create invoices in 30 seconds',
-  description: 'VAT-aware templates, multi-currency, live preview, and one-click sending. Simple. Fast. Compliant.',
-  keywords: 'invoice, invoicing, VAT, UK, EU, PDF, business, accounting',
-  authors: [{ name: 'Invoicerly Team' }],
+  title: 'Skeleton - Documents made simple',
+  description: 'Neutral, customizable document generation with PDF, email, and sharing.',
+  keywords: 'document, pdf, email, sharing, generator, template',
+  authors: [{ name: 'Skeleton' }],
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
     apple: '/favicon.svg',
   },
   openGraph: {
-    title: 'Invoicerly - Create invoices in 30 seconds',
-    description: 'VAT-aware templates, multi-currency, live preview, and one-click sending.',
+    title: 'Skeleton - Documents made simple',
+    description: 'Neutral, customizable document generation with PDF, email, and sharing.',
     type: 'website',
     locale: 'en_GB',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Invoicerly - Create invoices in 30 seconds',
-    description: 'VAT-aware templates, multi-currency, live preview, and one-click sending.',
+    title: 'Skeleton - Documents made simple',
+    description: 'Neutral, customizable document generation with PDF, email, and sharing.',
   },
   robots: {
     index: true,

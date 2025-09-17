@@ -123,6 +123,67 @@ The app can be deployed to any platform that supports Next.js:
 - AWS Amplify
 - Railway
 
+## OpenAI Setup
+
+This project integrates OpenAI for text generation and file management.
+
+### 1) Environment variables
+
+Copy `env.example` to `.env.local` and set at least:
+
+```
+OPENAI_API_KEY=sk-...
+# optional overrides
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_ORG=
+OPENAI_BASE_URL=
+```
+
+For production (e.g. Vercel), set the same variables in Project → Settings → Environment.
+
+### 2) Library helper
+
+`src/lib/openai.ts` centralizes client creation and a simple text generation helper.
+
+### 3) API routes
+
+- `POST /api/openai/test` — text generation (requires session)
+  - Body JSON:
+    ```json
+    { "prompt": "Say hello in Russian", "temperature": 0.7 }
+    ```
+  - Response: `{ text: string }`
+
+- `GET /api/openai/files` — list uploaded files
+- `POST /api/openai/files` — upload a file (multipart/form-data):
+  - `file`: the file
+  - `purpose`: defaults to `assistants`
+- `DELETE /api/openai/files/[id]` — delete a file by id
+
+All routes require an authenticated user (NextAuth).
+
+### 4) Quick local test
+
+Run dev server:
+
+```
+npm run dev
+```
+
+Generate text:
+
+```
+curl -X POST http://localhost:3000/api/openai/test \
+  -H "Content-Type: application/json" \
+  -b "next-auth.session-token=YOUR_SESSION_TOKEN" \
+  -d '{"prompt":"Привет, OpenAI!"}'
+```
+
+If you see connectivity errors (e.g. `Unable to reach the model provider`), check:
+- `OPENAI_API_KEY` is set and valid
+- No corporate proxy/firewall blocks outbound HTTPS to `api.openai.com`
+- If using a custom provider, set `OPENAI_BASE_URL`
+
 ## License
 
 This project is licensed under the MIT License.

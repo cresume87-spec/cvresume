@@ -1,23 +1,21 @@
 import { Theme } from '@/types';
 
 export const THEME: Theme = {
-  name: "Ledger Calm",
-  bg: "bg-slate-50",
-  text: "text-slate-900",
-  card: "bg-white",
-  border: "border-slate-200",
-  muted: "text-slate-500",
+  name: "Brand",
+  bg: "bg-[#F8FAFC]",
+  text: "text-[#0F172A]",
+  card: "bg-[#FFFFFF]",
+  border: "border-[#E2E8F0]",
+  muted: "text-[#475569]",
   primary: {
-    text: "text-blue-600",
-    bg: "bg-blue-600",
-    hover: "hover:bg-blue-700",
-    ring: "focus:ring-blue-600/30",
+    text: "text-[#2563EB]",
+    bg: "bg-[#2563EB]",
+    hover: "hover:bg-[#1E40AF]",
+    ring: "focus:ring-[#2563EB]/25",
   },
   accent: {
-    text: "text-emerald-600",
-    bg: "bg-emerald-500",
+    text: "text-[#FB7185]",
+    bg: "bg-[#FB7185]",
   },
 };
-
-
 

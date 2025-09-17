@@ -28,7 +28,7 @@ export default function LogoUploader({ value, onChange }: LogoUploaderProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="h-12 w-28 rounded-lg border border-black/10 bg-white overflow-hidden flex items-center justify-center">
+      <div className="h-12 w-28 rounded-lg border border-[#E2E8F0] bg-white overflow-hidden flex items-center justify-center">
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="Logo" className="max-h-10 max-w-[104px] object-contain" />
@@ -37,13 +37,12 @@ export default function LogoUploader({ value, onChange }: LogoUploaderProps) {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onPick} className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm">Upload</button>
+        <button type="button" onClick={onPick} className="rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm">Upload</button>
         {value && (
-          <button type="button" onClick={clear} className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm">Remove</button>
+          <button type="button" onClick={clear} className="rounded-lg border border-[#E2E8F0] bg-white px-3 py-2 text-sm">Remove</button>
         )}
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
     </div>
   );
 }
-

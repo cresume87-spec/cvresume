@@ -10,17 +10,14 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    console.log(`[PDF_API] Generating PDF for invoice ${id}`);
+    console.log(`[PDF_API] Generating PDF for document ${id}`);
     
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-    const urlObj = new URL(req.url);
-    const due = urlObj.searchParams.get('due');
-    const q = due ? `?due=${encodeURIComponent(due)}` : '';
-    const url = `${origin}/print/${id}${q}`;
+    const url = `${origin}/print/${id}`;
     
     console.log(`[PDF_API] Base URL: ${baseUrl}`);
     console.log(`[PDF_API] Origin: ${origin}`);
@@ -61,7 +58,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       console.log(`[PDF_API] PDF generated, size: ${pdfBuffer.length} bytes`);
 
       const body = new Uint8Array(pdfBuffer);
-      const fileName = `invoice-${id || 'document'}.pdf`;
+      const fileName = `document-${id || 'document'}.pdf`;
       return new Response(body, {
         status: 200,
         headers: {

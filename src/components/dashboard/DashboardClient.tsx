@@ -2,14 +2,13 @@
 
 import { Button, Card, Input } from '@/components';
 import Section from '@/components/layout/Section';
-import InvoiceA4 from '@/components/pdf/InvoiceA4';
+import DocumentA4 from '@/components/pdf/DocumentA4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // ТИПЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 type Currency = 'GBP' | 'EUR';
-type InvoiceStatus = 'Draft' | 'Ready' | 'Error' | 'Sent' | 'Paid' | 'Overdue';
-type Invoice = { id: string; number: string; date: string; client: string; currency: Currency; subtotal: number; tax: number; total: number; status: InvoiceStatus };
-type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Invoice' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
+type Document = { id: string; title: string; updatedAt: string; data?: any };
+type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Document' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
 type Company = { name: string; vat?: string; reg?: string; address1?: string; city?: string; country?: string; iban?: string; bankName?: string; bic?: string };
 type Me = { id: string; name: string | null; email: string | null; tokenBalance: number; currency: Currency; company: Company | null };
 
@@ -37,7 +36,7 @@ function int(n: number) { try { return new Intl.NumberFormat().format(Math.round
 export default function DashboardClient() {
   const bcRef = useRef<BroadcastChannel | null>(null);
   const [me, setMe] = useState<Me | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<Document[]>([]);
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [invRange, setInvSlice] = useState<[number, number]>([0, 20]);
   const [ledRange, setLedSlice] = useState<[number, number]>([0, 20]);
@@ -61,10 +60,10 @@ export default function DashboardClient() {
         setForm(user.company || { name: '' });
         try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: user.tokenBalance }); } catch {}
       }
-      const invRes = await fetch('/api/invoices');
+      const invRes = await fetch('/api/documents');
       if (invRes.ok) {
-        const { invoices } = await invRes.json();
-        setInvoices(invoices);
+        const { documents } = await invRes.json();
+        setInvoices(documents);
       }
       const ledRes = await fetch('/api/ledger');
       if (ledRes.ok) {
@@ -82,10 +81,10 @@ export default function DashboardClient() {
   }, []);
 
   const fetchInvoice = async (id: string) => {
-    const res = await fetch(`/api/invoices/${id}`);
+    const res = await fetch(`/api/documents/${id}`);
     if (!res.ok) return null;
-    const { invoice } = await res.json();
-    return invoice as any;
+    const { document } = await res.json();
+    return document as any;
   };
 
   const openView = async (id: string) => {
@@ -95,35 +94,16 @@ export default function DashboardClient() {
       return;
     }
     const inv = await fetchInvoice(id);
-    if (!inv) { alert('Invoice not found'); return; }
+    if (!inv) { alert('Document not found'); return; }
     setViewId(id);
     setViewInv(inv);
   };
 
-  const markReadyIfDraft = async (id: string) => {
-    const inv = invoices.find(x => x.id === id);
-    if (!inv) return { ok: false, err: 'Not found' };
-    if (inv.status !== 'Draft') return { ok: true };
-    const res = await fetch(`/api/invoices/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Ready', subtotal: inv.subtotal, tax: inv.tax, total: inv.total }) });
-    if (!res.ok) {
-      const j = await res.json().catch(()=>({ error:'Failed'}));
-      return { ok: false, err: j.error || 'Failed to mark Ready' };
-    }
-    const j = await res.json();
-    const updated = j.invoice as Invoice;
-    setInvoices(prev => prev.map(x => x.id===id? { ...x, status: updated.status } : x));
-    if (typeof j.tokenBalance === 'number' && me) {
-      setMe({ ...me, tokenBalance: j.tokenBalance });
-      try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: j.tokenBalance }); } catch {}
-    }
-    const ledRes = await fetch('/api/ledger');
-    if (ledRes.ok) { const { ledger } = await ledRes.json(); setLedger(ledger); }
-    return { ok: true };
-  };
+  const markReadyIfDraft = async (_id: string) => ({ ok: true });
 
   const ensureReadyAndDownload = async (id: string) => {
     const invFull = await fetchInvoice(id);
-    if (!invFull) { alert('Invoice not found'); return; }
+    if (!invFull) { alert('Document not found'); return; }
     const mark = await markReadyIfDraft(id);
     if (!mark.ok) { alert(mark.err || 'Failed'); return; }
     try {
@@ -132,7 +112,7 @@ export default function DashboardClient() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `Invoice - ${invFull.number}.pdf`;
+      a.href = url; a.download = `${invFull.title || 'Document'}.pdf`;
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     } catch (e) {
       alert('Failed to download PDF');
@@ -141,11 +121,11 @@ export default function DashboardClient() {
 
   const createInvoice = async () => {
     if (!me) return;
-    if (me.tokenBalance < 10) { alert('Not enough tokens. Top up to create a new invoice.'); return; }
-    const res = await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currency: me.currency, client: 'New Client', subtotal: 100, tax: 20, total: 120 }) });
+    if (me.tokenBalance < 10) { alert('Недостаточно токенов. Пополните баланс.'); return; }
+    const res = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New Document', data: { content: [{ heading: 'Section', text: 'Text' }] } }) });
     if (res.ok) {
-      const { invoice, tokenBalance } = await res.json();
-      setInvoices(prev => [ { ...invoice, date: new Date(invoice.date).toISOString().slice(0,10) }, ...prev ]);
+      const { document, tokenBalance } = await res.json();
+      setInvoices(prev => [ document, ...prev ]);
       setMe({ ...me, tokenBalance });
       try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance }); } catch {}
       const ledRes = await fetch('/api/ledger');
@@ -155,7 +135,7 @@ export default function DashboardClient() {
       }
     } else {
       const j = await res.json().catch(()=>({ error:'Error'}));
-      alert(j.error || 'Error creating invoice');
+      alert(j.error || 'Error creating document');
     }
   };
 
@@ -222,7 +202,7 @@ export default function DashboardClient() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Hello, {userName}</h1>
-            <p className="mt-1 text-slate-600">Manage your invoices, token balance, and company details.</p>
+            <p className="mt-1 text-slate-600">Manage your documents, token balance, and company details.</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-2 text-sm rounded-full border border-black/10 bg-white px-3 py-1">Balance: <b>{int(tokenBalance)}</b> tokens <span className="text-slate-500">(~{int(tokenBalance/10)} invoices)</span></div>
@@ -233,18 +213,16 @@ export default function DashboardClient() {
         <div className="mt-4 grid lg:grid-cols-2 gap-4 items-start">
           <Card padding="sm" data-reveal>
               <div className="flex items-center justify-between">
-                <div className="text-base font-semibold">Recent invoices</div>
+                <div className="text-base font-semibold">Recent documents</div>
                 <a className="text-sm underline" href="#">View all</a>
               </div>
               <div className="mt-3 overflow-hidden rounded-xl border border-black/10">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-slate-600">
                     <tr>
-                      <th className="text-left px-3 py-2">Number</th>
-                      <th className="text-left px-3 py-2">Date</th>
-                      <th className="text-left px-3 py-2">Client</th>
-                      <th className="text-right px-3 py-2">Total</th>
-                      <th className="text-left px-3 py-2">Status</th>
+                      <th className="text-left px-3 py-2">Title</th>
+                      <th className="text-left px-3 py-2">Updated</th>
+                      <th className="text-left px-3 py-2">Recipient</th>
                       <th className="text-right px-3 py-2">Actions</th>
                     </tr>
                   </thead>
@@ -252,20 +230,9 @@ export default function DashboardClient() {
                     {invView.map(inv => (
                       <React.Fragment key={inv.id}>
                         <tr className={`border-t ${viewId===inv.id ? 'border-black' : 'border-black/10'}`}>
-                          <td className={`px-3 py-2 font-mono text-[12px] ${viewId===inv.id ? 'border-t-2 border-l-2 border-black rounded-tl-xl' : ''}`}>{inv.number}</td>
-                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{new Date(inv.date).toISOString().slice(0,10)}</td>
-                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{inv.client}</td>
-                          <td className={`px-3 py-2 text-right ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{fmtMoney(inv.total, inv.currency)}</td>
-                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>
-                            <span className={`rounded-full px-2 py-0.5 text-[11px] border ${
-                              inv.status==='Ready' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' :
-                              inv.status==='Error' ? 'border-rose-200 bg-rose-50 text-rose-800' :
-                              inv.status==='Paid' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' :
-                              inv.status==='Sent' ? 'border-blue-200 bg-blue-50 text-blue-800' :
-                              inv.status==='Overdue' ? 'border-rose-200 bg-rose-50 text-rose-800' :
-                              'border-black/10'
-                            }`}>{inv.status}</span>
-                          </td>
+                          <td className={`px-3 py-2 font-mono text-[12px] ${viewId===inv.id ? 'border-t-2 border-l-2 border-black rounded-tl-xl' : ''}`}>{(inv as any).title || 'Document'}</td>
+                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{new Date(inv.updatedAt).toISOString().slice(0,10)}</td>
+                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{(inv as any).data?.recipient?.name || (inv as any).data?.recipient?.company || '-'}</td>
                           <td className={`px-3 py-2 text-right ${viewId===inv.id ? 'border-t-2 border-r-2 border-black rounded-tr-xl' : ''}`}>
                             <button className="text-sm underline mr-2" onClick={()=>openView(inv.id)}>{viewId===inv.id? 'Hide' : 'View'}</button>
                             <button className="text-sm underline" onClick={()=>ensureReadyAndDownload(inv.id)}>Download</button>
@@ -280,10 +247,17 @@ export default function DashboardClient() {
                                   onClose={()=>{ setViewId(null); setViewInv(null); }}
                                   onRefresh={async(id)=>{ const iv = await fetchInvoice(id); if(iv) setViewInv(iv); }}
                                   onDownload={()=>ensureReadyAndDownload(viewInv.id)}
-                                  onSendEmail={async()=>{ const r = await markReadyIfDraft(viewInv.id); if(r.ok){ alert('Email queued'); } else { alert(r.err||'Failed'); }}}
+                                  onSendEmail={async()=>{
+                                    const current = viewInv as any;
+                                    const defaultEmail = current?.data?.recipient?.email || '';
+                                    const to = prompt('Recipient email:', defaultEmail);
+                                    if (!to) return;
+                                    const r = await fetch('/api/email/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: to, documentId: current.id }) });
+                                    if (!r.ok) alert('Email send failed'); else alert('Email sent successfully!');
+                                  }}
                                   onSave={async(next)=>{
-                                    const res = await fetch(`/api/invoices/${viewInv.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
-                                    if (res.ok) { const j = await res.json(); setViewInv(j.invoice); setInvoices(prev=>prev.map(x=>x.id===j.invoice.id? { ...x, client: j.invoice.client, subtotal: j.invoice.subtotal, tax: j.invoice.tax, total: j.invoice.total } : x)); }
+                                    const res = await fetch(`/api/documents/${viewInv.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+                                    if (res.ok) { const j = await res.json(); setViewInv(j.document); setInvoices(prev=>prev.map(x=>x.id===j.document.id? j.document : x)); }
                                     else { const j = await res.json().catch(()=>({error:'Failed'})); alert(j.error||'Failed to save'); }
                                   }}
                                 />
@@ -363,18 +337,15 @@ export default function DashboardClient() {
     </main>
     {printing && (
       <div id="dash-print-area" style={{ position:'absolute', left: '-10000px', top: 0, width: '100%' }}>
-        <InvoiceA4
-          currency={printing.currency}
-          items={printing.items as any}
-          subtotal={printing.subtotal}
-          taxTotal={printing.tax}
-          total={printing.total}
+        <DocumentA4
+          title={printing.title}
+          documentNo={printing.documentNo}
+          documentDate={printing.documentDate}
           sender={printing.sender}
-          client={printing.client}
-          invoiceNo={printing.invoiceNo}
-          invoiceDate={printing.invoiceDate}
-          invoiceDue={printing.invoiceDue}
+          recipient={printing.recipient}
+          content={printing.content}
           notes={printing.notes}
+          footerText={printing.footerText}
         />
       </div>
     )}
@@ -578,7 +549,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
       <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(90vh - 110px)' }}>
         {!editing ? (
           <div className="max-w-[800px] mx-auto">
-            <InvoiceA4
+            <DocumentA4
               currency={invoice.currency}
               items={(invoice.items||[]).map((it:any)=>({ desc: it.description, qty: it.quantity, rate: it.rate, tax: it.tax }))}
               subtotal={invoice.subtotal}

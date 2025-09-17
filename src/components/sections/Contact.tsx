@@ -37,13 +37,13 @@ export default function Contact() {
           viewport={{ once: true }}
         >
           <h2 className="text-2xl font-bold">Contact us</h2>
-          <p className="mt-2 text-slate-600">Leave a message - we'll reply within one business day.</p>
+          <p className="mt-2 text-slate-600">MOCK: Leave a message — we usually reply within 1 business day.</p>
           <div className="mt-6 grid gap-3 text-sm text-slate-700">
-            <div>Company: GET STUFFED LTD</div>
-            <div>Reg: 15673179</div>
-            <div>Address: Flat 21 County Chambers, 1 Drapery, Northampton, United Kingdom, NN1 2ET</div>
-            <div>Email: info@invoicerly.co.uk</div>
-            <div>Phone: +44 7822016497</div>
+            <div>Company: MOCK COMPANY LTD</div>
+            <div>Reg: 00000000</div>
+            <div>Address: 123 Mock Street, City, Country</div>
+            <div>Email: hello@example.com</div>
+            <div>Phone: +00 0000 000000</div>
           </div>
         </motion.div>
 

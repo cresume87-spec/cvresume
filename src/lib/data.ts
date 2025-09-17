@@ -2,23 +2,23 @@ import { PricingPlan, Testimonial, Feature, TemplateInfo } from '@/types';
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    name: 'Beginner',
-    price: 'GBP 10',
-    points: ['Top up 1,000 tokens (~100 invoices)', 'No subscription', 'Draft/preview free'],
+    name: 'Starter',
+    price: 'GBP 5',
+    points: ['Top up tokens', 'No subscription', 'Preview included'],
     cta: 'Buy tokens',
     popular: false,
   },
   {
     name: 'Pro',
-    price: 'GBP 50',
-    points: ['Top up 5,000 tokens (~500 invoices)', 'Templates & logo', 'Payment links', 'Read receipts'],
+    price: 'GBP 15',
+    points: ['Top up tokens', 'Branding options', 'Priority support'],
     cta: 'Buy tokens',
     popular: true,
   },
   {
     name: 'Business',
-    price: 'GBP 100',
-    points: ['Top up 10,000 tokens (~1,000 invoices)', 'Teams & roles', 'Integrations (Stripe/Wise)', 'API & webhooks'],
+    price: 'GBP 30',
+    points: ['Top up tokens', 'Team access', 'Integrations'],
     cta: 'Buy tokens',
     popular: false,
   },
@@ -90,6 +90,4 @@ export const TEMPLATES: TemplateInfo[] = [
   { id: 'education', name: 'Education', status: 'preview', badge: 'Coming soon', cta: 'waitlist' },
   { id: 'nonprofit', name: 'Non-profit', status: 'preview', badge: 'Coming soon', cta: 'waitlist' },
 ];
-
-
 

@@ -13,48 +13,44 @@ const absoluteUrl = (path: string) => {
   return `${baseUrl}${path}`;
 };
 
-// Функция теперь принимает только один аргумент `req`
+// Универсальная отправка документа PDF по email
 export async function POST(req: Request) {
   try {
-    console.log(`[INVOICE_SEND] Starting email send process`);
-    console.log(`[INVOICE_SEND] RESEND_API_KEY exists: ${!!process.env.RESEND_API_KEY}`);
-    console.log(`[INVOICE_SEND] EMAIL_FROM: ${process.env.EMAIL_FROM}`);
+    console.log(`[DOC_SEND] Starting email send process`);
+    console.log(`[DOC_SEND] RESEND_API_KEY exists: ${!!process.env.RESEND_API_KEY}`);
+    console.log(`[DOC_SEND] EMAIL_FROM: ${process.env.EMAIL_FROM}`);
     
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ИЗМЕНЕНО: Получаем и email, и invoiceId из тела запроса
-    const { email: toEmail, invoiceId } = await req.json();
-    if (!toEmail || !invoiceId) {
+    const { email: toEmail, documentId } = await req.json();
+    if (!toEmail || !documentId) {
       return NextResponse.json(
-        { message: "Recipient email and Invoice ID are required" },
+        { message: "Recipient email and Document ID are required" },
         { status: 400 },
       );
     }
 
-    const invoice = await prisma.invoice.findFirst({
-      where: {
-        id: invoiceId, // Используем ID из тела запроса
-        userId: session.user.id,
-      },
+    const doc = await prisma.document.findFirst({
+      where: { id: documentId, userId: session.user.id },
       include: { user: { include: { company: true } } },
     });
 
-    if (!invoice) {
+    if (!doc) {
       return NextResponse.json(
-        { message: "Invoice not found" },
+        { message: "Document not found" },
         { status: 404 },
       );
     }
 
-    console.log(`[INVOICE_SEND] Generating PDF for invoice ${invoice.id}`);
+    console.log(`[DOC_SEND] Generating PDF for document ${doc.id}`);
     
     // Generate PDF directly instead of fetching from API
     const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
-    const printUrl = `${origin}/print/${invoice.id}`;
+    const printUrl = `${origin}/print/${doc.id}`;
     
     console.log(`[INVOICE_SEND] Print URL: ${printUrl}`);
     
@@ -71,12 +67,12 @@ export async function POST(req: Request) {
     let pdfBuffer: Buffer;
     try {
       const page = await browser.newPage();
-      console.log(`[INVOICE_SEND] Navigating to: ${printUrl}`);
+      console.log(`[DOC_SEND] Navigating to: ${printUrl}`);
       await page.goto(printUrl, { 
         waitUntil: ['domcontentloaded', 'networkidle0'],
         timeout: 30000
       });
-      console.log(`[INVOICE_SEND] Page loaded, generating PDF...`);
+      console.log(`[DOC_SEND] Page loaded, generating PDF...`);
       
       pdfBuffer = await page.pdf({
         format: 'A4',
@@ -85,9 +81,9 @@ export async function POST(req: Request) {
         preferCSSPageSize: true,
       });
       
-      console.log(`[INVOICE_SEND] PDF generated, size: ${pdfBuffer.length} bytes`);
+      console.log(`[DOC_SEND] PDF generated, size: ${pdfBuffer.length} bytes`);
     } catch (pdfError) {
-      console.error(`[INVOICE_SEND] PDF generation error:`, pdfError);
+      console.error(`[DOC_SEND] PDF generation error:`, pdfError);
       throw new Error(`Failed to generate PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
     } finally {
       try { await browser.close(); } catch {}
@@ -96,11 +92,11 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: `Invoicerly <${process.env.EMAIL_FROM || "info@invoicerly.co.uk"}>`,
       to: toEmail,
-      subject: `Invoice ${invoice.number} from ${invoice.user?.company?.name || "Invoicerly"}`,
-      html: `<p>Please find your invoice attached.</p>`,
+      subject: `${doc.title} from ${doc.user?.company?.name || "Invoicerly"}`,
+      html: `<p>Please find your document attached.</p>`,
       attachments: [
         {
-          filename: `Invoice-${invoice.number}.pdf`,
+          filename: `${doc.title || 'Document'}.pdf`,
           content: pdfBuffer,
         },
       ],
@@ -108,7 +104,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Email sent successfully" });
   } catch (error) {
-    console.error("[INVOICE_SEND_ERROR]", error);
+    console.error("[DOC_SEND_ERROR]", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal Server Error" },
       { status: 500 },

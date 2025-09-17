@@ -22,7 +22,7 @@ export default function Card({
     lg: 'p-8'
   };
 
-  const baseClasses = `rounded-2xl bg-white border border-black/10 shadow-sm ${paddingClasses[padding]} ${className}`;
+  const baseClasses = `rounded-2xl bg-white border border-[#E2E8F0] shadow-sm ${paddingClasses[padding]} ${className}`;
 
   if (hover) {
     return (
