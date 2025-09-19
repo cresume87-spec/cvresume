@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Section from '@/components/layout/Section';
 import Card from '@/components/ui/Card';
 
@@ -12,6 +12,7 @@ const STEPS: { title: string; desc: string }[] = [
 ];
 
 export default function HowItWorks() {
+  const reduceMotion = useReducedMotion();
   return (
     <Section id="how" className="py-12">
       <motion.div
@@ -29,9 +30,11 @@ export default function HowItWorks() {
         {STEPS.map((s, i) => (
           <motion.div
             key={s.title}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05, duration: 0.4 }}
+            initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            whileHover={reduceMotion ? undefined : { y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 260, damping: 22 } }}
+            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+            transition={{ delay: reduceMotion ? 0 : i * 0.05, duration: 0.4 }}
             viewport={{ once: true }}
           >
             <Card className="h-full" padding="md">

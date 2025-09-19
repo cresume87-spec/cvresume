@@ -13,7 +13,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
     const { id } = await params;
     const client = getOpenAIClient();
-    const result = await client.files.del(id);
+    const result = await client.files.delete(id);
     return NextResponse.json({ deleted: result.deleted, id: result.id });
   } catch (err: any) {
     const message = err?.message || 'Failed to delete file';
@@ -21,5 +21,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'OpenAI unavailable', message }, { status });
   }
 }
+
 
 

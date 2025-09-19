@@ -3,6 +3,7 @@
 import { Button, Card, Input } from '@/components';
 import Section from '@/components/layout/Section';
 import DocumentA4 from '@/components/pdf/DocumentA4';
+import InvoiceA4 from '@/components/pdf/InvoiceA4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // ТИПЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -11,6 +12,7 @@ type Document = { id: string; title: string; updatedAt: string; data?: any };
 type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Document' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
 type Company = { name: string; vat?: string; reg?: string; address1?: string; city?: string; country?: string; iban?: string; bankName?: string; bic?: string };
 type Me = { id: string; name: string | null; email: string | null; tokenBalance: number; currency: Currency; company: Company | null };
+type MarkReadyResult = { ok: boolean; err?: string };
 
 const currencySym = (c: Currency) => (c === 'GBP' ? 'GBP ' : 'EUR ');
 const fmtMoney = (n: number, c: Currency) => {
@@ -99,7 +101,7 @@ export default function DashboardClient() {
     setViewInv(inv);
   };
 
-  const markReadyIfDraft = async (_id: string) => ({ ok: true });
+  const markReadyIfDraft = async (_id: string): Promise<MarkReadyResult> => ({ ok: true });
 
   const ensureReadyAndDownload = async (id: string) => {
     const invFull = await fetchInvoice(id);
@@ -549,7 +551,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
       <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(90vh - 110px)' }}>
         {!editing ? (
           <div className="max-w-[800px] mx-auto">
-            <DocumentA4
+            <InvoiceA4
               currency={invoice.currency}
               items={(invoice.items||[]).map((it:any)=>({ desc: it.description, qty: it.quantity, rate: it.rate, tax: it.tax }))}
               subtotal={invoice.subtotal}

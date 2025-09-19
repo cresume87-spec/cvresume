@@ -23,8 +23,17 @@ export async function GET() {
   }
 }
 
+const FILE_PURPOSES = [
+  'assistants',
+  'batch',
+  'fine-tune',
+  'vision',
+  'user_data',
+  'evals',
+] as const;
+
 const UploadSchema = z.object({
-  purpose: z.string().default('assistants'),
+  purpose: z.enum(FILE_PURPOSES).default('assistants'),
 });
 
 // Upload file (multipart/form-data)
@@ -63,5 +72,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'OpenAI unavailable', message }, { status });
   }
 }
-
 

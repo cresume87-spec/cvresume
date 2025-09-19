@@ -2,7 +2,7 @@
 
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { THEME } from '@/lib/theme';
 
 type Currency = 'GBP' | 'EUR';
@@ -41,14 +41,17 @@ export default function PlanCard({ name, popular, badgeText, bullets, cta, onAct
     return Math.max(0, Math.round(resolvedAmount.amount * TOKENS_PER_UNIT));
   })();
 
+  const reduceMotion = useReducedMotion();
   const incVat = typeof vatRatePercent === 'number' ? resolvedAmount.amount * (1 + vatRatePercent / 100) : null;
 
   const money = (n: number, curr: Currency) => new Intl.NumberFormat(curr === 'GBP' ? 'en-GB' : 'en-IE', { style: 'currency', currency: curr, maximumFractionDigits: n % 1 === 0 ? 0 : 2 }).format(n);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      whileHover={reduceMotion ? undefined : { y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 260, damping: 22 } }}
+      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.4 }}
       viewport={{ once: true }}
     >

@@ -55,6 +55,8 @@ function LogoTile({ index, reduce, src, alt }: { index: number; reduce: boolean 
       initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
       whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.08 * index }}
+      whileHover={reduce ? undefined : { y: -6, scale: 1.03, transition: { type: 'spring', stiffness: 320, damping: 22 } }}
+      whileTap={reduce ? undefined : { scale: 0.97 }}
       viewport={{ once: true }}
     >
       <img src={src} alt={alt} className="max-h-7 w-auto opacity-80" />

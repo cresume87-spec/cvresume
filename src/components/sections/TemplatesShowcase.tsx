@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Section from '@/components/layout/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,6 +14,7 @@ const TEMPLATE_KEYS: ResumeTemplateKey[] = ['classic', 'split', 'serif', 'tech']
 export default function TemplatesShowcase() {
   const [docType, setDocType] = useState<'resume' | 'cv'>('resume');
   const [modal, setModal] = useState<{ open: boolean; key?: ResumeTemplateKey }>({ open: false });
+  const reduceMotion = useReducedMotion();
 
   const data = useMemo(() => (docType === 'resume' ? sampleResumeData : sampleCVData), [docType]);
 
@@ -38,26 +39,36 @@ export default function TemplatesShowcase() {
       </motion.div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {TEMPLATE_KEYS.map((key) => {
+        {TEMPLATE_KEYS.map((key, index) => {
           const T = ResumeTemplates[key];
           const title = labelForTemplate(key);
           return (
-            <Card key={key} className="p-3">
-              <div className="text-sm font-semibold text-slate-700 mb-2">{title}</div>
-              <div className="rounded-lg border border-slate-300 bg-white overflow-hidden p-3">
-                <ScaledA4>
-                  <T data={data} />
-                </ScaledA4>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <span>ATS-friendly — 1–2 pages</span>
-                <span>EN/LV/RU</span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setModal({ open: true, key })}>Preview</Button>
-                <a className="flex-1" href="/auth/signin?mode=login"><Button variant="secondary" className="w-full">Use template</Button></a>
-              </div>
-            </Card>
+            <motion.div
+              key={key}
+              initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+              whileHover={reduceMotion ? undefined : { y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 260, damping: 22 } }}
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+              transition={{ duration: 0.45, delay: reduceMotion ? 0 : index * 0.06 }}
+              viewport={{ once: true }}
+            >
+              <Card className="p-3 h-full">
+                <div className="text-sm font-semibold text-slate-700 mb-2">{title}</div>
+                <div className="rounded-lg border border-slate-300 bg-white overflow-hidden p-3">
+                  <ScaledA4>
+                    <T data={data} />
+                  </ScaledA4>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                  <span>ATS-friendly - 1-2 pages</span>
+                  <span>EN/LV/RU</span>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setModal({ open: true, key })}>Preview</Button>
+                  <a className="flex-1" href="/auth/signin?mode=login"><Button variant="secondary" className="w-full">Use template</Button></a>
+                </div>
+              </Card>
+            </motion.div>
           );
         })}
       </div>

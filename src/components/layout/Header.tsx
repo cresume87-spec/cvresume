@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { THEME } from '@/lib/theme';
@@ -108,14 +109,20 @@ export default function Header() {
     >
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className={`flex items-center gap-2 font-semibold ${THEME.text}`}>
+          <Link href="/" className={`flex items-center gap-2 font-semibold ${THEME.text}`} aria-label="Go to homepage">
             <motion.span
               whileHover={{ scale: 1.05 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               className="flex items-center gap-2"
             >
-              <div className={`h-7 w-7 rounded-xl ${THEME.primary.bg}`}></div>
-              <span>Skeleton</span>
+              <Image
+                src="/logo.webp"
+                alt="Skeleton logo"
+                width={32}
+                height={32}
+                className="h-7 w-auto"
+                priority
+              />
             </motion.span>
           </Link>
           

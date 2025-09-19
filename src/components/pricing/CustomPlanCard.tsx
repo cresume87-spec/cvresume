@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { useState } from 'react';
 import type { Currency } from '@/lib/plans';
@@ -13,14 +13,22 @@ export default function CustomPlanCard({ currency, onPurchase }: { currency: Cur
   const validNumber = Number.isFinite(numericPrice);
 
   const tokens = Math.max(0, Math.round((validNumber ? numericPrice : 0) * TOKENS_PER_UNIT));
+  const reduceMotion = useReducedMotion();
 
   const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     setPriceInput(e.target.value);
   };
 
   return (
-    <motion.div className="rounded-2xl bg-white border border-[#E2E8F0] shadow-sm p-6 flex flex-col"
-      initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} viewport={{ once: true }}>
+    <motion.div
+      className="rounded-2xl bg-white border border-[#E2E8F0] shadow-sm p-6 flex flex-col"
+      initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      whileHover={reduceMotion ? undefined : { y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 260, damping: 22 } }}
+      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+      transition={{ duration: 0.4 }}
+      viewport={{ once: true }}
+    >
       <div className="flex items-center justify-between">
         <div className="text-lg font-semibold">Custom</div>
         <span className="text-xs rounded-full px-2 py-1 bg-slate-100 border border-[#E2E8F0] text-slate-700">EARLY / SUPPORTER</span>
