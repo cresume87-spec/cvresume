@@ -4,7 +4,18 @@ import { z } from "zod";
 // ИЗМЕНЕНО: Используем именованный импорт { ContactEmail } вместо дефолтного.
 import { ContactEmail } from "@/components/emails/ContactEmail";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null | undefined;
+
+function getResendClient(): Resend | null {
+  if (resendClient !== undefined) return resendClient;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    resendClient = null;
+    return resendClient;
+  }
+  resendClient = new Resend(apiKey);
+  return resendClient;
+}
 
 const contactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long."),
@@ -27,6 +38,15 @@ export async function POST(req: Request) {
     }
 
     const { name, email, message } = validation.data;
+
+    const resend = getResendClient();
+    if (!resend) {
+      console.error('Resend API key is missing.');
+      return NextResponse.json(
+        { error: 'Email service is not configured.' },
+        { status: 503 },
+      );
+    }
 
     const { data, error } = await resend.emails.send({
       from: "Invoicerly Contact Form <info@invoicerly.co.uk>", // Замените на ваш верифицированный домен
@@ -54,3 +74,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
