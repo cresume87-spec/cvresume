@@ -6,7 +6,18 @@ import { Resend } from "resend";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null | undefined;
+
+function getResendClient(): Resend | null {
+  if (resendClient !== undefined) return resendClient;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    resendClient = null;
+    return resendClient;
+  }
+  resendClient = new Resend(apiKey);
+  return resendClient;
+}
 
 export async function POST(req: Request) {
   try {
@@ -36,6 +47,15 @@ export async function POST(req: Request) {
       try { await browser.close(); } catch {}
     }
 
+    const resend = getResendClient();
+    if (!resend) {
+      console.error('Resend API key is missing.');
+      return NextResponse.json(
+        { message: 'Email service is not configured.' },
+        { status: 503 },
+      );
+    }
+
     await resend.emails.send({
       from: `Invoicerly <${process.env.EMAIL_FROM || 'info@invoicerly.co.uk'}>`,
       to: toEmail,
@@ -50,6 +70,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Internal Server Error' }, { status: 500 });
   }
 }
+
+
 
 
 
