@@ -1,13 +1,28 @@
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
+  const stripe = getStripe();
+  if (!stripe) {
+    console.error("STRIPE_SECRET_KEY is missing.");
+    return new NextResponse("Payment processor not configured", { status: 503 });
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET is not set.");
+    return new NextResponse("Payment processor not configured", { status: 503 });
+  }
+
   const body = await req.text();
   const headersList = await headers();
-  const signature = headersList.get("Stripe-Signature") as string;
+  const signature = headersList.get("Stripe-Signature");
+  if (!signature) {
+    return new NextResponse("Missing Stripe signature", { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -15,7 +30,7 @@ export async function POST(req: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      webhookSecret,
     );
   } catch (error: any) {
     console.error(`❌ Webhook signature verification failed: ${error.message}`);
@@ -68,3 +83,4 @@ export async function POST(req: Request) {
 
   return new NextResponse(null, { status: 200 });
 }
+

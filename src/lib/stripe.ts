@@ -1,11 +1,19 @@
 import Stripe from "stripe";
 
-// Эта проверка убедится, что вы не забыли добавить ключ в .env.local
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY is not set in environment variables");
-}
+let cachedStripe: Stripe | null | undefined;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil", // Используем последнюю стабильную версию API
-  typescript: true,
-});
+export function getStripe(): Stripe | null {
+  if (cachedStripe !== undefined) return cachedStripe;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    cachedStripe = null;
+    return cachedStripe;
+  }
+
+  cachedStripe = new Stripe(secretKey, {
+    apiVersion: "2025-08-27.basil",
+    typescript: true,
+  });
+
+  return cachedStripe;
+}

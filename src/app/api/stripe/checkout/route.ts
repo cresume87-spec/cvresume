@@ -1,6 +1,6 @@
 import { authOptions } from "@/lib/auth";
 import { pricingPlans } from "@/lib/plans";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
       return new NextResponse("Invalid request", { status: 400 });
     }
 
+    const stripe = getStripe();
+    if (!stripe) {
+      console.error("STRIPE_SECRET_KEY is missing.");
+      return new NextResponse("Payment processor not configured", { status: 503 });
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -69,3 +75,4 @@ export async function POST(req: Request) {
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
+
