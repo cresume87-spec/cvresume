@@ -4,22 +4,22 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     name: 'Starter',
     price: 'GBP 5',
-    points: ['Top up tokens', 'No subscription', 'Preview included'],
-    cta: 'Buy tokens',
+    points: ['Manual token top-up', 'No subscription', 'Preview included'],
+    cta: 'Request top-up',
     popular: false,
   },
   {
     name: 'Pro',
     price: 'GBP 15',
-    points: ['Top up tokens', 'Branding options', 'Priority support'],
-    cta: 'Buy tokens',
+    points: ['Manual token top-up', 'Branding options', 'Priority support'],
+    cta: 'Request top-up',
     popular: true,
   },
   {
     name: 'Business',
     price: 'GBP 30',
-    points: ['Top up tokens', 'Team access', 'Integrations'],
-    cta: 'Buy tokens',
+    points: ['Manual token top-up', 'Team access', 'Integrations roadmap'],
+    cta: 'Request top-up',
     popular: false,
   },
 ];

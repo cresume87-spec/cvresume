@@ -108,7 +108,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     id: 'mock-card-numbers',
     question: 'Do you keep card numbers?',
-    answer: 'MOCK: Payments handling placeholder. Cards stored by PSP (e.g., Stripe), not by us.',
+    answer: 'MOCK: Payments handling placeholder. Cards and bank details are never stored on our servers.',
     category: 'account',
   },
   {
@@ -632,5 +632,6 @@ function FAQCard({
     </Card>
   );
 }
+
 
 

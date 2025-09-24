@@ -32,8 +32,7 @@ export default function PricingClient() {
     try { return (localStorage.getItem('currency') as Currency) || 'GBP'; } catch { return 'GBP'; }
   });
   const [country, setCountry] = useState<string>('United Kingdom');
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { status } = useSession();
+    const { status } = useSession();
   const router = useRouter();
   const signedIn = status === 'authenticated';
 
@@ -63,33 +62,13 @@ export default function PricingClient() {
     return () => { try { bcRef.current?.close(); } catch {} };
   }, []);
 
-  const handlePurchase = async (planId: string | null, customAmount?: number) => {
+  const handlePlanRequest = (label: string) => {
     if (!signedIn) {
-      return router.push('/auth/signin?mode=login');
+      router.push('/auth/signin?mode=login');
+      return;
     }
 
-    setIsLoading(planId);
-    try {
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // ИЗМЕНЕНО: Отправляем на сервер и ID плана, и ВАЛЮТУ
-        body: JSON.stringify({ planId, currency, customAmount }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error || 'Something went wrong.');
-      }
-
-      window.location.href = data.url;
-
-    } catch (error) {
-      console.error("Stripe checkout error:", error);
-      toast.error('Could not create payment session. Please try again.');
-      setIsLoading(null);
-    }
+    toast.info('Token top-ups are handled manually. Please reach out via the contact form.');
   };
 
   return (
@@ -125,9 +104,10 @@ export default function PricingClient() {
               bullets={plan.points}
               cta={plan.cta}
               priceText={formatPrice(plan.price)}
+              onAction={() => handlePlanRequest(plan.name)}
             />
           ))}
-          <CustomPlanCard currency={currency} onPurchase={(amount, curr) => { /* MOCK: no-op */ }} />
+          <CustomPlanCard currency={currency} onRequest={() => handlePlanRequest('custom')} />
         </div>
 
         <div className="mt-12 grid md:grid-cols-2 gap-6">
@@ -190,3 +170,5 @@ export default function PricingClient() {
 }
 
 // CustomPlanCard removed: use only the unified PlanCard across pages.
+
+

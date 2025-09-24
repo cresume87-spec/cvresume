@@ -18,7 +18,7 @@
 Notes:
 - CLI also works if you run `npx vercel login` once on this machine.
 - Build uses `npm run build` which includes Prisma `migrate deploy`.
-- Ensure `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, and any SMTP/Stripe vars are configured in Vercel Project → Settings → Environment.
+- Ensure `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, and any SMTP vars are configured in Vercel Project → Settings → Environment.
 
 ## GitHub Actions (auto-deploy on push)
 
@@ -28,4 +28,5 @@ Notes:
   - `VERCEL_PROJECT_ID` — Target project ID
 - Workflow: `.github/workflows/vercel.yml` builds and deploys on pushes to `main`.
 - If you prefer Vercel’s Git integration, you can remove the workflow and connect the repo at vercel.com instead.
+
 

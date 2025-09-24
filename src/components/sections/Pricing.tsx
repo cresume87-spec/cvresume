@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import Section from '@/components/layout/Section';
 import Card from '@/components/ui/Card';
+import { toast } from 'sonner';
 import Button from '@/components/ui/Button';
 import { PRICING_PLANS } from '@/lib/data';
 import { THEME } from '@/lib/theme';
@@ -36,6 +37,10 @@ export default function Pricing() {
   const parseAmount = (priceText: string) => {
     const match = priceText.match(/([0-9]+(?:\.[0-9]+)?)/);
     return match ? parseFloat(match[1]) : 0;
+  };
+
+  const handleTopUpRequest = () => {
+    toast.info('Token top-ups are handled manually. Please contact support.');
   };
 
   return (
@@ -74,7 +79,7 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          <CustomPlanCard currency={currency} onPurchase={(amt)=>{ console.log('purchase', amt, currency); }} />
+          <CustomPlanCard currency={currency} onRequest={handleTopUpRequest} />
         </motion.div>
       </div>
       <div className="mx-auto max-w-3xl mt-6">

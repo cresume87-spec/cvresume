@@ -196,7 +196,7 @@ export default function BillingTokensPage() {
                       All transactions are recorded in your token ledger. You can access:
                     </p>
                     <ul className="text-sm text-slate-600 space-y-1 ml-4">
-                      <li>• Receipts via Stripe dashboard</li>
+                      <li>• Receipts provided by support</li>
                       <li>• Transaction history in your Dashboard</li>
                       <li>• Detailed ledger with invoice numbers</li>
                     </ul>
@@ -371,3 +371,5 @@ export default function BillingTokensPage() {
     </main>
   );
 }
+
+
