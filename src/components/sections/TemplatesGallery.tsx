@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { motion } from 'framer-motion';
 import Section from '@/components/layout/Section';
@@ -18,7 +18,7 @@ export default function TemplatesGallery() {
         viewport={{ once: true }}
       >
         <h2 className="text-2xl sm:text-3xl font-bold">Resume & CV templates</h2>
-        <p className="mt-2 text-slate-600">Formal, universal and creative вЂ” for any industry.</p>
+        <p className="mt-2 text-slate-600">Formal, universal and creative - for any industry.</p>
       </motion.div>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -34,12 +34,12 @@ export default function TemplatesGallery() {
           <Card key={i} className="p-3">
             <div className="aspect-[1/1.414] w-full rounded-lg border border-dashed border-slate-300 bg-slate-50" />
             <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-              <span>ATSвЂ‘friendly В· 1вЂ“2 pages</span>
+              <span>ATS-friendly, 1-2 pages</span>
               <span>EN/LV/RU</span>
             </div>
             <div className="mt-3 flex gap-2">
               <a className="flex-1" href="/templates"><Button variant="outline" className="w-full">Preview</Button></a>
-              <a className="flex-1" href="/generator"><Button variant="secondary" className="w-full">Use template</Button></a>
+              <a className="flex-1" href="/create-cv"><Button variant="secondary" className="w-full">Use template</Button></a>
             </div>
           </Card>
         ))}
@@ -47,5 +47,3 @@ export default function TemplatesGallery() {
     </Section>
   );
 }
-
-

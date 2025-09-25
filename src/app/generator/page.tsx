@@ -1,21 +1,21 @@
-import CVResumeBuilder from '@/components/builder/CVResumeBuilder';
+import { redirect } from 'next/navigation';
+import { BUILDER_TEMPLATE_KEYS, DocType } from '@/components/builder/CVResumeBuilder';
 import { ResumeTemplateKey } from '@/components/resume';
 
-type GeneratorPageProps = {
+type PageProps = {
   searchParams?: {
     type?: string;
     template?: string;
   };
 };
 
-const ALLOWED_TEMPLATES: ResumeTemplateKey[] = ['classic', 'split', 'serif', 'tech'];
+const isTemplateKey = (value?: string): value is ResumeTemplateKey =>
+  !!value && BUILDER_TEMPLATE_KEYS.includes(value as ResumeTemplateKey);
 
-export default function GeneratorPage({ searchParams }: GeneratorPageProps) {
-  const docType = searchParams?.type === 'cv' ? 'cv' : 'resume';
-  const rawTemplate = searchParams?.template;
-  const template = ALLOWED_TEMPLATES.includes(rawTemplate as ResumeTemplateKey)
-    ? (rawTemplate as ResumeTemplateKey)
-    : 'classic';
+export default function GeneratorPage({ searchParams }: PageProps) {
+  const docType: DocType = searchParams?.type === 'resume' ? 'resume' : 'cv';
+  const template = isTemplateKey(searchParams?.template) ? searchParams!.template : undefined;
 
-  return <CVResumeBuilder initialDocType={docType} initialTemplate={template} />;
+  const query = template ? `?template=${encodeURIComponent(template)}` : '';
+  redirect(`/create-${docType}${query}`);
 }

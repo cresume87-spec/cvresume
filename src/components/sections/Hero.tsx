@@ -14,8 +14,8 @@ type Phase = 'typing' | 'pausing' | 'deleting';
 export default function Hero() {
   const { status } = useSession();
   const signedIn = status === 'authenticated';
-  const primaryHref = signedIn ? '/generator?type=cv' : '/auth/signin?mode=login';
-  const secondaryHref = signedIn ? '/generator?type=resume' : '/auth/signin?mode=login';
+  const primaryHref = signedIn ? '/create-cv' : '/auth/signin?mode=login';
+  const secondaryHref = signedIn ? '/create-resume' : '/auth/signin?mode=login';
 
   // Typewriter state
   const [index, setIndex] = useState(0); // which phrase

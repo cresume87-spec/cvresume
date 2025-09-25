@@ -71,7 +71,7 @@ const ISSUES: TroubleshootingIssue[] = [
     ],
     links: [
       { text: 'Resend invoice', href: '/dashboard' },
-      { text: 'Email settings', href: '/generator' }
+      { text: 'Email settings', href: '/create-cv' }
     ],
     tags: ['email', 'delivery', 'spam']
   },
@@ -88,8 +88,8 @@ const ISSUES: TroubleshootingIssue[] = [
       'Ensure all required fields are filled'
     ],
     links: [
-      { text: 'Regenerate PDF', href: '/generator' },
-      { text: 'Company settings', href: '/generator' }
+      { text: 'Regenerate PDF', href: '/create-cv' },
+      { text: 'Company settings', href: '/create-cv' }
     ],
     tags: ['pdf', 'formatting', 'logo']
   },
@@ -106,7 +106,7 @@ const ISSUES: TroubleshootingIssue[] = [
       'The note appears automatically when conditions are met'
     ],
     links: [
-      { text: 'VAT settings', href: '/generator' },
+      { text: 'VAT settings', href: '/create-cv' },
       { text: 'VAT Guide', href: '/help/faq' }
     ],
     tags: ['vat', 'reverse-charge', 'eu']
@@ -124,7 +124,7 @@ const ISSUES: TroubleshootingIssue[] = [
       'You can manually set the next number if needed'
     ],
     links: [
-      { text: 'Invoice settings', href: '/generator' },
+      { text: 'Invoice settings', href: '/create-cv' },
       { text: 'Numbering guide', href: '/help/faq' }
     ],
     tags: ['numbering', 'sequence', 'prefix']

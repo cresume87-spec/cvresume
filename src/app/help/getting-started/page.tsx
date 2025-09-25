@@ -33,7 +33,7 @@ const STEPS = [
       'Invoice numbering prefix'
     ],
     cta: 'Open company settings',
-    ctaLink: '/generator',
+    ctaLink: '/create-cv',
     tip: 'You can update these details anytime',
     icon: '🏢'
   },
@@ -63,7 +63,7 @@ const STEPS = [
       'Preview your invoice before issuing'
     ],
     cta: 'Open invoice generator',
-    ctaLink: '/generator',
+    ctaLink: '/create-cv',
     tip: 'Save clients and items as presets for faster invoicing',
     icon: '📄'
   },
@@ -78,7 +78,7 @@ const STEPS = [
       'Track read receipts (Pro/Business plans)'
     ],
     cta: 'Open generator',
-    ctaLink: '/generator',
+    ctaLink: '/create-cv',
     note: 'Issuing an invoice deducts 10 tokens from your balance',
     icon: '📤'
   }
@@ -328,7 +328,7 @@ export default function GettingStartedPage() {
                       <Button href="/help/billing-tokens" size="lg">
                         Next: Billing & Tokens
                       </Button>
-                      <Button href="/generator" variant="outline" size="lg">
+                      <Button href="/create-cv" variant="outline" size="lg">
                         Open generator
                       </Button>
                     </div>

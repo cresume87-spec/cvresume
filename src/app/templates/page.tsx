@@ -51,7 +51,7 @@ export default function TemplatesPage() {
                 </PreviewA4>
                 <div className="mt-3 flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => window.open(window.location.href, '_blank')}>Open full</Button>
-                  <a href="/generator" className="flex-1"><Button variant="secondary" className="w-full">Use template</Button></a>
+                  <a href={`/create-${docType}?template=${key}`} className="flex-1"><Button variant="secondary" className="w-full">Use template</Button></a>
                 </div>
               </Card>
             );
@@ -71,4 +71,5 @@ function labelForTemplate(k: ResumeTemplateKey) {
     default: return k;
   }
 }
+
 

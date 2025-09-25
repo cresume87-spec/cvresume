@@ -271,7 +271,7 @@ export default function TokenCalculatorPage() {
               
               <div className="flex gap-3">
                 <Button
-                  href="/generator"
+                  href="/create-cv"
                   variant="outline"
                   className="flex-1"
                 >

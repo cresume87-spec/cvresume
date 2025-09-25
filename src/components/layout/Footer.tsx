@@ -17,7 +17,7 @@ export default function Footer() {
           <div>
             <div className="font-semibold mb-2">Product</div>
             <div className="grid gap-1 text-slate-700">
-              <Link href="/generator" className="hover:underline">Generator</Link>
+              <Link href="/create-cv" className="hover:underline">Generator</Link>
               <Link href="/pricing" className="hover:underline">Pricing</Link>
               <Link href="/token-calculator" className="hover:underline">Token Calculator</Link>
             </div>

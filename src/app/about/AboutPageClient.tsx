@@ -64,7 +64,7 @@ export default function AboutPageClient() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6 }}
           >
-            <Button href="/generator" size="lg">Get started</Button>
+            <Button href="/create-cv" size="lg">Get started</Button>
             <Button variant="outline" href="/pricing" size="lg">View pricing</Button>
           </motion.div>
         </motion.div>

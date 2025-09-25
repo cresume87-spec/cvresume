@@ -10,12 +10,14 @@ import {
 } from '@/components/resume';
 import { ScaledA4 } from '@/components/resume/ui';
 
-type DocType = 'resume' | 'cv';
+export type DocType = 'resume' | 'cv';
 
 type BuilderProps = {
   initialDocType?: DocType | string;
   initialTemplate?: ResumeTemplateKey | string;
 };
+
+export const BUILDER_TEMPLATE_KEYS: ResumeTemplateKey[] = ['classic', 'split', 'serif', 'tech'];
 
 const TEMPLATE_LABELS: Record<ResumeTemplateKey, string> = {
   classic: 'Classic ATS',
@@ -24,7 +26,7 @@ const TEMPLATE_LABELS: Record<ResumeTemplateKey, string> = {
   tech: 'Tech Compact',
 };
 
-const TEMPLATE_OPTIONS = (Object.keys(TEMPLATE_LABELS) as ResumeTemplateKey[]).map((key) => ({
+const TEMPLATE_OPTIONS = BUILDER_TEMPLATE_KEYS.map((key) => ({
   key,
   label: TEMPLATE_LABELS[key],
 }));
@@ -45,7 +47,9 @@ function normalizeDocType(value?: DocType | string): DocType {
 }
 
 function normalizeTemplate(value?: ResumeTemplateKey | string): ResumeTemplateKey {
-  return TEMPLATE_OPTIONS.find((item) => item.key === value)?.key ?? 'classic';
+  return BUILDER_TEMPLATE_KEYS.includes(value as ResumeTemplateKey)
+    ? (value as ResumeTemplateKey)
+    : 'classic';
 }
 
 function cloneProfile(profile: Profile): Profile {
@@ -533,3 +537,6 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
+
+
+

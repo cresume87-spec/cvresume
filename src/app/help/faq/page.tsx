@@ -431,7 +431,7 @@ function FAQContent() {
               Can't find what you're looking for? We're here to help.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button href="/generator" size="lg">
+              <Button href="/create-cv" size="lg">
                 Open invoice generator
               </Button>
               <Button href="/pricing" size="lg" variant="outline">
