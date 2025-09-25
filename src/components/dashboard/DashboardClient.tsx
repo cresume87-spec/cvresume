@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import { Button, Card, Input } from '@/components';
 import Section from '@/components/layout/Section';
@@ -6,13 +6,14 @@ import DocumentA4 from '@/components/pdf/DocumentA4';
 import InvoiceA4 from '@/components/pdf/InvoiceA4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-// Ð¢Ð˜ÐŸÐ« Ð˜ Ð’Ð¡ÐŸÐžÐœÐžÐ“ÐÐ¢Ð•Ð›Ð¬ÐÐ«Ð• Ð¤Ð£ÐÐšÐ¦Ð˜Ð˜
+// ÒÈÏÛ È ÂÑÏÎÌÎÃÀÒÅËÜÍÛÅ ÔÓÍÊÖÈÈ
 type Currency = 'GBP' | 'EUR';
 type Document = { id: string; title: string; updatedAt: string; data?: any };
 type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Document' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
 type Company = { name: string; vat?: string; reg?: string; address1?: string; city?: string; country?: string; iban?: string; bankName?: string; bic?: string };
 type Me = { id: string; name: string | null; email: string | null; tokenBalance: number; currency: Currency; company: Company | null };
 type MarkReadyResult = { ok: boolean; err?: string };
+type ProfileForm = { firstName: string; lastName: string; email: string; phone: string; photo: string };
 
 const currencySym = (c: Currency) => (c === 'GBP' ? 'GBP ' : 'EUR ');
 const fmtMoney = (n: number, c: Currency) => {
@@ -23,7 +24,7 @@ const fmtMoney = (n: number, c: Currency) => {
 };
 
 function money(n: number, c: Currency) {
-  const sym = c === 'GBP' ? 'Â£' : 'â‚¬';
+  const sym = c === 'GBP' ? '?' : 'ˆ';
   const abs = Math.abs(n);
   const opts: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
   try { return `${n < 0 ? '-' : ''}${sym}${new Intl.NumberFormat(undefined, opts).format(abs)}`; } catch { return `${sym}${abs.toFixed(2)}`; }
@@ -32,7 +33,7 @@ function int(n: number) { try { return new Intl.NumberFormat().format(Math.round
 
 
 // ====================================================================
-// ÐžÐ¡ÐÐžÐ’ÐÐžÐ™ ÐšÐžÐœÐŸÐžÐÐ•ÐÐ¢
+// ÎÑÍÎÂÍÎÉ ÊÎÌÏÎÍÅÍÒ
 // ====================================================================
 
 export default function DashboardClient() {
@@ -42,10 +43,10 @@ export default function DashboardClient() {
   const [ledger, setLedger] = useState<LedgerRow[]>([]);
   const [invRange, setInvSlice] = useState<[number, number]>([0, 20]);
   const [ledRange, setLedSlice] = useState<[number, number]>([0, 20]);
-  const [savingCompany, setSavingCompany] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [savedBanner, setSavedBanner] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
-  const [form, setForm] = useState<Company>({ name: '' });
+  const [profile, setProfile] = useState<ProfileForm>({ firstName: '', lastName: '', email: '', phone: '', photo: '' });
   const [viewId, setViewId] = useState<string | null>(null);
   const [viewInv, setViewInv] = useState<any | null>(null);
   const [printing, setPrinting] = useState<any>(null);
@@ -59,7 +60,13 @@ export default function DashboardClient() {
       if (meRes.ok) {
         const { user } = await meRes.json();
         setMe(user);
-        setForm(user.company || { name: '' });
+        setProfile({
+          firstName: user.company?.name || '',
+          lastName: user.company?.vat || '',
+          email: user.company?.reg || user.email || '',
+          phone: user.company?.address1 || '',
+          photo: user.company?.logoUrl || '',
+        });
         try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: user.tokenBalance }); } catch {}
       }
       const invRes = await fetch('/api/documents');
@@ -123,7 +130,7 @@ export default function DashboardClient() {
 
   const createInvoice = async () => {
     if (!me) return;
-    if (me.tokenBalance < 10) { alert('ÐÐµÐ´Ð¾ÑÑ‚Ð°Ñ‚Ð¾Ñ‡Ð½Ð¾ Ñ‚Ð¾ÐºÐµÐ½Ð¾Ð². ÐŸÐ¾Ð¿Ð¾Ð»Ð½Ð¸Ñ‚Ðµ Ð±Ð°Ð»Ð°Ð½Ñ.'); return; }
+    if (me.tokenBalance < 10) { alert('Íåäîñòàòî÷íî òîêåíîâ. Ïîïîëíèòå áàëàíñ.'); return; }
     const res = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New Document', data: { content: [{ heading: 'Section', text: 'Text' }] } }) });
     if (res.ok) {
       const { document, tokenBalance } = await res.json();
@@ -158,20 +165,47 @@ export default function DashboardClient() {
     }
   };
 
-  const saveCompanyProfile = async (next: Company) => {
-    setSavingCompany(true);
-    const res = await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setProfile(prev => ({ ...prev, photo: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const saveProfile = async (next: ProfileForm) => {
+    setSavingProfile(true);
+    const payload = {
+      firstName: next.firstName,
+      lastName: next.lastName,
+      contactEmail: next.email,
+      phone: next.phone,
+      photo: next.photo,
+    };
+    const res = await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       const { company } = await res.json();
-      setForm(company);
-      setSavingCompany(false);
+      setProfile({
+        firstName: company?.name || '',
+        lastName: company?.vat || '',
+        email: company?.reg || '',
+        phone: company?.address1 || '',
+        photo: company?.logoUrl || '',
+      });
+      setMe(prev => prev ? { ...prev, company } : prev);
+      setSavingProfile(false);
       setErrorBanner(null);
-      setSavedBanner('Company profile saved. New invoices will use these details as the seller.');
-      try { bcRef.current?.postMessage({ type: 'company-updated', company }); } catch {}
+      setSavedBanner('Profile saved. CV and resume will use these details.');
+      try { bcRef.current?.postMessage({ type: 'profile-updated', company }); } catch {}
       setTimeout(() => setSavedBanner(null), 2500);
     } else {
-      setSavingCompany(false);
-      let message = 'Failed to save company';
+      setSavingProfile(false);
+      let message = 'Failed to save profile';
       try {
         const j = await res.json();
         if (j?.error) message = j.error;
@@ -204,11 +238,11 @@ export default function DashboardClient() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Hello, {userName}</h1>
-            <p className="mt-1 text-slate-600">Manage your documents, token balance, and company details.</p>
+            <p className="mt-1 text-slate-600">Manage your CV and resume, token balance, and token history.</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-2 text-sm rounded-full border border-black/10 bg-white px-3 py-1">Balance: <b>{int(tokenBalance)}</b> tokens <span className="text-slate-500">(~{int(tokenBalance/10)} invoices)</span></div>
-            <a href="#company-settings" className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm">Company settings</a>
+            <div className="inline-flex items-center gap-2 text-sm rounded-full border border-black/10 bg-white px-3 py-1">Balance: <b>{int(tokenBalance)}</b> tokens</div>
+            <a href="#profile-settings" className="rounded-xl border border-black/10 bg-white px-4 py-2 text-sm">My settings</a>
           </div>
         </div>
 
@@ -307,30 +341,29 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        <div className="mt-6 scroll-mt-24" id="company-settings">
+        <div className="mt-6 scroll-mt-24" id="profile-settings">
             <Card padding="sm">
-              <div className="text-base font-semibold">Company settings</div>
-              <p className="text-sm text-slate-600 mt-1">Saved details will be used as the seller on your invoices.</p>
+              <div className="text-base font-semibold">My settings</div>
+              <p className="text-sm text-slate-600 mt-1">These details personalise your CV and resume.</p>
               {savedBanner && <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 text-sm p-3">{savedBanner}</div>}
               {errorBanner && <div className="mt-3 rounded-lg border border-red-200 bg-red-50 text-red-900 text-sm p-3">{errorBanner}</div>}
-              <form className="mt-4 grid gap-3" onSubmit={(e)=>{e.preventDefault(); saveCompanyProfile(form);}}>
-                <Input label="Company name" value={form.name||''} onChange={(e)=>setForm({...form, name:e.target.value})} required />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="VAT" value={form.vat||''} onChange={(e)=>setForm({...form, vat:e.target.value})} placeholder="GB123456789" />
-                  <Input label="Reg" value={form.reg||''} onChange={(e)=>setForm({...form, reg:e.target.value})} />
-                </div>
-                <Input label="Address line" value={form.address1||''} onChange={(e)=>setForm({...form, address1:e.target.value})} />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="City" value={form.city||''} onChange={(e)=>setForm({...form, city:e.target.value})} />
-                  <Input label="Country" value={form.country||''} onChange={(e)=>setForm({...form, country:e.target.value})} />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <Input label="IBAN" value={form.iban||''} onChange={(e)=>setForm({...form, iban:e.target.value})} placeholder={currency==='GBP'? 'GB00 BANK 0000 0000 0000 00' : 'DE00 BANK 0000 0000 0000 00'} />
-                  <Input label="Bank name" value={(form as any).bankName||''} onChange={(e)=>setForm({...form, bankName:e.target.value} as any)} placeholder="Your Bank" />
-                  <Input label="SWIFT / BIC" value={form.bic||''} onChange={(e)=>setForm({...form, bic:e.target.value})} placeholder="BANKGB2L" />
+              <form className="mt-4 grid gap-3" onSubmit={(e)=>{e.preventDefault(); saveProfile(profile);}}>
+                <Input label="Name" value={profile.firstName} onChange={(e)=>setProfile({ ...profile, firstName: e.target.value })} required />
+                <Input label="Surname" value={profile.lastName} onChange={(e)=>setProfile({ ...profile, lastName: e.target.value })} />
+                <Input label="E-mail" type="email" value={profile.email} onChange={(e)=>setProfile({ ...profile, email: e.target.value })} required />
+                <Input label="Phone" value={profile.phone} onChange={(e)=>setProfile({ ...profile, phone: e.target.value })} />
+                <div className="grid gap-2">
+                  <label className="text-xs text-[#475569] font-medium">Photo</label>
+                  {profile.photo && (
+                    <div className="flex items-center gap-3">
+                      <img src={profile.photo} alt="Profile" className="h-16 w-16 rounded-full object-cover border border-black/10" />
+                      <Button type="button" size="sm" variant="outline" onClick={()=>setProfile({ ...profile, photo: '' })}>Remove</Button>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} className="text-sm" />
                 </div>
                 <div className="mt-2">
-                  <Button disabled={savingCompany} variant="primary" type="submit">{savingCompany? 'Savingâ€¦' : 'Save company'}</Button>
+                  <Button disabled={savingProfile} variant="primary" type="submit">{savingProfile? 'Saving...' : 'Save profile'}</Button>
                 </div>
               </form>
             </Card>
@@ -405,7 +438,7 @@ export default function DashboardClient() {
 }
 
 
-// === Ð’Ð«ÐÐ•Ð¡Ð•ÐÐÐ«Ð• ÐšÐžÐœÐŸÐžÐÐ•ÐÐ¢Ð« ===
+// === ÂÛÍÅÑÅÍÍÛÅ ÊÎÌÏÎÍÅÍÒÛ ===
 
 function TablePager({ total, pageSize = 20, onSlice }: { total: number; pageSize?: number; onSlice: (from: number, to: number) => void }) {
   const [page, setPage] = useState(1);
@@ -421,7 +454,7 @@ function TablePager({ total, pageSize = 20, onSlice }: { total: number; pageSize
 
   return (
     <div className="flex items-center justify-between p-3">
-      <div className="text-xs text-slate-600">Showing {Math.min((page - 1) * pageSize + 1, total)}â€“{Math.min(page * pageSize, total)} of {total}</div>
+      <div className="text-xs text-slate-600">Showing {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} of {total}</div>
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
         <div className="text-xs text-slate-600">{page} / {pages}</div>
@@ -511,7 +544,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
     <div className="flex flex-col max-h-[90vh]">
       <div className="flex items-center justify-between p-3 border-b border-black/10">
         <div className="text-base font-semibold">Invoice {invoice.number}</div>
-        <button className="text-xl leading-none px-2" aria-label="Close" onClick={onClose}>Ã—</button>
+        <button className="text-xl leading-none px-2" aria-label="Close" onClick={onClose}>?</button>
       </div>
 
       <div className="p-3 border-b border-black/10 flex items-center gap-2">
@@ -525,7 +558,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-3 w-full">
-              <div className="text-sm text-slate-700">Totals: Subtotal <b>{fmtMoney(totals.subtotal, invoice.currency)}</b> Â· Tax <b>{fmtMoney(totals.tax, invoice.currency)}</b> Â· Total <b>{fmtMoney(totals.total, invoice.currency)}</b></div>
+              <div className="text-sm text-slate-700">Totals: Subtotal <b>{fmtMoney(totals.subtotal, invoice.currency)}</b> · Tax <b>{fmtMoney(totals.tax, invoice.currency)}</b> · Total <b>{fmtMoney(totals.total, invoice.currency)}</b></div>
               <div className="ml-auto flex items-center gap-2">
                 <button className="text-sm underline" onClick={async()=>{
                   await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(company) });
@@ -651,3 +684,4 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
     </div>
   );
 }
+

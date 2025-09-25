@@ -70,6 +70,7 @@ export default function Pricing() {
               amount={base}
               currency={currency}
               tokens={tokens}
+              onAction={handleTopUpRequest}
             />
           );
         })}

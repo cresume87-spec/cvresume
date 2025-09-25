@@ -203,19 +203,15 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (ev: MessageEvent) => {
         const data: any = (ev as any)?.data || {};
-        if (data.type === 'company-updated' && data.company) {
+        if (data.type === 'profile-updated' && data.company) {
           const c = data.company;
-          const vatOrReg = c.vat || c.reg || '';
+          const fullName = [c.name, c.vat].filter(Boolean).join(' ').trim();
           setSender((prev) => ({
             ...prev,
-            company: c.name ?? prev.company,
-            vat: vatOrReg,
-            address: c.address1 ?? prev.address,
-            city: c.city ?? prev.city,
-            country: c.country ?? prev.country,
-            iban: c.iban ?? prev.iban,
+            company: fullName || prev.company,
+            email: c.reg || prev.email,
+            phone: c.address1 || prev.phone,
           }));
-          if (c.country && CURRENCY_BY_COUNTRY[c.country]) setCountry(c.country);
         }
         if (data.type === 'tokens-updated' && typeof data.tokenBalance === 'number') {
           setTokenBalance(data.tokenBalance);
