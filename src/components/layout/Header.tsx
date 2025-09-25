@@ -127,8 +127,8 @@ export default function Header() {
           </Link>
           
           <nav className="hidden sm:flex items-center gap-2 text-sm relative">
-            <a href={signedIn ? '/generator' : '/auth/signin?mode=login'} className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-3 py-2 transition-colors">Create my CV</a>
-            <a href={signedIn ? '/generator' : '/auth/signin?mode=login'} className="rounded-xl border border-[#E2E8F0] hover:bg-[#E2E8F0] px-3 py-2 transition-colors">Create my resume</a>
+            <a href={signedIn ? '/generator?type=cv' : '/auth/signin?mode=login'} className="rounded-xl bg-[#2563EB] hover:bg-[#1E40AF] text-white px-3 py-2 transition-colors">Create my CV</a>
+            <a href={signedIn ? '/generator?type=resume' : '/auth/signin?mode=login'} className="rounded-xl border border-[#E2E8F0] hover:bg-[#E2E8F0] px-3 py-2 transition-colors">Create my resume</a>
             {signedIn && (
               <a href="/dashboard" className={`rounded-xl px-3 py-2 transition-colors ${isDashboard ? 'bg-black/5' : 'hover:bg-black/5'}`}>Dashboard</a>
             )}
@@ -225,8 +225,8 @@ export default function Header() {
 
                 <div className="flex-1 overflow-y-auto px-4 py-3 text-sm">
                   <nav className="grid gap-1">
-                    <Link href={signedIn ? '/generator' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my CV</Link>
-                    <Link href={signedIn ? '/generator' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my resume</Link>
+                    <Link href={signedIn ? '/generator?type=cv' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my CV</Link>
+                    <Link href={signedIn ? '/generator?type=resume' : '/auth/signin?mode=login'} className={`rounded-xl px-3 py-2 hover:bg-slate-50`} onClick={closeMobile}>Create my resume</Link>
                     {signedIn && (
                       <Link href="/dashboard" className={`rounded-xl px-3 py-2 hover:bg-slate-50 ${isDashboard ? 'bg-black/5' : ''}`} onClick={closeMobile}>Dashboard</Link>
                     )}

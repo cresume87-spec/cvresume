@@ -23,7 +23,7 @@ export default function CTAVisual() {
               Stand out with a stylish CV template and land the job of your dreams.
             </p>
             <div className="mt-6">
-              <Button href="/generator" size="lg" className="!bg-[#2563EB] !hover:bg-[#1E40AF] text-white">
+              <Button href="/generator?type=cv" size="lg" className="!bg-[#2563EB] !hover:bg-[#1E40AF] text-white">
                 Create my CV
               </Button>
             </div>

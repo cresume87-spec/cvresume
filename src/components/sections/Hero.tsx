@@ -14,8 +14,8 @@ type Phase = 'typing' | 'pausing' | 'deleting';
 export default function Hero() {
   const { status } = useSession();
   const signedIn = status === 'authenticated';
-  const primaryHref = signedIn ? '/generator' : '/auth/signin?mode=login';
-  const secondaryHref = signedIn ? '/generator' : '/auth/signin?mode=login';
+  const primaryHref = signedIn ? '/generator?type=cv' : '/auth/signin?mode=login';
+  const secondaryHref = signedIn ? '/generator?type=resume' : '/auth/signin?mode=login';
 
   // Typewriter state
   const [index, setIndex] = useState(0); // which phrase
@@ -91,7 +91,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6 }}
             >
-              Pick a template, add your experience — get a clean, ATS‑friendly CV in minutes. Export to PDF or DOCX.
+              Pick a template, add your experience - get a clean, ATS-friendly CV in minutes. Export to PDF or DOCX.
             </motion.p>
 
             <motion.div
