@@ -6,7 +6,7 @@ import DocumentA4 from '@/components/pdf/DocumentA4';
 import InvoiceA4 from '@/components/pdf/InvoiceA4';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-// ÒÈÏÛ È ÂÑÏÎÌÎÃÀÒÅËÜÍÛÅ ÔÓÍÊÖÈÈ
+// Ð¢Ð˜ÐŸÐ« Ð˜ Ð’Ð¡ÐŸÐžÐœÐžÐ“ÐÐ¢Ð•Ð›Ð¬ÐÐ«Ð• Ð¤Ð£ÐÐšÐ¦Ð˜Ð˜
 type Currency = 'GBP' | 'EUR';
 type Document = { id: string; title: string; updatedAt: string; data?: any };
 type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Document' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
@@ -24,7 +24,7 @@ const fmtMoney = (n: number, c: Currency) => {
 };
 
 function money(n: number, c: Currency) {
-  const sym = c === 'GBP' ? '?' : 'ˆ';
+  const sym = c === 'GBP' ? '?' : 'â‚¬';
   const abs = Math.abs(n);
   const opts: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
   try { return `${n < 0 ? '-' : ''}${sym}${new Intl.NumberFormat(undefined, opts).format(abs)}`; } catch { return `${sym}${abs.toFixed(2)}`; }
@@ -33,7 +33,7 @@ function int(n: number) { try { return new Intl.NumberFormat().format(Math.round
 
 
 // ====================================================================
-// ÎÑÍÎÂÍÎÉ ÊÎÌÏÎÍÅÍÒ
+// ÐžÐ¡ÐÐžÐ’ÐÐžÐ™ ÐšÐžÐœÐŸÐžÐÐ•ÐÐ¢
 // ====================================================================
 
 export default function DashboardClient() {
@@ -130,7 +130,7 @@ export default function DashboardClient() {
 
   const createInvoice = async () => {
     if (!me) return;
-    if (me.tokenBalance < 10) { alert('Íåäîñòàòî÷íî òîêåíîâ. Ïîïîëíèòå áàëàíñ.'); return; }
+    if (me.tokenBalance < 10) { alert('ÐÐµÐ´Ð¾ÑÑ‚Ð°Ñ‚Ð¾Ñ‡Ð½Ð¾ Ñ‚Ð¾ÐºÐµÐ½Ð¾Ð². ÐŸÐ¾Ð¿Ð¾Ð»Ð½Ð¸Ñ‚Ðµ Ð±Ð°Ð»Ð°Ð½Ñ.'); return; }
     const res = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: 'New Document', data: { content: [{ heading: 'Section', text: 'Text' }] } }) });
     if (res.ok) {
       const { document, tokenBalance } = await res.json();
@@ -438,7 +438,7 @@ export default function DashboardClient() {
 }
 
 
-// === ÂÛÍÅÑÅÍÍÛÅ ÊÎÌÏÎÍÅÍÒÛ ===
+// === Ð’Ð«ÐÐ•Ð¡Ð•ÐÐÐ«Ð• ÐšÐžÐœÐŸÐžÐÐ•ÐÐ¢Ð« ===
 
 function TablePager({ total, pageSize = 20, onSlice }: { total: number; pageSize?: number; onSlice: (from: number, to: number) => void }) {
   const [page, setPage] = useState(1);
@@ -454,7 +454,7 @@ function TablePager({ total, pageSize = 20, onSlice }: { total: number; pageSize
 
   return (
     <div className="flex items-center justify-between p-3">
-      <div className="text-xs text-slate-600">Showing {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} of {total}</div>
+      <div className="text-xs text-slate-600">Showing {Math.min((page - 1) * pageSize + 1, total)}â€“{Math.min(page * pageSize, total)} of {total}</div>
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
         <div className="text-xs text-slate-600">{page} / {pages}</div>
@@ -558,7 +558,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-3 w-full">
-              <div className="text-sm text-slate-700">Totals: Subtotal <b>{fmtMoney(totals.subtotal, invoice.currency)}</b> · Tax <b>{fmtMoney(totals.tax, invoice.currency)}</b> · Total <b>{fmtMoney(totals.total, invoice.currency)}</b></div>
+              <div className="text-sm text-slate-700">Totals: Subtotal <b>{fmtMoney(totals.subtotal, invoice.currency)}</b> Â· Tax <b>{fmtMoney(totals.tax, invoice.currency)}</b> Â· Total <b>{fmtMoney(totals.total, invoice.currency)}</b></div>
               <div className="ml-auto flex items-center gap-2">
                 <button className="text-sm underline" onClick={async()=>{
                   await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(company) });

@@ -49,6 +49,8 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
     iban: 'GB00BANK0000000000',
     bankName: '',
     bic: '',
+    email: 'hello@acme.co.uk',
+    phone: '+44 20 7946 0018',
   });
   const [client, setClient] = useState({
     name: 'Client GmbH',
@@ -204,13 +206,13 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
       bcRef.current.onmessage = (ev: MessageEvent) => {
         const data: any = (ev as any)?.data || {};
         if (data.type === 'profile-updated' && data.company) {
-          const c = data.company;
-          const fullName = [c.name, c.vat].filter(Boolean).join(' ').trim();
+          const c = data.company as any;
+          const fullName = [c?.name, c?.vat].filter(Boolean).join(' ').trim();
           setSender((prev) => ({
             ...prev,
             company: fullName || prev.company,
-            email: c.reg || prev.email,
-            phone: c.address1 || prev.phone,
+            email: c?.reg || c?.contactEmail || prev.email,
+            phone: c?.address1 || c?.phone || prev.phone,
           }));
         }
         if (data.type === 'tokens-updated' && typeof data.tokenBalance === 'number') {
