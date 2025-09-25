@@ -115,10 +115,35 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     resume: emptyProfile(),
     cv: emptyProfile(),
   }));
+  const bcRef = React.useRef<BroadcastChannel | null>(null);
+  const [busy, setBusy] = React.useState<null | 'draft' | 'pdf' | 'docx'>(null);
+  const [notice, setNotice] = React.useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const noticeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    try { bcRef.current = new BroadcastChannel('app-events'); } catch {}
+    return () => {
+      if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+      try { bcRef.current?.close(); } catch {}
+    };
+  }, []);
+
+  const pushNotice = React.useCallback((kind: 'success' | 'error', message: string) => {
+    setNotice({ kind, message });
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = setTimeout(() => setNotice(null), 6000);
+  }, []);
 
   const template = templatesByDoc[docType];
   const profile = profiles[docType];
   const SelectedTemplate = ResumeTemplates[template] ?? ResumeTemplates.classic;
+
+  type CreateDocResult = {
+    document: { id: string; title?: string };
+    tokenBalance?: number;
+    charge?: number;
+    action?: string;
+  };
 
   const setProfile = React.useCallback(
     (updater: React.SetStateAction<Profile>) => {
@@ -135,9 +160,111 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     setTemplatesByDoc((current) => ({ ...current, [docType]: value }));
   };
 
-  const handleExport = (kind: 'PDF' | 'DOCX') => {
-    alert(`Export ${kind}: -5 tokens`);
-  };
+  const sanitizeFilename = React.useCallback(
+    (title: string | undefined, ext: 'pdf' | 'docx') => {
+      const fallback = docType === 'cv' ? 'cv' : 'resume';
+      const base = title && title.trim() ? title.trim() : fallback;
+      const safe = base.replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '-');
+      return `${safe || fallback}.${ext}`;
+    },
+    [docType],
+  );
+
+  const downloadBinary = React.useCallback(async (url: string, filename: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      const info = await response.json().catch(() => ({}));
+      throw new Error(info?.error || 'Failed to download file');
+    }
+    const blob = await response.blob();
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(href);
+  }, []);
+
+  const createDocument = React.useCallback(
+    async (action: 'draft' | 'export-pdf' | 'export-docx'): Promise<CreateDocResult> => {
+      const profilePayload = JSON.parse(JSON.stringify(profile)) as Profile;
+      const payload = {
+        title: profilePayload.name
+          ? `${profilePayload.name} ${docType === 'cv' ? 'CV' : 'Resume'}`
+          : docType === 'cv' ? 'CV Draft' : 'Resume Draft',
+        action,
+        docType,
+        template,
+        data: {
+          docType,
+          template,
+          profile: profilePayload,
+          meta: { generatedAt: new Date().toISOString() },
+        },
+      };
+
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || 'Unable to save document');
+      }
+
+      if (typeof result?.tokenBalance === 'number') {
+        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: result.tokenBalance }); } catch {}
+      }
+      try { bcRef.current?.postMessage({ type: 'documents-updated' }); } catch {}
+
+      return result as CreateDocResult;
+    },
+    [profile, docType, template],
+  );
+
+  const handleCreateDraft = React.useCallback(async () => {
+    if (busy) return;
+    setBusy('draft');
+    setNotice(null);
+    try {
+      const result = await createDocument('draft');
+      const charged = result.charge ?? 10;
+      pushNotice('success', `Draft saved to dashboard. Spent ${charged} tokens.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save draft';
+      pushNotice('error', message);
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, createDocument, pushNotice]);
+
+  const handleExport = React.useCallback(
+    async (format: 'pdf' | 'docx') => {
+      if (busy) return;
+      setBusy(format === 'pdf' ? 'pdf' : 'docx');
+      setNotice(null);
+      try {
+        const result = await createDocument(format === 'pdf' ? 'export-pdf' : 'export-docx');
+        const documentSummary = result.document;
+        const filename = sanitizeFilename(documentSummary?.title, format);
+        const endpoint = format === 'pdf' ? `/api/resume/pdf/${documentSummary.id}` : `/api/resume/docx/${documentSummary.id}`;
+        await downloadBinary(endpoint, filename);
+        const charged = result.charge ?? 15;
+        pushNotice('success', `${format.toUpperCase()} ready. Spent ${charged} tokens.`);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : `Unable to export ${format.toUpperCase()}`;
+        pushNotice('error', message);
+      } finally {
+        setBusy(null);
+      }
+    },
+    [busy, createDocument, downloadBinary, pushNotice, sanitizeFilename],
+  );
 
   const handleManager = () => {
     alert('Personal manager request sent. -80 tokens');
@@ -155,21 +282,30 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
             <div className="h-6 w-6 rounded-full bg-slate-900" aria-hidden />
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <button id="btn-save" className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100">Save draft</button>
+            <button
+              id="btn-save"
+              className="rounded-md border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={handleCreateDraft}
+              disabled={busy !== null}
+            >
+              {busy === 'draft' ? 'Saving...' : 'Save draft'}
+            </button>
             <div className="hidden items-center gap-1 md:flex">
               <button
                 id="btn-export-pdf"
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100"
-                onClick={() => handleExport('PDF')}
+                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => handleExport('pdf')}
+                disabled={busy !== null}
               >
-                Export PDF
+                {busy === 'pdf' ? 'Preparing...' : 'Export PDF'}
               </button>
               <button
                 id="btn-export-docx"
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100"
-                onClick={() => handleExport('DOCX')}
+                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => handleExport('docx')}
+                disabled={busy !== null}
               >
-                Export DOCX
+                {busy === 'docx' ? 'Preparing...' : 'Export DOCX'}
               </button>
             </div>
           </div>
@@ -217,7 +353,7 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
             <div className="font-semibold">Costs</div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <CostPill label="Create" value="10 tok." />
-              <CostPill label="Export" value="5 tok." />
+              <CostPill label="Export" value="15 tok." />
               <CostPill label="Manager" value="80 tok." />
               <CostPill label="AI" value="20 tok." />
             </div>
@@ -236,11 +372,19 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
                 <div className="font-semibold">{TEMPLATE_LABELS[template]}</div>
               </div>
               <div className="hidden items-center gap-2 md:flex">
-                <button className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100" onClick={() => handleExport('PDF')}>
-                  Export PDF
+                <button
+                  className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => handleExport('pdf')}
+                  disabled={busy !== null}
+                >
+                  {busy === 'pdf' ? 'Preparing...' : 'Export PDF'}
                 </button>
-                <button className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100" onClick={() => handleExport('DOCX')}>
-                  Export DOCX
+                <button
+                  className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => handleExport('docx')}
+                  disabled={busy !== null}
+                >
+                  {busy === 'docx' ? 'Preparing...' : 'Export DOCX'}
                 </button>
               </div>
             </div>
@@ -249,6 +393,41 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
                 <SelectedTemplate data={profile} />
               </ScaledA4>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-sm">
+            <div className="font-semibold">Token actions</div>
+            <p className="mt-1 text-slate-600">Use tokens to generate your {docType === 'cv' ? 'CV' : 'resume'}.</p>
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                className="rounded-md bg-slate-900 px-3 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleCreateDraft}
+                disabled={busy !== null}
+              >
+                {busy === 'draft' ? 'Creating draft...' : 'Create (10 tok.)'}
+              </button>
+              <button
+                className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => handleExport('pdf')}
+                disabled={busy !== null}
+              >
+                {busy === 'pdf' ? 'Creating PDF...' : 'Create & Export PDF (15 tok.)'}
+              </button>
+              <button
+                className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => handleExport('docx')}
+                disabled={busy !== null}
+              >
+                {busy === 'docx' ? 'Creating DOCX...' : 'Create & Export DOCX (15 tok.)'}
+              </button>
+            </div>
+            {notice && (
+              <div
+                className={`mt-3 rounded-md border px-3 py-2 text-xs ${notice.kind === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}
+              >
+                {notice.message}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-sm">
@@ -555,6 +734,3 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
-
-
-

@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 type Currency = 'GBP' | 'EUR';
 
-type Document = { id: string; title: string; updatedAt: string; data?: any };
+type Document = { id: string; title: string; updatedAt: string; status?: "Draft" | "Ready"; format?: string; docType?: string; data?: any };
 
 type LedgerRow = { id: string; ts: string; type: 'Top-up' | 'Document' | 'Adjust' | 'STRIPE_PURCHASE'; delta: number; balanceAfter: number; currency?: Currency; amount?: number; receiptUrl?: string; invoiceNumber?: string };
 
@@ -1365,6 +1365,7 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
   );
 
 }
+
 
 
 

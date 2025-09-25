@@ -27,9 +27,23 @@ export async function POST(req: Request) {
   const userId = (session.user as any).id as string;
 
   const body = await req.json().catch(() => ({}));
-  const title = (body.title as string) || 'Untitled Document';
-  const data = typeof body.data === 'object' ? body.data : {};
-  const charge = Number(process.env.TOKENS_PER_DOCUMENT || 10);
+  const title = typeof body.title === 'string' && body.title.trim() ? body.title.trim() : 'Untitled Document';
+  const data = typeof body.data === 'object' && body.data !== null ? body.data : {};
+  const actionRaw = typeof body.action === 'string' ? body.action.toLowerCase() : 'draft';
+  const allowedActions = new Set(['draft', 'export-pdf', 'export-docx']);
+  const action = allowedActions.has(actionRaw) ? actionRaw : 'draft';
+  const draftCharge = Number(process.env.TOKENS_PER_DOCUMENT || 10);
+  const exportCharge = Number(process.env.TOKENS_PER_EXPORT || 15);
+  const chargeMap: Record<string, number> = {
+    draft: draftCharge,
+    'export-pdf': exportCharge,
+    'export-docx': exportCharge,
+  };
+  const charge = chargeMap[action] ?? draftCharge;
+  const docTypeRaw = typeof body.docType === 'string' ? body.docType.toLowerCase() : 'document';
+  const docType = ['cv', 'resume', 'document'].includes(docTypeRaw) ? docTypeRaw : 'document';
+  const status = action === 'draft' ? 'Draft' : 'Ready';
+  const format = action === 'export-docx' ? 'docx' : action === 'export-pdf' ? 'pdf' : 'draft';
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -37,23 +51,34 @@ export async function POST(req: Request) {
       if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
       if (user.tokenBalance < charge) return NextResponse.json({ error: 'Not enough tokens' }, { status: 400 });
 
-      const doc = await tx.document.create({ data: { userId, title, data: data as any } });
+      const doc = await tx.document.create({
+        data: {
+          userId,
+          title,
+          data: data as any,
+          docType,
+          status,
+          format,
+        },
+      });
 
       const newBalance = user.tokenBalance - charge;
       await tx.user.update({ where: { id: userId }, data: { tokenBalance: newBalance } });
       await tx.ledgerEntry.create({
         data: {
           userId,
-          type: 'Document',
+          type: action === 'draft' ? 'Document' : 'Document Export',
           delta: -charge,
           balanceAfter: newBalance,
         },
       });
 
-      return NextResponse.json({ document: doc, tokenBalance: newBalance });
+      return NextResponse.json({ document: doc, tokenBalance: newBalance, charge, action });
     });
   } catch (err) {
     console.error('[DOCUMENTS_POST_ERROR]', err);
     return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
   }
 }
+
+

@@ -149,6 +149,13 @@ model Document {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   data      Json?
+  docType   String   @default("document")
+  status    String   @default("Draft")
+  format    String   @default("draft")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
+
+

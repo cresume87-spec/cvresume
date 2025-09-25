@@ -26,13 +26,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => ({}));
   const title = typeof body.title === 'string' ? body.title : undefined;
   const data = typeof body.data === 'object' ? body.data : undefined;
+  const status = typeof body.status === 'string' ? body.status : undefined;
+  const format = typeof body.format === 'string' ? body.format : undefined;
+  const docType = typeof body.docType === 'string' ? body.docType : undefined;
 
   const exists = await prisma.document.findFirst({ where: { id, userId } });
   if (!exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const updated = await prisma.document.update({ where: { id }, data: { ...(title && { title }), ...(data && { data: data as any }) } });
+  const updated = await prisma.document.update({
+    where: { id },
+    data: {
+      ...(title && { title }),
+      ...(data && { data: data as any }),
+      ...(status && { status }),
+      ...(format && { format }),
+      ...(docType && { docType }),
+    },
+  });
   return NextResponse.json({ document: updated });
 }
+
 
 
 
