@@ -1,13 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  ResumeTemplates,
-  ResumeTemplateKey,
-  sampleCVData,
-  sampleResumeData,
-  Profile,
-} from '@/components/resume';
+import { ResumeTemplates, ResumeTemplateKey, Profile } from '@/components/resume';
 import { ScaledA4 } from '@/components/resume/ui';
 
 export type DocType = 'resume' | 'cv';
@@ -52,8 +46,23 @@ function normalizeTemplate(value?: ResumeTemplateKey | string): ResumeTemplateKe
     : 'classic';
 }
 
-function cloneProfile(profile: Profile): Profile {
-  return JSON.parse(JSON.stringify(profile)) as Profile;
+function emptyProfile(): Profile {
+  return {
+    name: '',
+    role: '',
+    summary: '',
+    contacts: {
+      email: '',
+      phone: '',
+      location: '',
+      website: '',
+      linkedin: '',
+    },
+    experience: [],
+    education: [],
+    skills: [],
+    photo: '',
+  };
 }
 
 function mutateExp(
@@ -103,8 +112,8 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     cv: defaultTemplate,
   }));
   const [profiles, setProfiles] = React.useState<Record<DocType, Profile>>(() => ({
-    resume: cloneProfile(sampleResumeData),
-    cv: cloneProfile(sampleCVData),
+    resume: emptyProfile(),
+    cv: emptyProfile(),
   }));
 
   const template = templatesByDoc[docType];
@@ -144,8 +153,6 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <div className="h-6 w-6 rounded-full bg-slate-900" aria-hidden />
-            <span className="text-sm font-semibold">CVBuilder</span>
-            <span className="hidden text-xs text-slate-500 sm:inline">/ Create {docType.toUpperCase()}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <button id="btn-save" className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100">Save draft</button>
@@ -207,11 +214,13 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
             ))}
           </nav>
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-            <div className="font-semibold">Shortcuts</div>
-            <ul className="mt-2 space-y-1">
-              <li>Alt + 1..6 to jump to steps</li>
-              <li>Ctrl + S to save draft</li>
-            </ul>
+            <div className="font-semibold">Costs</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <CostPill label="Create" value="10 tok." />
+              <CostPill label="Export" value="5 tok." />
+              <CostPill label="Manager" value="80 tok." />
+              <CostPill label="AI" value="20 tok." />
+            </div>
           </div>
         </aside>
 
@@ -313,28 +322,28 @@ function PersonalForm({ profile, setProfile }: EditorProps) {
       <h2 className="text-lg font-semibold">Personal details</h2>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <Field label="Full name">
-          <Input value={profile.name} onChange={(event) => setProfile((prev) => ({ ...prev, name: event.target.value }))} />
+          <Input value={profile.name} placeholder="Enter full name" onChange={(event) => setProfile((prev) => ({ ...prev, name: event.target.value }))} />
         </Field>
         <Field label="Role / Title">
-          <Input value={profile.role} onChange={(event) => setProfile((prev) => ({ ...prev, role: event.target.value }))} />
+          <Input value={profile.role} placeholder="e.g. Product Manager" onChange={(event) => setProfile((prev) => ({ ...prev, role: event.target.value }))} />
         </Field>
         <Field label="Email">
-          <Input value={profile.contacts.email} onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, email: event.target.value } }))} />
+          <Input value={profile.contacts.email} placeholder="name@email.com" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, email: event.target.value } }))} />
         </Field>
         <Field label="Phone">
-          <Input value={profile.contacts.phone} onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, phone: event.target.value } }))} />
+          <Input value={profile.contacts.phone} placeholder="Phone number" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, phone: event.target.value } }))} />
         </Field>
         <Field label="Location">
-          <Input value={profile.contacts.location} onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, location: event.target.value } }))} />
+          <Input value={profile.contacts.location} placeholder="City, Country" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, location: event.target.value } }))} />
         </Field>
         <Field label="Website">
-          <Input value={profile.contacts.website || ''} onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, website: event.target.value } }))} />
+          <Input value={profile.contacts.website || ''} placeholder="Personal site (optional)" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, website: event.target.value } }))} />
         </Field>
         <Field label="LinkedIn">
-          <Input value={profile.contacts.linkedin || ''} onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, linkedin: event.target.value } }))} />
+          <Input value={profile.contacts.linkedin || ''} placeholder="LinkedIn profile" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, linkedin: event.target.value } }))} />
         </Field>
         <Field label="Photo URL">
-          <Input value={profile.photo || ''} onChange={(event) => setProfile((prev) => ({ ...prev, photo: event.target.value }))} />
+          <Input value={profile.photo || ''} placeholder="Link to photo" onChange={(event) => setProfile((prev) => ({ ...prev, photo: event.target.value }))} />
         </Field>
       </div>
     </div>
@@ -347,7 +356,7 @@ function SummaryForm({ profile, setProfile }: EditorProps) {
       <h2 className="text-lg font-semibold">Summary</h2>
       <div className="mt-3 grid gap-3">
         <Field label="Professional summary">
-          <Textarea rows={5} value={profile.summary} onChange={(event) => setProfile((prev) => ({ ...prev, summary: event.target.value }))} />
+          <Textarea rows={5} value={profile.summary} placeholder="Summarize your experience and strengths" onChange={(event) => setProfile((prev) => ({ ...prev, summary: event.target.value }))} />
         </Field>
         <div className="rounded-lg border border-dashed border-slate-300 p-3 text-xs text-slate-600">
           <div className="font-semibold">Writing tips</div>
@@ -386,22 +395,22 @@ function ExperienceForm({ profile, setProfile }: EditorProps) {
           <div key={entry.id} className="rounded-lg border border-slate-200 p-3">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Title">
-                <Input value={entry.title} onChange={(event) => mutateExp(setProfile, entry.id, { title: event.target.value })} />
+                <Input value={entry.title} placeholder="Job title" onChange={(event) => mutateExp(setProfile, entry.id, { title: event.target.value })} />
               </Field>
               <Field label="Company">
-                <Input value={entry.company} onChange={(event) => mutateExp(setProfile, entry.id, { company: event.target.value })} />
+                <Input value={entry.company} placeholder="Company" onChange={(event) => mutateExp(setProfile, entry.id, { company: event.target.value })} />
               </Field>
               <Field label="Location">
-                <Input value={entry.location} onChange={(event) => mutateExp(setProfile, entry.id, { location: event.target.value })} />
+                <Input value={entry.location} placeholder="Location" onChange={(event) => mutateExp(setProfile, entry.id, { location: event.target.value })} />
               </Field>
               <Field label="Start">
-                <Input value={entry.start} onChange={(event) => mutateExp(setProfile, entry.id, { start: event.target.value })} />
+                <Input value={entry.start} placeholder="Start date" onChange={(event) => mutateExp(setProfile, entry.id, { start: event.target.value })} />
               </Field>
               <Field label="End">
-                <Input value={entry.end} onChange={(event) => mutateExp(setProfile, entry.id, { end: event.target.value })} />
+                <Input value={entry.end} placeholder="End date or Present" onChange={(event) => mutateExp(setProfile, entry.id, { end: event.target.value })} />
               </Field>
               <Field label="Bullets (one per line)">
-                <Textarea rows={3} value={entry.points.join('\n')} onChange={(event) => mutateExp(setProfile, entry.id, { points: event.target.value.split('\n') })} />
+                <Textarea rows={3} value={entry.points.join('\n')} placeholder="Use action verbs + results" onChange={(event) => mutateExp(setProfile, entry.id, { points: event.target.value.split('\n') })} />
               </Field>
             </div>
             <div className="mt-2 text-right">
@@ -440,16 +449,16 @@ function EducationForm({ profile, setProfile }: EditorProps) {
         {profile.education.map((entry) => (
           <div key={entry.id} className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-3">
             <Field label="Degree">
-              <Input value={entry.degree} onChange={(event) => mutateEdu(setProfile, entry.id, { degree: event.target.value })} />
+              <Input value={entry.degree} placeholder="Degree or certificate" onChange={(event) => mutateEdu(setProfile, entry.id, { degree: event.target.value })} />
             </Field>
             <Field label="School">
-              <Input value={entry.school} onChange={(event) => mutateEdu(setProfile, entry.id, { school: event.target.value })} />
+              <Input value={entry.school} placeholder="School" onChange={(event) => mutateEdu(setProfile, entry.id, { school: event.target.value })} />
             </Field>
             <Field label="Year">
-              <Input value={entry.year} onChange={(event) => mutateEdu(setProfile, entry.id, { year: event.target.value })} />
+              <Input value={entry.year} placeholder="Year completed" onChange={(event) => mutateEdu(setProfile, entry.id, { year: event.target.value })} />
             </Field>
             <Field label="Location">
-              <Input value={entry.location} onChange={(event) => mutateEdu(setProfile, entry.id, { location: event.target.value })} />
+              <Input value={entry.location} placeholder="Location" onChange={(event) => mutateEdu(setProfile, entry.id, { location: event.target.value })} />
             </Field>
             <div className="col-span-2 text-right">
               <button className="text-xs text-slate-500 hover:underline" onClick={() => removeEdu(setProfile, entry.id)}>
@@ -519,6 +528,15 @@ type EditorProps = {
   profile: Profile;
   setProfile: React.Dispatch<React.SetStateAction<Profile>>;
 };
+
+function CostPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
+      <span className="mr-2 text-slate-500">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
 
 export function runBuilderSmokeTests() {
   const element = React.createElement(CVResumeBuilder, {});
