@@ -281,34 +281,7 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
           <div className="flex items-center gap-3">
             <div className="h-6 w-6 rounded-full bg-slate-900" aria-hidden />
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <button
-              id="btn-save"
-              className="rounded-md border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={handleCreateDraft}
-              disabled={busy !== null}
-            >
-              {busy === 'draft' ? 'Saving...' : 'Save draft'}
-            </button>
-            <div className="hidden items-center gap-1 md:flex">
-              <button
-                id="btn-export-pdf"
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => handleExport('pdf')}
-                disabled={busy !== null}
-              >
-                {busy === 'pdf' ? 'Preparing...' : 'Export PDF'}
-              </button>
-              <button
-                id="btn-export-docx"
-                className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => handleExport('docx')}
-                disabled={busy !== null}
-              >
-                {busy === 'docx' ? 'Preparing...' : 'Export DOCX'}
-              </button>
-            </div>
-          </div>
+          <div className="flex items-center gap-2 text-sm" />
         </div>
       </header>
 
@@ -370,22 +343,6 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
               <div>
                 <div className="text-xs text-slate-500">Template</div>
                 <div className="font-semibold">{TEMPLATE_LABELS[template]}</div>
-              </div>
-              <div className="hidden items-center gap-2 md:flex">
-                <button
-                  className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => handleExport('pdf')}
-                  disabled={busy !== null}
-                >
-                  {busy === 'pdf' ? 'Preparing...' : 'Export PDF'}
-                </button>
-                <button
-                  className="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => handleExport('docx')}
-                  disabled={busy !== null}
-                >
-                  {busy === 'docx' ? 'Preparing...' : 'Export DOCX'}
-                </button>
               </div>
             </div>
             <div className="mt-3 rounded-xl border border-slate-200 bg-slate-100 p-3">
