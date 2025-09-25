@@ -513,8 +513,8 @@ export default function DashboardClient() {
                       <th className="text-left px-3 py-2">Title</th>
 
                       <th className="text-left px-3 py-2">Updated</th>
+                      <th className="text-left px-3 py-2">Status</th>
 
-                      <th className="text-left px-3 py-2">Recipient</th>
 
                       <th className="text-right px-3 py-2">Actions</th>
 
@@ -534,14 +534,13 @@ export default function DashboardClient() {
 
                           <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{new Date(inv.updatedAt).toISOString().slice(0,10)}</td>
 
-                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{(inv as any).data?.recipient?.name || (inv as any).data?.recipient?.company || '-'}</td>
+                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{(inv as any).status || (inv as any).statusMessage || inv.status || 'Draft'}</td>
 
                           <td className={`px-3 py-2 text-right ${viewId===inv.id ? 'border-t-2 border-r-2 border-black rounded-tr-xl' : ''}`}>
-
-                            <button className="text-sm underline mr-2" onClick={()=>openView(inv.id)}>{viewId===inv.id? 'Hide' : 'View'}</button>
-
-                            <button className="text-sm underline" onClick={()=>ensureReadyAndDownload(inv.id)}>Download</button>
-
+                            <div className="flex justify-end gap-2">
+                              <button className="text-sm underline" onClick={() => window.open(`/print-resume/${inv.id}`, '_blank')}>View</button>
+                              <button className="text-sm underline" onClick={() => ensureReadyAndDownload(inv.id)}>Download</button>
+                            </div>
                           </td>
 
                         </tr>
@@ -550,7 +549,7 @@ export default function DashboardClient() {
 
                           <tr className={`bg-white ${viewId===inv.id ? '' : 'border-t border-black/10'}`}>
 
-                            <td className={`px-3 py-3 ${viewId===inv.id ? 'border-l-2 border-r-2 border-b-2 border-black rounded-b-xl' : ''}`} colSpan={6}>
+                            <td className={`px-3 py-3 ${viewId===inv.id ? 'border-l-2 border-r-2 border-b-2 border-black rounded-b-xl' : ''}`} colSpan={4}>
 
                               <div className="p-2">
 
