@@ -2,6 +2,8 @@ import { Profile } from '@/components/resume/types';
 
 export const sampleResumeData: Profile = {
   name: 'Elena Carter',
+  firstName: 'Elena',
+  lastName: 'Carter',
   role: 'Sales Advisor',
   summary:
     'UK-based sales professional with 5+ years across high-street retail and e-commerce. Proven track record of exceeding targets, mentoring junior staff, and improving NPS through structured consultative selling.',
@@ -9,10 +11,10 @@ export const sampleResumeData: Profile = {
     email: 'elena.carter@outlook.com',
     phone: '+44 20 7946 0123',
     location: 'London, UK',
-    website: 'elenacarter.co.uk',
-    linkedin: 'linkedin.com/in/elenacarter-uk',
+    website: 'https://elenacarter.co.uk',
+    linkedin: 'https://linkedin.com/in/elenacarter-uk',
   },
-  photo: '/mock_imageюцуиз.webp',
+  photo: '/mock_image.webp',
   experience: [
     {
       id: '1',
@@ -22,9 +24,9 @@ export const sampleResumeData: Profile = {
       start: '2022',
       end: 'Present',
       points: [
-        'Exceeded quarterly revenue targets by 18% via upsell playbooks and CRM hygiene.',
-        'Launched weekly coaching; ramp time for new hires reduced by 25%.',
-        'Owned VIP client portfolio (~120 contacts), 92% retention.',
+        'Exceeded quarterly revenue targets by 18% through consistent upsell playbooks and CRM hygiene.',
+        'Launched weekly coaching sessions and reduced ramp time for new hires by 25%.',
+        'Owned a VIP client portfolio of 120 accounts with 92% retention.',
       ],
     },
     {
@@ -35,8 +37,8 @@ export const sampleResumeData: Profile = {
       start: '2020',
       end: '2022',
       points: [
-        'Improved store NPS from 64 → 78 within 8 months.',
-        'Introduced product knowledge cards; onboarding time cut by 30%.',
+        'Improved store NPS from 64 to 78 within eight months.',
+        'Introduced product knowledge cards and cut onboarding time by 30%.',
       ],
     },
   ],
@@ -62,12 +64,12 @@ export const sampleResumeData: Profile = {
 export const sampleCVData: Profile = {
   ...sampleResumeData,
   summary:
-    'UK-based sales professional with 5+ years in retail and e-commerce. Strong track record in targets, coaching, and NPS. CV version includes certifications and volunteering.',
+    'UK-based sales professional with 5+ years in retail and e-commerce. CV version includes additional certifications and volunteering experience.',
   experience: [
     ...sampleResumeData.experience,
     {
       id: '3',
-      title: 'Intern',
+      title: 'Sales Intern',
       company: 'Outlet Co.',
       location: 'Birmingham',
       start: '2018',
@@ -79,7 +81,7 @@ export const sampleCVData: Profile = {
     ...sampleResumeData.education,
     {
       id: 'e2',
-      degree: 'CIM Sales & Marketing (Certificate)',
+      degree: 'CIM Sales and Marketing Certificate',
       school: 'Chartered Institute of Marketing',
       year: '2021',
       location: 'London',

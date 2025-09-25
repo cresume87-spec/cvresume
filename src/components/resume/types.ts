@@ -28,12 +28,13 @@ export type Education = {
 
 export type Profile = {
   name: string;
+  firstName: string;
+  lastName: string;
   role: string;
   summary: string;
   contacts: Contacts;
   experience: Experience[];
   education: Education[];
   skills: string[];
-  photo?: string;
+  photo: string;
 };
-

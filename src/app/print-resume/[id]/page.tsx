@@ -41,8 +41,16 @@ const coerceProfile = (input: any): Profile => {
     linkedin: typeof input?.contacts?.linkedin === 'string' ? input.contacts.linkedin : '',
   } as Profile['contacts'];
 
+  const providedFirst = typeof input?.firstName === 'string' ? input.firstName : '';
+  const providedLast = typeof input?.lastName === 'string' ? input.lastName : '';
+  const derivedFromName = typeof input?.name === 'string' ? input.name.split(' ') : [];
+  const fallbackFirst = providedFirst || derivedFromName[0] || '';
+  const fallbackLast = providedLast || (derivedFromName.length > 1 ? derivedFromName.slice(1).join(' ') : '');
+
   return {
-    name: typeof input?.name === 'string' ? input.name : '',
+    name: typeof input?.name === 'string' ? input.name : [fallbackFirst, fallbackLast].filter(Boolean).join(' ').trim(),
+    firstName: fallbackFirst,
+    lastName: fallbackLast,
     role: typeof input?.role === 'string' ? input.role : '',
     summary: typeof input?.summary === 'string' ? input.summary : '',
     contacts,
@@ -74,3 +82,7 @@ export default async function PrintResumePage({ params }: { params: Promise<{ id
     </div>
   );
 }
+
+
+
+

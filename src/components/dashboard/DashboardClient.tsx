@@ -230,9 +230,13 @@ export default function DashboardClient() {
 
     if (!mark.ok) { alert(mark.err || 'Failed'); return; }
 
-    try {
+    const docType = (invFull as any).docType;
+    const isResumeDocument = docType === 'cv' || docType === 'resume';
+    const downloadPath = isResumeDocument ? `/api/resume/pdf/${id}` : `/api/pdf/${id}`;
+    const fallbackName = invFull.title || (isResumeDocument ? (docType === 'cv' ? 'CV' : 'Resume') : 'Document');
 
-      const res = await fetch(`/api/pdf/${id}`);
+    try {
+      const res = await fetch(downloadPath);
 
       if (!res.ok) throw new Error('Server PDF failed');
 
@@ -241,8 +245,8 @@ export default function DashboardClient() {
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement('a');
-
-      a.href = url; a.download = `${invFull.title || 'Document'}.pdf`;
+      a.href = url;
+      a.download = `${fallbackName}.pdf`;
 
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 
@@ -254,6 +258,25 @@ export default function DashboardClient() {
 
   };
 
+
+
+  const handleViewDocument = (document: any) => {
+    if (!document) return;
+    const docType = (document as any).docType;
+    if (docType === 'cv' || docType === 'resume') {
+      const templateKey = (document as any)?.data?.template ?? (document as any)?.data?.templateKey;
+      const query = templateKey ? `?template=${encodeURIComponent(templateKey)}` : '';
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const target = origin ? `${origin}/print-resume/${document.id}${query}` : `/print-resume/${document.id}${query}`;
+      try {
+        window.open(target, '_blank', 'noopener');
+      } catch {
+        window.open(`/print-resume/${document.id}${query}`, '_blank', 'noopener');
+      }
+      return;
+    }
+    openView(document.id);
+  };
 
 
   const createInvoice = async () => {
@@ -538,7 +561,12 @@ export default function DashboardClient() {
 
                           <td className={`px-3 py-2 text-right ${viewId===inv.id ? 'border-t-2 border-r-2 border-black rounded-tr-xl' : ''}`}>
                             <div className="flex justify-end gap-2">
-                              <button className="text-sm underline" onClick={() => window.open(`/print-resume/${inv.id}`, '_blank')}>View</button>
+                              <button
+                                className="text-sm underline"
+                                onClick={() => handleViewDocument(inv)}
+                              >
+                                {(inv as any).docType === 'cv' || (inv as any).docType === 'resume' ? 'View' : (viewId===inv.id ? 'Hide' : 'View')}
+                              </button>
                               <button className="text-sm underline" onClick={() => ensureReadyAndDownload(inv.id)}>Download</button>
                             </div>
                           </td>

@@ -46,9 +46,18 @@ function normalizeTemplate(value?: ResumeTemplateKey | string): ResumeTemplateKe
     : 'classic';
 }
 
+function composeFullName(first?: string | null, last?: string | null) {
+  const parts: string[] = [];
+  if (first && first.trim()) parts.push(first.trim());
+  if (last && last.trim()) parts.push(last.trim());
+  return parts.join(' ').trim();
+}
+
 function emptyProfile(): Profile {
   return {
     name: '',
+    firstName: '',
+    lastName: '',
     role: '',
     summary: '',
     contacts: {
@@ -120,21 +129,108 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
   const [notice, setNotice] = React.useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const noticeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const applyCompanyProfile = React.useCallback((company: any) => {
+    if (!company) return;
+    const firstName = typeof company.name === 'string' ? company.name.trim() : '';
+    const lastName = typeof company.vat === 'string' ? company.vat.trim() : '';
+    const email = typeof company.reg === 'string' ? company.reg.trim() : '';
+    const phone = typeof company.address1 === 'string' ? company.address1.trim() : '';
+    const photo = typeof company.logoUrl === 'string' ? company.logoUrl : '';
+
+    setProfiles((current) => {
+      const applyTo = (profile: Profile): Profile => {
+        let mutated = false;
+        let nextProfile = profile;
+        let contacts = profile.contacts;
+        const ensureProfile = () => {
+          if (!mutated) {
+            nextProfile = { ...profile };
+            contacts = { ...profile.contacts };
+            mutated = true;
+          }
+        };
+
+        if (firstName && !profile.firstName) {
+          ensureProfile();
+          nextProfile.firstName = firstName;
+        }
+        if (lastName && !profile.lastName) {
+          ensureProfile();
+          nextProfile.lastName = lastName;
+        }
+        if (email && !profile.contacts.email) {
+          ensureProfile();
+          contacts.email = email;
+        }
+        if (phone && !profile.contacts.phone) {
+          ensureProfile();
+          contacts.phone = phone;
+        }
+        if (mutated) {
+          nextProfile.contacts = contacts;
+        }
+        if (photo && !profile.photo) {
+          ensureProfile();
+          nextProfile.photo = photo;
+        }
+        const combined = composeFullName(nextProfile.firstName, nextProfile.lastName);
+        if (combined && (!profile.name || profile.name === composeFullName(profile.firstName, profile.lastName))) {
+          ensureProfile();
+          nextProfile.name = combined;
+        }
+        return mutated ? nextProfile : profile;
+      };
+
+      const resume = applyTo(current.resume);
+      const cv = applyTo(current.cv);
+      if (resume === current.resume && cv === current.cv) return current;
+      return { resume, cv };
+    });
+  }, [setProfiles]);
+
   React.useEffect(() => {
-    try { bcRef.current = new BroadcastChannel('app-events'); } catch {}
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('app-events');
+      channel.onmessage = (event: MessageEvent) => {
+        const data: any = (event as MessageEvent).data;
+        if (data?.type === 'profile-updated' && data.company) {
+          applyCompanyProfile(data.company);
+        }
+      };
+      bcRef.current = channel;
+    } catch {
+      bcRef.current = null;
+    }
     return () => {
       if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
-      try { bcRef.current?.close(); } catch {}
+      try { channel?.close(); } catch {}
+      bcRef.current = null;
     };
-  }, []);
+  }, [applyCompanyProfile]);
+
+  React.useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/api/company', { cache: 'no-store' });
+        if (!res.ok) return;
+        const payload = await res.json().catch(() => null);
+        applyCompanyProfile(payload?.company);
+      } catch {
+        /* no-op */
+      }
+    };
+    loadProfile();
+  }, [applyCompanyProfile]);
 
   const pushNotice = React.useCallback((kind: 'success' | 'error', message: string) => {
     setNotice({ kind, message });
     if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current);
     noticeTimerRef.current = setTimeout(() => setNotice(null), 6000);
-  }, []);
+  }, [setProfiles]);
 
-  const template = templatesByDoc[docType];
+
+const template = templatesByDoc[docType];
   const profile = profiles[docType];
   const SelectedTemplate = ResumeTemplates[template] ?? ResumeTemplates.classic;
 
@@ -185,11 +281,17 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(href);
-  }, []);
+  }, [setProfiles]);
 
   const createDocument = React.useCallback(
     async (action: 'draft' | 'export-pdf' | 'export-docx'): Promise<CreateDocResult> => {
       const profilePayload = JSON.parse(JSON.stringify(profile)) as Profile;
+      if (!profilePayload.name || !profilePayload.name.trim()) {
+        const combinedName = composeFullName(profilePayload.firstName, profilePayload.lastName);
+        if (combinedName) {
+          profilePayload.name = combinedName;
+        }
+      }
       const payload = {
         title: profilePayload.name
           ? `${profilePayload.name} ${docType === 'cv' ? 'CV' : 'Resume'}`
@@ -445,12 +547,65 @@ function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 function PersonalForm({ profile, setProfile }: EditorProps) {
+  const nameParts = React.useMemo(() => {
+    const parts = (profile.name || '').trim().split(/\s+/).filter(Boolean);
+    const first = profile.firstName ?? parts[0] ?? '';
+    const last = profile.lastName ?? (parts.length > 1 ? parts.slice(1).join(' ') : '');
+    return { first, last };
+  }, [profile.firstName, profile.lastName, profile.name]);
+
+  const handleFirstNameChange = (value: string) => {
+    setProfile((prev) => {
+      const fallbackLast = prev.lastName ?? nameParts.last;
+      const combined = composeFullName(value, fallbackLast);
+      return {
+        ...prev,
+        firstName: value,
+        lastName: prev.lastName ?? fallbackLast,
+        name: combined || value || prev.name,
+      };
+    });
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setProfile((prev) => {
+      const fallbackFirst = prev.firstName ?? nameParts.first;
+      const combined = composeFullName(fallbackFirst, value);
+      return {
+        ...prev,
+        firstName: prev.firstName ?? fallbackFirst,
+        lastName: value,
+        name: combined || fallbackFirst || value || prev.name,
+      };
+    });
+  };
+
+  const handlePhotoUpload: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setProfile((prev) => ({ ...prev, photo: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handlePhotoRemove = () => {
+    setProfile((prev) => ({ ...prev, photo: '' }));
+  };
+
   return (
     <div>
       <h2 className="text-lg font-semibold">Personal details</h2>
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <Field label="Full name">
-          <Input value={profile.name} placeholder="Enter full name" onChange={(event) => setProfile((prev) => ({ ...prev, name: event.target.value }))} />
+        <Field label="Name">
+          <Input value={nameParts.first} placeholder="Enter name" onChange={(event) => handleFirstNameChange(event.target.value)} />
+        </Field>
+        <Field label="Surname">
+          <Input value={nameParts.last} placeholder="Enter surname" onChange={(event) => handleLastNameChange(event.target.value)} />
         </Field>
         <Field label="Role / Title">
           <Input value={profile.role} placeholder="e.g. Product Manager" onChange={(event) => setProfile((prev) => ({ ...prev, role: event.target.value }))} />
@@ -470,13 +625,29 @@ function PersonalForm({ profile, setProfile }: EditorProps) {
         <Field label="LinkedIn">
           <Input value={profile.contacts.linkedin || ''} placeholder="LinkedIn profile" onChange={(event) => setProfile((prev) => ({ ...prev, contacts: { ...prev.contacts, linkedin: event.target.value } }))} />
         </Field>
-        <Field label="Photo URL">
-          <Input value={profile.photo || ''} placeholder="Link to photo" onChange={(event) => setProfile((prev) => ({ ...prev, photo: event.target.value }))} />
-        </Field>
+        {profile.photo ? (
+          <div className="col-span-2 grid gap-2">
+            <Field label="Photo URL">
+              <Input value={profile.photo} placeholder="Link to photo" onChange={(event) => setProfile((prev) => ({ ...prev, photo: event.target.value }))} />
+            </Field>
+            <div className="flex items-center gap-3">
+              <img src={profile.photo} alt="Profile" className="h-16 w-16 rounded-full object-cover border border-slate-200" />
+              <button type="button" className="text-xs text-slate-500 underline" onClick={handlePhotoRemove}>
+                Remove photo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <label className="col-span-2 block">
+            <div className="mb-1 text-xs font-semibold text-slate-600">Upload photo</div>
+            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="text-sm" />
+          </label>
+        )}
       </div>
     </div>
   );
 }
+
 
 function SummaryForm({ profile, setProfile }: EditorProps) {
   return (
@@ -683,3 +854,4 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
+

@@ -2,6 +2,8 @@ import { Profile } from '@/components/resume/types';
 
 export const emptyProfile = (): Profile => ({
   name: '',
+  firstName: '',
+  lastName: '',
   role: '',
   summary: '',
   contacts: { email: '', phone: '', location: '', website: '', linkedin: '' },
@@ -13,4 +15,3 @@ export const emptyProfile = (): Profile => ({
 
 export const emptyResumeData: Profile = emptyProfile();
 export const emptyCVData: Profile = emptyProfile();
-
