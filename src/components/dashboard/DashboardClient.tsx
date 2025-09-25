@@ -95,7 +95,7 @@ export default function DashboardClient() {
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<ProfileForm>({ firstName: '', lastName: '', email: '', phone: '', photo: '' });
-  const [profileInitialized, setProfileInitialized] = useState(false);
+  const profileInitializedRef = useRef(false);
 
   const [viewId, setViewId] = useState<string | null>(null);
 
@@ -123,7 +123,7 @@ export default function DashboardClient() {
 
         setMe(user);
 
-        if (!profileInitialized) {
+        if (!profileInitializedRef.current) {
           setProfile({
             firstName: user.company?.name || '',
             lastName: user.company?.vat || '',
@@ -131,7 +131,7 @@ export default function DashboardClient() {
             phone: user.company?.address1 || '',
             photo: user.company?.logoUrl || '',
           });
-          setProfileInitialized(true)
+          profileInitializedRef.current = true;
         }
 
         try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: user.tokenBalance }); } catch {}
@@ -341,7 +341,7 @@ export default function DashboardClient() {
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         setProfile(prev => ({ ...prev, photo: reader.result as string }));
-        setProfileInitialized(true);
+        profileInitializedRef.current = true;
       }
     };
 
@@ -390,6 +390,7 @@ export default function DashboardClient() {
         photo: company?.logoUrl || '',
 
       });
+      profileInitializedRef.current = true;
 
       setMe(prev => prev ? { ...prev, company } : prev);
 
