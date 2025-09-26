@@ -11,6 +11,7 @@ import DocumentA4 from '@/components/pdf/DocumentA4';
 import InvoiceA4 from '@/components/pdf/InvoiceA4';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 
 
@@ -76,6 +77,7 @@ function int(n: number) { try { return new Intl.NumberFormat().format(Math.round
 
 export default function DashboardClient() {
 
+  const router = useRouter();
   const bcRef = useRef<BroadcastChannel | null>(null);
 
   const [me, setMe] = useState<Me | null>(null);
@@ -259,6 +261,20 @@ export default function DashboardClient() {
   };
 
 
+
+  const handleEditDocument = (document: any) => {
+    if (!document) return;
+    const docType = (document as any).docType === 'cv' ? 'cv' : 'resume';
+    const basePath = docType === 'cv' ? '/create-cv' : '/create-resume';
+    const data: any = (document as any).data || {};
+    const templateKey = data.template ?? data.templateKey ?? (document as any).template;
+    const params = new URLSearchParams();
+    params.set('documentId', document.id);
+    if (typeof templateKey === 'string' && templateKey) {
+      params.set('template', templateKey);
+    }
+    router.push(`${basePath}?${params.toString()}`);
+  };
 
   const handleViewDocument = (document: any) => {
     if (!document) return;
@@ -547,7 +563,15 @@ export default function DashboardClient() {
 
                   <tbody>
 
-                    {invView.map(inv => (
+                    {invView.map((inv) => {
+                      const rawStatus = ((inv as any).status ?? (inv as any).statusMessage ?? inv.status ?? 'Draft') as string;
+                      const statusLabel = typeof rawStatus === 'string' ? rawStatus : 'Draft';
+                      const docType = (inv as any).docType;
+                      const isResumeDocument = docType === 'cv' || docType === 'resume';
+                      const normalizedStatus = statusLabel.toString().trim().toLowerCase();
+                      const isDraft = isResumeDocument && normalizedStatus === 'draft';
+
+                      return (
 
                       <React.Fragment key={inv.id}>
 
@@ -557,7 +581,7 @@ export default function DashboardClient() {
 
                           <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{new Date(inv.updatedAt).toISOString().slice(0,10)}</td>
 
-                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{(inv as any).status || (inv as any).statusMessage || inv.status || 'Draft'}</td>
+                          <td className={`px-3 py-2 ${viewId===inv.id ? 'border-t-2 border-black' : ''}`}>{statusLabel}</td>
 
                           <td className={`px-3 py-2 text-right ${viewId===inv.id ? 'border-t-2 border-r-2 border-black rounded-tr-xl' : ''}`}>
                             <div className="flex justify-end gap-2">
@@ -567,7 +591,16 @@ export default function DashboardClient() {
                               >
                                 {(inv as any).docType === 'cv' || (inv as any).docType === 'resume' ? 'View' : (viewId===inv.id ? 'Hide' : 'View')}
                               </button>
-                              <button className="text-sm underline" onClick={() => ensureReadyAndDownload(inv.id)}>Download</button>
+                              {isDraft ? (
+                                <button
+                                  className="text-sm underline"
+                                  onClick={() => handleEditDocument(inv)}
+                                >
+                                  Edit
+                                </button>
+                              ) : (
+                                <button className="text-sm underline" onClick={() => ensureReadyAndDownload(inv.id)}>Download</button>
+                              )}
                             </div>
                           </td>
 
@@ -629,7 +662,10 @@ export default function DashboardClient() {
 
                       </React.Fragment>
 
-                    ))}
+                    );
+
+                    })}
+
 
                   </tbody>
 
@@ -659,13 +695,11 @@ export default function DashboardClient() {
 
                       <th className="text-left px-3 py-2">Type</th>
 
-                      <th className="text-left px-3 py-2">Number</th>
 
                       <th className="text-right px-3 py-2">Delta</th>
 
                       <th className="text-right px-3 py-2">Balance</th>
 
-                      <th className="text-right px-3 py-2">Receipt</th>
 
                     </tr>
 
@@ -681,13 +715,11 @@ export default function DashboardClient() {
 
                         <td className="px-3 py-2">{row.type}</td>
 
-                        <td className="px-3 py-2">{row.invoiceNumber || '-'}</td>
 
                         <td className={`px-3 py-2 text-right ${row.delta>0?'text-emerald-700':'text-slate-900'}`}>{row.delta>0? `+${int(row.delta)}` : `-${int(Math.abs(row.delta))}`} tokens</td>
 
                         <td className="px-3 py-2 text-right">{int(row.balanceAfter)}</td>
 
-                        <td className="px-3 py-2 text-right">{row.type==='Top-up' || row.type === 'STRIPE_PURCHASE' ? <a className="underline text-sm" href={row.receiptUrl||'#'} target="_blank" rel="noopener noreferrer">Receipt</a> : '-'}</td>
 
                       </tr>
 

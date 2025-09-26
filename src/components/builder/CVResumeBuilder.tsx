@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { ResumeTemplates, ResumeTemplateKey, Profile } from '@/components/resume';
+import { useSearchParams } from 'next/navigation';
 import { ScaledA4 } from '@/components/resume/ui';
 
 export type DocType = 'resume' | 'cv';
@@ -74,6 +75,65 @@ function emptyProfile(): Profile {
   };
 }
 
+function coerceProfileData(input: any): Profile {
+  const base = emptyProfile();
+  const firstName = typeof input?.firstName === 'string' ? input.firstName : '';
+  const lastName = typeof input?.lastName === 'string' ? input.lastName : '';
+  const fullNameSource = typeof input?.name === 'string' ? input.name : '';
+  const experience = Array.isArray(input?.experience)
+    ? input.experience.map((exp: any) => ({
+        id: typeof exp?.id === 'string' ? exp.id : Math.random().toString(36).slice(2),
+        title: typeof exp?.title === 'string' ? exp.title : '',
+        company: typeof exp?.company === 'string' ? exp.company : '',
+        location: typeof exp?.location === 'string' ? exp.location : '',
+        start: typeof exp?.start === 'string' ? exp.start : '',
+        end: typeof exp?.end === 'string' ? exp.end : '',
+        points: Array.isArray(exp?.points) ? exp.points.filter((p: any) => typeof p === 'string') : [],
+      }))
+    : [];
+
+  const education = Array.isArray(input?.education)
+    ? input.education.map((ed: any) => ({
+        id: typeof ed?.id === 'string' ? ed.id : Math.random().toString(36).slice(2),
+        degree: typeof ed?.degree === 'string' ? ed.degree : '',
+        school: typeof ed?.school === 'string' ? ed.school : '',
+        year: typeof ed?.year === 'string' ? ed.year : '',
+        location: typeof ed?.location === 'string' ? ed.location : '',
+      }))
+    : [];
+
+  const skills = Array.isArray(input?.skills) ? input.skills.filter((s: any) => typeof s === 'string') : [];
+
+  const contacts = (input?.contacts ?? {}) as Record<string, unknown>;
+  const email = typeof contacts?.email === 'string' ? (contacts.email as string) : (typeof input?.email === 'string' ? input.email : '');
+  const phone = typeof contacts?.phone === 'string' ? (contacts.phone as string) : (typeof input?.phone === 'string' ? input.phone : '');
+  const location = typeof contacts?.location === 'string' ? (contacts.location as string) : (typeof input?.location === 'string' ? input.location : '');
+  const website = typeof contacts?.website === 'string' ? (contacts.website as string) : (typeof input?.website === 'string' ? input.website : '');
+  const linkedin = typeof contacts?.linkedin === 'string' ? (contacts.linkedin as string) : (typeof input?.linkedin === 'string' ? input.linkedin : '');
+
+  const computedName = fullNameSource && fullNameSource.trim() ? fullNameSource : composeFullName(firstName, lastName);
+
+  return {
+    ...base,
+    name: computedName,
+    firstName,
+    lastName,
+    role: typeof input?.role === 'string' ? input.role : '',
+    summary: typeof input?.summary === 'string' ? input.summary : '',
+    contacts: {
+      email,
+      phone,
+      location,
+      website,
+      linkedin,
+    },
+    experience,
+    education,
+    skills,
+    photo: typeof input?.photo === 'string' ? input.photo : base.photo,
+  };
+}
+
 function mutateExp(
   setProfile: React.Dispatch<React.SetStateAction<Profile>>,
   id: string,
@@ -128,6 +188,10 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
   const [busy, setBusy] = React.useState<null | 'draft' | 'pdf' | 'docx'>(null);
   const [notice, setNotice] = React.useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const noticeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchParams = useSearchParams();
+  const documentIdFromQuery = searchParams.get('documentId');
+  const templateOverride = searchParams.get('template');
+  const [loadedDocumentId, setLoadedDocumentId] = React.useState<string | null>(null);
 
   const applyCompanyProfile = React.useCallback((company: any) => {
     if (!company) return;
@@ -229,8 +293,65 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     noticeTimerRef.current = setTimeout(() => setNotice(null), 6000);
   }, [setProfiles]);
 
+  React.useEffect(() => {
+    if (!templateOverride) return;
+    const normalizedTemplate = normalizeTemplate(templateOverride);
+    setTemplatesByDoc((current) => ({
+      ...current,
+      [docType]: normalizedTemplate,
+    }));
+  }, [templateOverride, docType]);
 
-const template = templatesByDoc[docType];
+  React.useEffect(() => {
+    if (!documentIdFromQuery || loadedDocumentId === documentIdFromQuery) return;
+    let cancelled = false;
+
+    const loadExisting = async () => {
+      try {
+        const response = await fetch(`/api/documents/${documentIdFromQuery}`, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Failed to load document');
+        }
+        const payload = await response.json().catch(() => null);
+        const doc = payload?.document;
+        if (!doc) {
+          throw new Error('Document not found');
+        }
+        if (cancelled) return;
+        const docTypeFromDoc: DocType = doc.docType === 'cv' ? 'cv' : 'resume';
+        const templateFromDoc = doc?.data?.template ?? doc?.data?.templateKey ?? doc.template;
+        const profileSource = doc?.data?.profile ?? doc?.data?.data?.profile ?? doc?.profile ?? doc?.data ?? {};
+        const hydratedProfile = coerceProfileData(profileSource);
+
+        setDocType(docTypeFromDoc);
+        if (typeof templateFromDoc === 'string' && templateFromDoc) {
+          const nextTemplate = normalizeTemplate(templateFromDoc);
+          setTemplatesByDoc((current) => ({
+            ...current,
+            [docTypeFromDoc]: nextTemplate,
+          }));
+        }
+        setProfiles((current) => ({
+          ...current,
+          [docTypeFromDoc]: hydratedProfile,
+        }));
+        setLoadedDocumentId(documentIdFromQuery);
+        setStep('personal');
+      } catch (error) {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : 'Failed to load document';
+        pushNotice('error', message);
+      }
+    };
+
+    loadExisting();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [documentIdFromQuery, loadedDocumentId, pushNotice]);
+
+  const template = templatesByDoc[docType];
   const profile = profiles[docType];
   const SelectedTemplate = ResumeTemplates[template] ?? ResumeTemplates.classic;
 
@@ -648,7 +769,6 @@ function PersonalForm({ profile, setProfile }: EditorProps) {
   );
 }
 
-
 function SummaryForm({ profile, setProfile }: EditorProps) {
   return (
     <div>
@@ -854,4 +974,5 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
+
 

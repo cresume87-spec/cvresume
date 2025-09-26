@@ -2,7 +2,7 @@ import CVResumeBuilder, { BUILDER_TEMPLATE_KEYS } from '@/components/builder/CVR
 import { ResumeTemplateKey } from '@/components/resume';
 
 type PageProps = {
-  searchParams?: Promise<{ template?: string }>;
+  searchParams?: Promise<{ template?: string; documentId?: string }>;
 };
 
 const isTemplateKey = (value?: string): value is ResumeTemplateKey =>
@@ -13,3 +13,4 @@ export default async function CreateCvPage({ searchParams }: PageProps) {
   const template = isTemplateKey(params.template) ? params.template : undefined;
   return <CVResumeBuilder initialDocType="cv" initialTemplate={template} />;
 }
+
