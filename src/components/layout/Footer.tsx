@@ -2,8 +2,15 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/print-resume')) {
+    return null;
+  }
+
   return (
     <motion.footer
       className="py-10 border-t border-[#E2E8F0] mt-10"
@@ -73,3 +80,4 @@ export default function Footer() {
     </motion.footer>
   );
 }
+

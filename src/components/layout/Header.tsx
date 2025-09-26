@@ -99,6 +99,10 @@ export default function Header() {
     return () => { try { document.body.style.overflow = ''; } catch {} };
   }, [mobileOpen, mounted]);
 
+  if (pathname?.startsWith('/print-resume')) {
+    return null;
+  }
+
   return (
     <motion.header 
       className="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-[#E2E8F0]"
@@ -273,3 +277,4 @@ export default function Header() {
     </motion.header>
   );
 }
+
