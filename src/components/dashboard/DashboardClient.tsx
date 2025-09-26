@@ -27,7 +27,7 @@ type Company = { name: string; vat?: string; reg?: string; address1?: string; ci
 
 type Me = { id: string; name: string | null; email: string | null; tokenBalance: number; currency: Currency; company: Company | null };
 
-type MarkReadyResult = { ok: boolean; err?: string };
+type MarkReadyResult = { ok: boolean; err?: string; document?: any };
 
 type ProfileForm = { firstName: string; lastName: string; email: string; phone: string; photo: string };
 
@@ -218,7 +218,49 @@ export default function DashboardClient() {
 
 
 
-  const markReadyIfDraft = async (_id: string): Promise<MarkReadyResult> => ({ ok: true });
+  const markReadyIfDraft = async (document: any): Promise<MarkReadyResult> => {
+    if (!document) return { ok: false, err: 'Document not found' };
+    const docType = String((document as any).docType ?? '').toLowerCase();
+    const statusRaw = String((document as any).status ?? '').toLowerCase();
+
+    const isResumeDoc = docType === 'cv' || docType === 'resume';
+    if (!isResumeDoc) return { ok: true, document };
+
+    if (statusRaw === 'draft') {
+      return { ok: false, err: 'This draft is not export-ready yet. Use export actions to generate a file.' };
+    }
+
+    if (statusRaw === 'sent') {
+      try {
+        const res = await fetch(`/api/resume/manager/${document.id}/release`, { method: 'POST' });
+        if (res.status === 202) {
+          const pendingPayload = await res.json().catch(() => ({}));
+          const releaseAtIso = typeof pendingPayload?.releaseAt === 'string' ? pendingPayload.releaseAt : null;
+          if (releaseAtIso) {
+            const releaseAt = new Date(releaseAtIso);
+            const formatted = Number.isNaN(releaseAt.getTime())
+              ? 'within the next few hours'
+              : releaseAt.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+            return { ok: false, err: `Personal manager is still working on it. Expected by ${formatted}.` };
+          }
+          return { ok: false, err: 'Personal manager is still working on it. Please try again later.' };
+        }
+        if (!res.ok) {
+          const errorPayload = await res.json().catch(() => ({}));
+          return { ok: false, err: errorPayload?.error || 'Unable to finalize manager document' };
+        }
+        const payload = await res.json().catch(() => ({}));
+        const updated = payload?.document ?? document;
+        setInvoices((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+        if (viewInv?.id === updated.id) setViewInv(updated);
+        return { ok: true, document: updated };
+      } catch (error) {
+        return { ok: false, err: error instanceof Error ? error.message : 'Unable to finalize manager document' };
+      }
+    }
+
+    return { ok: true, document };
+  };
 
 
 
@@ -228,14 +270,13 @@ export default function DashboardClient() {
 
     if (!invFull) { alert('Document not found'); return; }
 
-    const mark = await markReadyIfDraft(id);
-
+    const mark = await markReadyIfDraft(invFull);
     if (!mark.ok) { alert(mark.err || 'Failed'); return; }
-
-    const docType = (invFull as any).docType;
+    const resolvedDoc = mark.document ?? invFull;
+    const docType = (resolvedDoc as any).docType;
     const isResumeDocument = docType === 'cv' || docType === 'resume';
     const downloadPath = isResumeDocument ? `/api/resume/pdf/${id}` : `/api/pdf/${id}`;
-    const fallbackName = invFull.title || (isResumeDocument ? (docType === 'cv' ? 'CV' : 'Resume') : 'Document');
+    const fallbackName = (resolvedDoc as any).title || (isResumeDocument ? (docType === 'cv' ? 'CV' : 'Resume') : 'Document');
 
     try {
       const res = await fetch(downloadPath);
@@ -867,7 +908,7 @@ export default function DashboardClient() {
 
 
 
-                const r = await markReadyIfDraft(viewInv.id);
+                const r = await markReadyIfDraft(viewInv);
 
                 if (r.ok) {
 
@@ -1424,6 +1465,12 @@ function ModalInvoiceView({ invoice, onClose, onDownload, onSendEmail, onRefresh
   );
 
 }
+
+
+
+
+
+
 
 
 

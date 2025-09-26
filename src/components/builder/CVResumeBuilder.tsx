@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import { ResumeTemplates, ResumeTemplateKey, Profile } from '@/components/resume';
@@ -184,7 +184,7 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     cv: emptyProfile(),
   }));
   const bcRef = React.useRef<BroadcastChannel | null>(null);
-  const [busy, setBusy] = React.useState<null | 'draft' | 'pdf' | 'docx'>(null);
+  const [busy, setBusy] = React.useState<null | 'draft' | 'pdf' | 'docx' | 'ai' | 'manager'>(null);
   const [notice, setNotice] = React.useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const noticeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchParams = useSearchParams();
@@ -488,13 +488,92 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     [busy, createDocument, downloadBinary, pushNotice, sanitizeFilename],
   );
 
-  const handleManager = () => {
-    alert('Personal manager request sent. -800 tokens');
-  };
+  const handleAI = React.useCallback(async () => {
+    if (busy) return;
+    setBusy('ai');
+    setNotice(null);
+    try {
+      const response = await fetch('/api/resume/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ai',
+          docType,
+          template,
+          profile,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to improve resume');
+      }
+      if (payload?.profile) {
+        const nextProfile = coerceProfileData(payload.profile);
+        setProfiles((current) => ({ ...current, [docType]: nextProfile }));
+      }
+      if (typeof payload?.tokenBalance === 'number') {
+        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: payload.tokenBalance }); } catch {}
+      }
+      try { bcRef.current?.postMessage({ type: 'documents-updated' }); } catch {}
+      const docSummary = payload?.document as { id: string; title?: string } | undefined;
+      if (docSummary?.id) {
+        const fallback = docSummary.title || `${docType === 'cv' ? 'CV' : 'Resume'} AI`;
+        const filename = sanitizeFilename(fallback, 'pdf');
+        await downloadBinary(`/api/resume/pdf/${docSummary.id}`, filename);
+      }
+      pushNotice('success', 'AI polished your document and downloaded the PDF.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to improve resume';
+      pushNotice('error', message);
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, docType, template, profile, downloadBinary, pushNotice, setProfiles]);
 
-  const handleAI = () => {
-    alert('Improve with AI triggered. -200 tokens');
-  };
+  const handleManager = React.useCallback(async () => {
+    if (busy) return;
+    setBusy('manager');
+    setNotice(null);
+    try {
+      const response = await fetch('/api/resume/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'manager',
+          docType,
+          template,
+          profile,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to send to personal manager');
+      }
+      if (payload?.profile) {
+        const nextProfile = coerceProfileData(payload.profile);
+        setProfiles((current) => ({ ...current, [docType]: nextProfile }));
+      }
+      if (typeof payload?.tokenBalance === 'number') {
+        try { bcRef.current?.postMessage({ type: 'tokens-updated', tokenBalance: payload.tokenBalance }); } catch {}
+      }
+      try { bcRef.current?.postMessage({ type: 'documents-updated' }); } catch {}
+      const releaseAtIso = typeof payload?.releaseAt === 'string' ? payload.releaseAt : null;
+      if (releaseAtIso) {
+        const releaseAt = new Date(releaseAtIso);
+        const formatted = Number.isNaN(releaseAt.getTime())
+          ? 'within the next few hours'
+          : releaseAt.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+        pushNotice('success', `Request sent. Your personal manager will share the polished ${docType === 'cv' ? 'CV' : 'resume'} by ${formatted}.`);
+      } else {
+        pushNotice('success', 'Request sent to your personal manager. Expect an update within 3-6 hours.');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to send to personal manager';
+      pushNotice('error', message);
+    } finally {
+      setBusy(null);
+    }
+  }, [busy, docType, template, profile, pushNotice, setProfiles]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -605,11 +684,43 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
             <div className="font-semibold">AI assist</div>
             <p className="mt-1 text-slate-600">Let our model rewrite selected sections or generate bullet ideas.</p>
             <div className="mt-3 flex flex-col gap-2">
-              <button id="btn-ai" className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100" onClick={handleAI}>
-                Improve with AI (200 tok.)
+              <button
+                id="btn-ai"
+                className={`relative overflow-hidden rounded-md px-3 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  busy === 'ai'
+                    ? 'border border-transparent bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-sky-500 text-white shadow-lg animate-pulse'
+                    : 'border border-slate-300 text-slate-900 hover:bg-slate-100'
+                }`}
+                onClick={handleAI}
+                disabled={busy !== null}
+              >
+                {busy === 'ai' ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
+                    We are creating the perfect {docType === 'cv' ? 'CV' : 'resume'} for you...
+                  </span>
+                ) : (
+                  'Improve with AI (200 tok.)'
+                )}
               </button>
-              <button id="btn-manager" className="rounded-md bg-slate-900 px-3 py-2 font-semibold text-white hover:bg-slate-800" onClick={handleManager}>
-                Send to personal manager (800 tok.)
+              <button
+                id="btn-manager"
+                className={`rounded-md px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  busy === 'manager'
+                    ? 'bg-emerald-600 text-white shadow-inner'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
+                onClick={handleManager}
+                disabled={busy !== null}
+              >
+                {busy === 'manager' ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
+                    Sending to your personal manager...
+                  </span>
+                ) : (
+                  'Send to personal manager (800 tok.)'
+                )}
               </button>
             </div>
           </div>
@@ -973,8 +1084,3 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
-
-
-
-
-
