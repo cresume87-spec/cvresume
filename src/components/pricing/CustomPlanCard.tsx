@@ -7,7 +7,7 @@ import type { Currency } from '@/lib/plans';
 
 export default function CustomPlanCard({ currency, onRequest }: { currency: Currency; onRequest: () => void; }) {
   const [priceInput, setPriceInput] = useState<string>('5');
-  const TOKENS_PER_UNIT = 1;
+  const TOKENS_PER_UNIT = 100;
   const min = 5;
   const numericPrice = parseFloat(priceInput || '0');
   const validNumber = Number.isFinite(numericPrice);
@@ -64,5 +64,6 @@ export default function CustomPlanCard({ currency, onRequest }: { currency: Curr
     </motion.div>
   );
 }
+
 
 

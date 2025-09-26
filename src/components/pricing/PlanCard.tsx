@@ -37,7 +37,7 @@ export default function PlanCard({ name, popular, badgeText, bullets, cta, onAct
 
   const computedTokens = (() => {
     if (typeof tokens === 'number') return Math.max(0, Math.round(tokens));
-    const TOKENS_PER_UNIT = 1; // 10 GBP/EUR => 10 tokens
+    const TOKENS_PER_UNIT = 100; // 1 GBP/EUR = 100 tokens
     return Math.max(0, Math.round(resolvedAmount.amount * TOKENS_PER_UNIT));
   })();
 
@@ -91,4 +91,5 @@ export default function PlanCard({ name, popular, badgeText, bullets, cta, onAct
     </motion.div>
   );
 }
+
 

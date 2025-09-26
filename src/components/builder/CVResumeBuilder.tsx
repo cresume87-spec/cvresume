@@ -454,7 +454,7 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
     setNotice(null);
     try {
       const result = await createDocument('draft');
-      const charged = result.charge ?? 10;
+      const charged = result.charge ?? 100;
       pushNotice('success', `Draft saved to dashboard. Spent ${charged} tokens.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to save draft';
@@ -475,7 +475,7 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
         const filename = sanitizeFilename(documentSummary?.title, format);
         const endpoint = format === 'pdf' ? `/api/resume/pdf/${documentSummary.id}` : `/api/resume/docx/${documentSummary.id}`;
         await downloadBinary(endpoint, filename);
-        const charged = result.charge ?? 15;
+        const charged = result.charge ?? 150;
         pushNotice('success', `${format.toUpperCase()} ready. Spent ${charged} tokens.`);
       } catch (error) {
         const message =
@@ -489,11 +489,11 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
   );
 
   const handleManager = () => {
-    alert('Personal manager request sent. -80 tokens');
+    alert('Personal manager request sent. -800 tokens');
   };
 
   const handleAI = () => {
-    alert('Improve with AI triggered. -20 tokens');
+    alert('Improve with AI triggered. -200 tokens');
   };
 
   return (
@@ -539,10 +539,10 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
             <div className="font-semibold">Costs</div>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <CostPill label="Create" value="10 tok." />
-              <CostPill label="Export" value="15 tok." />
-              <CostPill label="Manager" value="80 tok." />
-              <CostPill label="AI" value="20 tok." />
+              <CostPill label="Create" value="100 tok." />
+              <CostPill label="Export" value="150 tok." />
+              <CostPill label="Manager" value="800 tok." />
+              <CostPill label="AI" value="200 tok." />
             </div>
           </div>
         </aside>
@@ -575,21 +575,21 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
                 onClick={handleCreateDraft}
                 disabled={busy !== null}
               >
-                {busy === 'draft' ? 'Creating draft...' : 'Create (10 tok.)'}
+                {busy === 'draft' ? 'Creating draft...' : 'Create (100 tok.)'}
               </button>
               <button
                 className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => handleExport('pdf')}
                 disabled={busy !== null}
               >
-                {busy === 'pdf' ? 'Creating PDF...' : 'Create & Export PDF (15 tok.)'}
+                {busy === 'pdf' ? 'Creating PDF...' : 'Create & Export PDF (150 tok.)'}
               </button>
               <button
                 className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => handleExport('docx')}
                 disabled={busy !== null}
               >
-                {busy === 'docx' ? 'Creating DOCX...' : 'Create & Export DOCX (15 tok.)'}
+                {busy === 'docx' ? 'Creating DOCX...' : 'Create & Export DOCX (150 tok.)'}
               </button>
             </div>
             {notice && (
@@ -606,10 +606,10 @@ export default function CVResumeBuilder({ initialDocType, initialTemplate }: Bui
             <p className="mt-1 text-slate-600">Let our model rewrite selected sections or generate bullet ideas.</p>
             <div className="mt-3 flex flex-col gap-2">
               <button id="btn-ai" className="rounded-md border border-slate-300 px-3 py-2 hover:bg-slate-100" onClick={handleAI}>
-                Improve with AI (20 tok.)
+                Improve with AI (200 tok.)
               </button>
               <button id="btn-manager" className="rounded-md bg-slate-900 px-3 py-2 font-semibold text-white hover:bg-slate-800" onClick={handleManager}>
-                Send to personal manager (80 tok.)
+                Send to personal manager (800 tok.)
               </button>
             </div>
           </div>
@@ -973,6 +973,7 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
+
 
 
 
