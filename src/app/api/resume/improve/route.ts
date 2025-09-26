@@ -166,6 +166,56 @@ function mergeProfiles(base: Profile, patchInput: any): Profile {
   return merged;
 }
 
+const MAX_SUMMARY_LENGTH = 1200;
+const MAX_EXPERIENCES = 6;
+const MAX_POINTS_PER_EXPERIENCE = 6;
+const MAX_POINT_LENGTH = 280;
+const MAX_EDUCATION_ENTRIES = 5;
+const MAX_SKILLS = 30;
+
+function prepareProfileForModel(profile: Profile): Profile {
+  const clone = JSON.parse(JSON.stringify(profile)) as Profile;
+
+  if (clone.photo && clone.photo.startsWith('data:')) {
+    clone.photo = '';
+  }
+
+  if (clone.summary) {
+    clone.summary = clone.summary.slice(0, MAX_SUMMARY_LENGTH);
+  }
+
+  clone.contacts = {
+    email: clone.contacts.email.slice(0, 320),
+    phone: clone.contacts.phone.slice(0, 80),
+    location: clone.contacts.location.slice(0, 160),
+    website: clone.contacts.website.slice(0, 320),
+    linkedin: clone.contacts.linkedin.slice(0, 320),
+  };
+
+  clone.experience = clone.experience.slice(0, MAX_EXPERIENCES).map((item) => ({
+    ...item,
+    title: item.title.slice(0, 160),
+    company: item.company.slice(0, 160),
+    location: item.location.slice(0, 160),
+    start: item.start.slice(0, 40),
+    end: item.end.slice(0, 40),
+    points: item.points.slice(0, MAX_POINTS_PER_EXPERIENCE).map((point) => point.slice(0, MAX_POINT_LENGTH)),
+  }));
+
+  clone.education = clone.education.slice(0, MAX_EDUCATION_ENTRIES).map((item) => ({
+    ...item,
+    degree: item.degree.slice(0, 160),
+    school: item.school.slice(0, 160),
+    year: item.year.slice(0, 40),
+    location: item.location.slice(0, 160),
+  }));
+
+  clone.skills = clone.skills.slice(0, MAX_SKILLS).map((skill) => skill.slice(0, 80)).filter(Boolean);
+
+  return clone;
+}
+
+
 function buildPrompt(profile: Profile, docType: DocType, action: Action): string {
   const label = docType === 'cv' ? 'CV' : 'resume';
   const tone =
@@ -210,7 +260,8 @@ function buildPrompt(profile: Profile, docType: DocType, action: Action): string
 async function improveProfileWithAI(profile: Profile, docType: DocType, action: Action): Promise<Profile> {
   const client = getOpenAIClient();
   const model = getDefaultOpenAIModel();
-  const prompt = buildPrompt(profile, docType, action);
+  const promptProfile = prepareProfileForModel(profile);
+  const prompt = buildPrompt(promptProfile, docType, action);
 
   const response = await client.chat.completions.create({
     model,
