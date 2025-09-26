@@ -4,6 +4,7 @@ import * as React from 'react';
 import { ResumeTemplates, ResumeTemplateKey, Profile } from '@/components/resume';
 import { useSearchParams } from 'next/navigation';
 import { ScaledA4 } from '@/components/resume/ui';
+import { BUILDER_TEMPLATE_KEYS } from '@/lib/resume/templates';
 
 export type DocType = 'resume' | 'cv';
 
@@ -11,8 +12,6 @@ type BuilderProps = {
   initialDocType?: DocType | string;
   initialTemplate?: ResumeTemplateKey | string;
 };
-
-export const BUILDER_TEMPLATE_KEYS: ResumeTemplateKey[] = ['classic', 'split', 'serif', 'tech'];
 
 const TEMPLATE_LABELS: Record<ResumeTemplateKey, string> = {
   classic: 'Classic ATS',
@@ -974,5 +973,7 @@ export function runBuilderSmokeTests() {
     { name: 'Manager button present', pass: !!managerButton },
   ];
 }
+
+
 
 
