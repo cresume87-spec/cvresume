@@ -49,7 +49,7 @@ const ISSUES: TroubleshootingIssue[] = [
       'Drafting and previewing invoices is free',
       'Tokens are only deducted when you Issue/Send/Download',
       'Top up your account with more tokens',
-      'Each invoice costs exactly 10 tokens'
+      'Each invoice costs exactly 100 tokens'
     ],
     links: [
       { text: 'View balance', href: '/dashboard' },

@@ -290,7 +290,7 @@ export default function InvoiceForm({ signedIn }: InvoiceFormProps) {
         await fetch('/api/company', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: sender.company, vat: sender.vat, address1: sender.address, city: sender.city, country: sender.country, iban: sender.iban, logoUrl: logo || undefined, bankName: sender.bankName, bic: sender.bic }) });
       } catch {}
 
-      // Create neutral document (charges 10 tokens)
+      // Create neutral document (charges 100 tokens)
       const createRes = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -376,7 +376,7 @@ const sendEmail = async () => {
     setBusy('email');
     setBanner(null);
     try {
-      // Create document first (charges 10 tokens)
+      // Create document first (charges 100 tokens)
       const createRes = await fetch('/api/documents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

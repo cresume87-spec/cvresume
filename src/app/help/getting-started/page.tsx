@@ -79,7 +79,7 @@ const STEPS = [
     ],
     cta: 'Open generator',
     ctaLink: '/create-cv',
-    note: 'Issuing an invoice deducts 10 tokens from your balance',
+    note: 'Issuing an invoice deducts 100 tokens from your balance',
     icon: '📤'
   }
 ];

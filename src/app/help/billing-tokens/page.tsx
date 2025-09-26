@@ -86,7 +86,7 @@ export default function BillingTokensPage() {
                     <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-2xl">📄</span>
                     </div>
-                    <h3 className="font-semibold text-slate-900 mb-2">1 invoice = 10 tokens</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">1 invoice = 100 tokens</h3>
                     <p className="text-sm text-slate-600">Fixed cost per invoice</p>
                   </div>
                 </div>

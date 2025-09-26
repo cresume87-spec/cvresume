@@ -20,7 +20,7 @@ export async function GET() {
   }
 }
 
-// Create a document and charge tokens (configurable, default 10)
+// Create a document and charge tokens (configurable, default 100)
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,8 +32,8 @@ export async function POST(req: Request) {
   const actionRaw = typeof body.action === 'string' ? body.action.toLowerCase() : 'draft';
   const allowedActions = new Set(['draft', 'export-pdf', 'export-docx']);
   const action = allowedActions.has(actionRaw) ? actionRaw : 'draft';
-  const draftCharge = Number(process.env.TOKENS_PER_DOCUMENT || 10);
-  const exportCharge = Number(process.env.TOKENS_PER_EXPORT || 15);
+  const draftCharge = Number(process.env.TOKENS_PER_DOCUMENT || 100);
+  const exportCharge = Number(process.env.TOKENS_PER_EXPORT || 150);
   const chargeMap: Record<string, number> = {
     draft: draftCharge,
     'export-pdf': exportCharge,
@@ -80,5 +80,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to create document' }, { status: 500 });
   }
 }
+
 
 
