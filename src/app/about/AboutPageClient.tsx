@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     title: 'Edit, preview, export',
-    description: 'Work in your dashboard, preview on A4, download PDF/DOCX when you're ready.',
+    description: 'Work in your dashboard, preview on A4, download PDF/DOCX when you\'re ready.',
   },
   {
     title: 'Fair pricing with tokens',
@@ -52,7 +52,7 @@ const PRINCIPLES = [
   },
   {
     title: 'Own your data',
-    description: 'You control what's stored and when it's deleted.',
+    description: 'You control what\'s stored and when it\'s deleted.',
   },
   {
     title: 'No lock-in',
@@ -67,7 +67,7 @@ const TRUST_ITEMS = [
   },
   {
     title: 'Minimal data collection',
-    description: 'We store only what's needed to deliver the service. No full card data on our servers.',
+    description: 'We store only what\'s needed to deliver the service. No full card data on our servers.',
   },
   {
     title: 'Account controls',
@@ -257,7 +257,7 @@ export default function AboutPageClient() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className={`text-3xl font-bold ${THEME.text}`}>Questions? We're here to help</h2>
+          <h2 className={`text-3xl font-bold ${THEME.text}`}>Questions? We\'re here to help</h2>
           <p className={`mt-4 text-base ${THEME.muted}`}>Get in touch with our team for support, partnerships, or media inquiries.</p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button href="/contact" size="lg">Contact us</Button>
