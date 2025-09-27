@@ -7,7 +7,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import Section from '@/components/layout/Section';
-import Pill from '@/components/policy/Pill';
 import Button from '@/components/ui/Button';
 import Segmented from '@/components/ui/Segmented';
 import { CC, VAT_RATES } from '@/lib/constants';
@@ -17,6 +16,45 @@ import PlanCard from '@/components/pricing/PlanCard';
 import CustomPlanCard from '@/components/pricing/CustomPlanCard';
 
 const COUNTRIES = Object.keys(CC);
+
+const FAQ_ITEMS = [
+  {
+    question: 'Do prices include taxes?',
+    answer: 'Prices are shown excluding VAT. UK/EU VAT (or local taxes/fees) is calculated at checkout based on your billing details.',
+  },
+  {
+    question: 'How are tokens priced?',
+    answer: '£1.00 or €1.00 = 100 tokens. Typical actions: Create CV/Resume — 10 tokens, Export (PDF/DOCX) — 5 tokens, Improve with AI — 20 tokens, Personal manager — 80 tokens.',
+  },
+  {
+    question: 'Do tokens expire?',
+    answer: 'No. Tokens never expire.',
+  },
+  {
+    question: 'Can I cancel or get a refund?',
+    answer: 'Top-ups are pay-as-you-go and non-refundable once completed.',
+  },
+  {
+    question: 'Which payment methods do you support?',
+    answer: 'All major cards (Visa, Mastercard, Amex) and popular wallets (Apple Pay / Google Pay). Bank transfer available for larger orders on request.',
+  },
+  {
+    question: 'Which currencies can I pay in?',
+    answer: 'GBP and EUR. Your card may convert from another currency at your issuer’s rate.',
+  },
+  {
+    question: 'Do you issue invoices/receipts?',
+    answer: 'Yes. A receipt (and VAT invoice if applicable) is emailed after payment. Add your company details and VAT number at checkout.',
+  },
+  {
+    question: 'Is there a minimum top-up?',
+    answer: 'Minimum top-up is £5 / €5. Larger amounts are supported via the Custom option.',
+  },
+  {
+    question: 'Is my payment data secure?',
+    answer: 'Payments are processed by a PCI-DSS compliant provider. We don’t store full card details on our servers.',
+  },
+];
 
 function money(n: number, currency: Currency) {
   const locale = currency === 'GBP' ? 'en-GB' : 'en-IE';
@@ -75,7 +113,6 @@ export default function PricingClient() {
     <div className="bg-slate-50 min-h-screen">
       <Section className="py-12">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2"><Pill>UK-first</Pill><Pill>EU-ready</Pill><Pill>Prices exclude VAT</Pill></div>
           <h1 className="mt-4 text-3xl sm:text-4xl font-bold">Top-Up</h1>
           <p className="mt-2 text-slate-600">Choose a top-up, set your country & currency — we estimate VAT for transparency.</p>
 
@@ -110,48 +147,15 @@ export default function PricingClient() {
           <CustomPlanCard currency={currency} onRequest={() => handlePlanRequest('custom')} />
         </div>
 
-        <div className="mt-12 grid md:grid-cols-2 gap-6">
-          <div className="rounded-2xl border border-black/10 bg-white p-6">
-            <h3 className="text-lg font-semibold">FAQ</h3>
-            <div className="mt-4 space-y-4 text-sm text-slate-700">
-              <div>
-                <div className="font-medium">MOCK: Do prices include taxes?</div>
-                <p className="text-slate-600 mt-1">MOCK: Taxes/fees may apply at checkout based on your country and status. Replace with your final policy.</p>
+        <div className='mt-12 max-w-3xl mx-auto rounded-2xl border border-black/10 bg-white p-6'>
+          <h3 className='text-lg font-semibold'>FAQ</h3>
+          <div className='mt-4 space-y-4 text-sm text-slate-700'>
+            {FAQ_ITEMS.map((item) => (
+              <div key={item.question}>
+                <div className='font-medium'>{item.question}</div>
+                <p className='text-slate-600 mt-1'>{item.answer}</p>
               </div>
-              <div>
-                <div className="font-medium">MOCK: Can I cancel anytime?</div>
-                <p className="text-slate-600 mt-1">MOCK: Describe your cancellation/changes policy in one sentence.</p>
-              </div>
-              <div>
-                <div className="font-medium">MOCK: Which payment methods are supported?</div>
-                <p className="text-slate-600 mt-1">MOCK: Cards and popular wallets. Optional bank transfer on higher tiers.</p>
-              </div>
-              <div>
-                <div className="font-medium">MOCK: Do you issue invoices/receipts?</div>
-                <p className="text-slate-600 mt-1">MOCK: Yes — add your company details and tax info as required.</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-black/10 bg-white p-6">
-            <h3 className="text-lg font-semibold">Still not sure?</h3>
-            <div className="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
-              <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">MOCK: Feature A</div>
-                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
-              </div>
-              <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">MOCK: Feature B</div>
-                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
-              </div>
-              <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">MOCK: Feature C</div>
-                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
-              </div>
-              <div className="rounded-xl border border-dashed border-black/15 p-4">
-                <div className="font-medium">MOCK: Feature D</div>
-                <p className="text-slate-600 mt-1">MOCK: Short neutral description.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
         {!signedIn && (

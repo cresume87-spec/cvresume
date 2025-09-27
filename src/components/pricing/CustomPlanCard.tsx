@@ -8,7 +8,7 @@ import type { Currency } from '@/lib/plans';
 export default function CustomPlanCard({ currency, onRequest }: { currency: Currency; onRequest: () => void; }) {
   const [priceInput, setPriceInput] = useState<string>('5');
   const TOKENS_PER_UNIT = 100;
-  const min = 5;
+  const min = 0.01;
   const numericPrice = parseFloat(priceInput || '0');
   const validNumber = Number.isFinite(numericPrice);
 
@@ -48,13 +48,13 @@ export default function CustomPlanCard({ currency, onRequest }: { currency: Curr
         <span className="text-base font-normal text-slate-500">/one-time</span>
       </div>
       {(!validNumber || numericPrice < min) && (
-        <div className="mt-1 text-[11px] text-red-600">Minimum amount is {currencyLabel}5.00</div>
+        <div className="mt-1 text-[11px] text-red-600">Minimum amount is {currencyLabel}0.01</div>
       )}
       <div className="mt-1 text-xs text-slate-600">= {tokens} tokens</div>
       <ul className="mt-4 space-y-2 text-sm text-slate-700 list-disc pl-5">
         <li>Plan a manual top-up</li>
         <li>No subscription - pay what you need</li>
-        <li>Minimum {currencyLabel}5</li>
+        <li>Minimum {currencyLabel}0.01</li>
       </ul>
       <div className="mt-6">
         <Button className="w-full" size="lg" onClick={onRequest} disabled={!validNumber || numericPrice < min}>
