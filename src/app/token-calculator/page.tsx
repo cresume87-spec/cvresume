@@ -1,395 +1,311 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Segmented from '@/components/ui/Segmented';
 
-type Currency = 'GBP' | 'EUR';
+const TOKENS_PER_UNIT = 100;
+const MIN_TOP_UP = 0.01;
 
-const MIN_AMOUNT = 5;
-const MAX_AMOUNT = 500;
+type Currency = 'GBP' | 'EUR';
+type ActionKey = 'draft' | 'pdf' | 'docx' | 'ai' | 'manager';
+
+type ActionConfig = {
+  id: ActionKey;
+  label: string;
+  description: string;
+  tokens: number;
+};
+
+const ACTIONS: ActionConfig[] = [
+  {
+    id: 'draft',
+    label: 'Create draft',
+    description: 'Creates a draft CV/resume in your Dashboard.',
+    tokens: 100,
+  },
+  {
+    id: 'pdf',
+    label: 'Create & Export PDF',
+    description: 'Instantly generates a ready-to-download PDF.',
+    tokens: 150,
+  },
+  {
+    id: 'docx',
+    label: 'Create & Export DOCX',
+    description: 'Exports a DOCX version for further editing.',
+    tokens: 150,
+  },
+  {
+    id: 'ai',
+    label: 'Improve with AI',
+    description: 'Refines wording, structure, and impact using AI.',
+    tokens: 200,
+  },
+  {
+    id: 'manager',
+    label: 'Send to personal manager',
+    description: 'Specialist review with feedback in 3–6 hours.',
+    tokens: 800,
+  },
+];
 
 const FAQ_ITEMS = [
-  { question: 'MOCK: How do tokens work?', answer: 'MOCK: Buy tokens and use them for document actions as needed.' },
-  { question: 'MOCK: Do tokens expire?', answer: 'MOCK: Tokens typically do not expire. Replace with your policy.' },
-  { question: 'MOCK: Can I get a refund?', answer: 'MOCK: Add your refund policy summary here.' },
+  {
+    question: 'How does the calculator work?',
+    answer: 'Pick the actions you need — the calculator totals the tokens and shows the GBP/EUR equivalent at £1.00 / €1.00 = 100 tokens.',
+  },
+  {
+    question: 'Which actions can I estimate?',
+    answer: 'Create — 100 tokens. Create & Export PDF — 150 tokens. Create & Export DOCX — 150 tokens. Improve with AI — 200 tokens. Send to personal manager — 800 tokens.',
+  },
+  {
+    question: 'How accurate is the estimate?',
+    answer: 'It reflects current rates at the time of calculation. VAT/taxes are not included and will be added at checkout where applicable.',
+  },
 ];
 
-const MOCK_EXAMPLES: Array<{ currency: Currency; amount: number }> = [
-  { currency: 'GBP', amount: 10 },
-  { currency: 'EUR', amount: 50 },
+const EXAMPLES: Array<{
+  title: string;
+  description: string;
+  actions: Partial<Record<ActionKey, number>>;
+}> = [
+  {
+    title: 'One polished CV',
+    description: 'Create + AI polish + PDF export.',
+    actions: { draft: 1, ai: 1, pdf: 1 },
+  },
+  {
+    title: 'Job hunt weekend',
+    description: 'Two tailored resumes with AI and PDF exports.',
+    actions: { draft: 2, ai: 2, pdf: 2 },
+  },
+  {
+    title: 'Manager-assisted revamp',
+    description: 'Create, AI improve, and send to personal manager.',
+    actions: { draft: 1, ai: 1, manager: 1 },
+  },
+  {
+    title: 'Full team refresh',
+    description: 'Five drafts and four exports for a small team.',
+    actions: { draft: 5, pdf: 4 },
+  },
 ];
+
+function formatCurrency(amount: number, currency: Currency) {
+  const locale = currency === 'GBP' ? 'en-GB' : 'de-DE';
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function currencySymbol(currency: Currency) {
+  return currency === 'GBP' ? '£' : '€';
+}
 
 export default function TokenCalculatorPage() {
+  const bcRef = useRef<BroadcastChannel | null>(null);
   const [currency, setCurrency] = useState<Currency>('GBP');
-  const [amount, setAmount] = useState(50);
-  const [invoicesNeeded, setInvoicesNeeded] = useState(5);
-  const [isUpdatingFromAmount, setIsUpdatingFromAmount] = useState(false);
-  const [isUpdatingFromInvoices, setIsUpdatingFromInvoices] = useState(false);
+  const [counts, setCounts] = useState<Record<ActionKey, number>>(() =>
+    ACTIONS.reduce((acc, action) => {
+      acc[action.id] = 0;
+      return acc;
+    }, {} as Record<ActionKey, number>),
+  );
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.gtag?.('event', 'calc_open', {
-        page_title: 'Token Calculator',
-      });
+    try {
+      bcRef.current = new BroadcastChannel('app-events');
+      bcRef.current.onmessage = (event: MessageEvent) => {
+        const data: any = (event as MessageEvent).data;
+        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR')) {
+          setCurrency(data.currency);
+        }
+      };
+    } catch {
+      bcRef.current = null;
     }
+    return () => {
+      try {
+        bcRef.current?.close();
+      } catch {}
+    };
   }, []);
 
-  // Calculate tokens and invoices
-  const tokens = amount * 100;
-  const calculatedInvoices = Math.floor(tokens / 10);
-  const effectiveCostPerInvoice = amount / calculatedInvoices;
+  const totalTokens = useMemo(() => {
+    return ACTIONS.reduce((sum, action) => sum + counts[action.id] * action.tokens, 0);
+  }, [counts]);
 
-  // Sync invoices needed with amount (only when amount changes and not from invoices input)
-  useEffect(() => {
-    if (!isUpdatingFromInvoices && !isUpdatingFromAmount) {
-      const newInvoices = Math.floor(tokens / 10);
-      if (newInvoices !== invoicesNeeded && newInvoices > 0) {
-        setInvoicesNeeded(newInvoices);
-      }
-    }
-  }, [amount, tokens, invoicesNeeded, isUpdatingFromInvoices, isUpdatingFromAmount]);
+  const estimatedCost = totalTokens / TOKENS_PER_UNIT;
+  const recommendedTopUp = Math.max(MIN_TOP_UP, Math.ceil(estimatedCost * 100) / 100);
+  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : '€1.00';
 
-  const handleAmountChange = (value: string) => {
-    const numValue = parseFloat(value) || 0;
-    const clampedValue = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, numValue));
-    
-    setIsUpdatingFromAmount(true);
-    setAmount(clampedValue);
-    
-    // Update invoices after amount change
-    const newInvoices = Math.floor(clampedValue * 100 / 10);
-    setInvoicesNeeded(newInvoices);
-    
-    setTimeout(() => {
-      setIsUpdatingFromAmount(false);
-    }, 0);
-    
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.gtag?.('event', 'calc_change_amount', {
-        amount: clampedValue,
-        currency: currency,
+  const handleCountChange = (action: ActionKey, value: string) => {
+    const parsed = Math.max(0, Math.floor(Number(value) || 0));
+    setCounts((prev) => ({ ...prev, [action]: parsed }));
+  };
+
+  const applyExample = (exampleActions: Partial<Record<ActionKey, number>>) => {
+    setCounts((prev) => {
+      const next = { ...prev };
+      ACTIONS.forEach((action) => {
+        next[action.id] = exampleActions[action.id] ?? 0;
       });
-    }
+      return next;
+    });
   };
-
-  const handleInvoicesChange = (value: string) => {
-    const numValue = parseInt(value) || 0;
-    const newInvoices = Math.max(1, numValue);
-    
-    setIsUpdatingFromInvoices(true);
-    setInvoicesNeeded(newInvoices);
-    
-    // Update amount after invoices change
-    const newAmount = Math.max(MIN_AMOUNT, Math.min(MAX_AMOUNT, newInvoices * 0.1));
-    setAmount(Math.round(newAmount * 100) / 100);
-    
-    setTimeout(() => {
-      setIsUpdatingFromInvoices(false);
-    }, 0);
-  };
-
-  const handleCurrencyChange = (value: string) => {
-    const newCurrency = value as Currency;
-    setCurrency(newCurrency);
-    
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.gtag?.('event', 'calc_change_currency', {
-        currency: newCurrency,
-      });
-    }
-  };
-
-  const handleTopUpClick = () => {
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.gtag?.('event', 'calc_topup_click', {
-        amount: amount,
-        currency: currency,
-        tokens: tokens,
-      });
-    }
-  };
-
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/token-calculator?amount=${amount}&currency=${currency}`;
-    navigator.clipboard.writeText(url);
-    
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.gtag?.('event', 'calc_copy_link', {
-        amount: amount,
-        currency: currency,
-      });
-    }
-  };
-
-  const topUpUrl = `/pricing?amount=${amount}&currency=${currency}`;
 
   return (
-    <main className="bg-slate-50 min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Token Calculator
-          </h1>
-          <p className="text-lg text-slate-600">MOCK: Calculate tokens needed and see effective cost per document</p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Controls */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-6">Calculate Tokens</h2>
-            
-            {/* Currency Toggle */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Currency
-              </label>
-              <Segmented
-                options={[
-                  { value: 'GBP', label: 'GBP (£)' },
-                  { value: 'EUR', label: 'EUR (€)' }
-                ]}
-                value={currency}
-                onChange={handleCurrencyChange}
-              />
-            </div>
-
-            {/* Amount Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-3">
-                Amount ({currency === 'GBP' ? '£' : '€'})
-              </label>
-              <div className="space-y-3">
-                <Input
-                  type="number"
-                  min={MIN_AMOUNT}
-                  max={MAX_AMOUNT}
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  className="text-lg"
-                />
-                <input
-                  type="range"
-                  min={MIN_AMOUNT}
-                  max={MAX_AMOUNT}
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>{currency === 'GBP' ? '£' : '€'}5</span>
-                  <span>{currency === 'GBP' ? '£' : '€'}500</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Invoices Needed Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-3">Documents needed</label>
-              <Input
-                type="number"
-                min="1"
-                value={invoicesNeeded}
-                onChange={(e) => handleInvoicesChange(e.target.value)}
-                className="text-lg"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                This will automatically adjust the amount
-              </p>
-            </div>
-
-            {/* Edge Cases */}
-            {amount < MIN_AMOUNT && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  Minimum amount is {currency === 'GBP' ? '£' : '€'}{MIN_AMOUNT}
-                </p>
-              </div>
-            )}
-
-            {amount >= MAX_AMOUNT && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">Need more than {currency === 'GBP' ? '£' : '€'}{MAX_AMOUNT}? <a href="/contact" className="ml-1 underline hover:no-underline">Contact us for bank transfer</a></p>
-              </div>
-            )}
-          </Card>
-
-          {/* Results */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-6">
-              Results
-            </h2>
-            
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center py-3 border-b border-slate-200">
-                <span className="text-slate-600">Tokens you'll get</span>
-                <span className="text-2xl font-bold text-slate-900">
-                  {tokens.toLocaleString()}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center py-3 border-b border-slate-200">
-                <span className="text-slate-600">≈ Documents</span>
-                <span className="text-2xl font-bold text-slate-900">
-                  {calculatedInvoices}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center py-3 border-b border-slate-200">
-                <span className="text-slate-600">Effective cost per document</span>
-                <span className="text-2xl font-bold text-emerald-600">
-                  {currency === 'GBP' ? '£' : '€'}{effectiveCostPerInvoice.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            <div className="mb-6 p-4 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-600"><strong>MOCK:</strong> Taxes and fees may apply. Replace with your billing notes.</p>
-            </div>
-
-            {/* CTAs */}
-            <div className="space-y-3">
-              <Button
-                href={topUpUrl}
-                size="lg"
-                className="w-full"
-                onClick={handleTopUpClick}
-              >
-                Top up {currency === 'GBP' ? '£' : '€'}{amount}
-              </Button>
-              
-              <div className="flex gap-3">
-                <Button
-                  href="/create-cv"
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Open Generator
-                </Button>
-                
-                <Button
-                  onClick={handleCopyLink}
-                  variant="outline"
-                  size="sm"
-                >
-                  Copy Link
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Examples */}
-        <div className="mt-12">
-          <h3 className="text-xl font-semibold text-slate-900 mb-6 text-center">
-            MOCK: Popular Examples
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            {MOCK_EXAMPLES.map((example) => (
-              <ExampleCard
-                key={`${example.currency}-${example.amount}`}
-                currency={example.currency}
-                amount={example.amount}
-                onSelect={() => {
-                  setCurrency(example.currency);
-                  setAmount(example.amount);
-                }}
-              />
-            ))}
+    <main className="min-h-screen bg-slate-50 py-12">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Token calculator</h1>
+          <p className="mt-2 text-slate-600">Calculate tokens needed and see effective cost per document.</p>
+          <div className="mt-6 flex justify-center">
+            <Segmented
+              options={[
+                { label: 'GBP', value: 'GBP' },
+                { label: 'EUR', value: 'EUR' },
+              ]}
+              value={currency}
+              onChange={(value) => setCurrency(value as Currency)}
+            />
           </div>
         </div>
 
-        {/* FAQ */}
-        <div className="mt-12">
-          <h3 className="text-xl font-semibold text-slate-900 mb-6 text-center">
-            Frequently Asked Questions
-          </h3>
+        <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold text-slate-900">Calculate tokens</h2>
+            <p className="mt-1 text-sm text-slate-600">Adjust the number of actions you plan to run. Each action multiplies by its token cost.</p>
+            <div className="mt-6 space-y-4">
+              {ACTIONS.map((action) => (
+                <div key={action.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-base font-semibold text-slate-900">{action.label}</div>
+                      <p className="text-sm text-slate-600">{action.description}</p>
+                    </div>
+                    <div className="text-right text-sm text-slate-500">
+                      <div className="font-semibold text-slate-900">{action.tokens} tokens</div>
+                      <div>{currencySymbol(currency)}{(action.tokens / TOKENS_PER_UNIT).toFixed(2)}</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <label className="text-sm text-slate-600">Quantity</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={counts[action.id].toString()}
+                      onChange={(event) => handleCountChange(action.id, event.target.value)}
+                      className="w-24"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-white shadow-md border border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-900">Results</h2>
+            <div className="mt-4 space-y-3 text-sm text-slate-700">
+              <div className="flex items-center justify-between">
+                <span>Total tokens</span>
+                <span className="text-base font-semibold text-slate-900">{totalTokens.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Estimated cost</span>
+                <span className="text-base font-semibold text-slate-900">
+                  {formatCurrency(estimatedCost, currency)} <span className="text-xs text-slate-500">(at {tokensPerUnitLabel} = 100 tokens)</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Suggested top-up</span>
+                <span className="text-base font-semibold text-emerald-600">{formatCurrency(recommendedTopUp, currency)}</span>
+              </div>
+            </div>
+            <div className="mt-6 space-y-3">
+              <Button href="/pricing" size='lg' onClick={() => {
+                if (typeof window !== 'undefined') {
+                  // @ts-ignore
+                  window.gtag?.('event', 'calc_go_to_pricing', {
+                    currency,
+                    total_tokens: totalTokens,
+                    estimated_cost: estimatedCost,
+                  });
+                }
+              }}>
+                Go to top-up page
+              </Button>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setCounts(ACTIONS.reduce((acc, action) => {
+                    acc[action.id] = 0;
+                    return acc;
+                  }, {} as Record<ActionKey, number>));
+                }}
+              >
+                Clear calculator
+              </Button>
+            </div>
+          </Card>
+        </div>
+
+        <section className="mt-12">
+          <h3 className="text-xl font-semibold text-slate-900 mb-6 text-center">Examples</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            {EXAMPLES.map((example) => {
+              const exampleTokens = ACTIONS.reduce((sum, action) => sum + (example.actions[action.id] ?? 0) * action.tokens, 0);
+              const exampleCost = exampleTokens / TOKENS_PER_UNIT;
+              return (
+                <motion.div
+                  key={example.title}
+                  className="cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-slate-400 transition"
+                  whileHover={{ y: -4 }}
+                  onClick={() => applyExample(example.actions)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-base font-semibold text-slate-900">{example.title}</div>
+                      <p className="text-sm text-slate-600">{example.description}</p>
+                    </div>
+                    <div className="text-right text-sm text-slate-600">
+                      <div className="font-semibold text-slate-900">{exampleTokens.toLocaleString()} tokens</div>
+                      <div>{formatCurrency(exampleCost, currency)}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-12">
+          <h3 className="text-xl font-semibold text-slate-900 mb-6 text-center">Frequently Asked Questions</h3>
           <div className="space-y-4">
             {FAQ_ITEMS.map((item, index) => (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
+                key={item.question}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.08 }}
               >
-                <Card className="p-4">
-                  <h4 className="font-semibold text-slate-900 mb-2">
-                    {item.question}
-                  </h4>
-                  <p className="text-slate-600 text-sm">
-                    {item.answer}
-                  </p>
+                <Card className="p-5">
+                  <h4 className="font-semibold text-slate-900 mb-2">{item.question}</h4>
+                  <p className="text-sm text-slate-600">{item.answer}</p>
                 </Card>
               </motion.div>
             ))}
           </div>
-        </div>
+        </section>
       </div>
-
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-        }
-        
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: none;
-        }
-      `}</style>
     </main>
-  );
-}
-
-function ExampleCard({
-  currency,
-  amount,
-  onSelect,
-}: {
-  currency: Currency;
-  amount: number;
-  onSelect: () => void;
-}) {
-  const tokens = amount * 100;
-  const invoices = Math.floor(tokens / 10);
-  const costPerInvoice = amount / invoices;
-
-  return (
-    <div 
-      className="p-4 cursor-pointer hover:bg-slate-50 transition-colors bg-white rounded-lg border border-slate-200 shadow-sm"
-      onClick={onSelect}
-    >
-      <div className="text-center">
-        <div className="text-2xl font-bold text-slate-900 mb-2">
-          {currency === 'GBP' ? '£' : '€'}{amount}
-        </div>
-        <div className="text-sm text-slate-600 space-y-1">
-          <div>{tokens.toLocaleString()} tokens</div>
-          <div>≈ {invoices} invoices</div>
-          <div className="text-emerald-600 font-medium">
-            {currency === 'GBP' ? '£' : '€'}{costPerInvoice.toFixed(2)} per invoice
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
