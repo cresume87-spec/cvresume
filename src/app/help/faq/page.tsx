@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 
-type FAQCategory = 'tokens' | 'vat' | 'pdf' | 'account' | 'integrations';
+type FAQCategory = 'creation' | 'tools' | 'tokens' | 'export' | 'account' | 'troubleshooting';
 type FAQItem = {
   id: string;
   question: string;
@@ -18,121 +18,162 @@ type FAQItem = {
 };
 
 const FAQ_DATA: FAQItem[] = [
-  // MOCK Top Questions
   {
-    id: 'mock-pricing',
+    id: 'top-what-can-i-do',
+    question: 'What can I do here?',
+    answer: 'Create a CV or resume from scratch, improve your draft with built-in writing tools, or request help from a personal manager who will edit your document.',
+    category: 'creation',
+    top: true,
+  },
+  {
+    id: 'top-pricing-model',
     question: 'How does pricing work?',
-    answer: 'MOCK: Pricing details placeholder. Replace with your product pricing rules.',
+    answer: 'Pay-as-you-go with tokens. 1.00 GBP or 1.00 EUR equals 100 tokens. Actions: Create - 100, Create & Export PDF - 150, Improve with AI - 200, Send to personal manager - 800.',
     category: 'tokens',
     top: true,
   },
   {
-    id: 'mock-vat-modes',
-    question: 'What VAT modes are supported?',
-    answer: 'MOCK: VAT modes placeholder. Example: domestic, reverse charge, cross‑border.',
-    category: 'vat',
-    top: true,
-  },
-  {
-    id: 'mock-drafting',
+    id: 'top-drafting-cost',
     question: 'Is drafting free?',
-    answer: 'MOCK: Drafting/billing behavior placeholder. Clarify when tokens/credits are used.',
-    category: 'pdf',
+    answer: 'Create costs 100 tokens and adds a draft to your Dashboard. You can edit it any time.',
+    category: 'creation',
     top: true,
   },
   {
-    id: 'mock-data-storage',
+    id: 'create-ats-friendly',
+    question: 'Will my document be ATS-friendly?',
+    answer: 'Yes. Our templates follow common ATS reading patterns with clear headings, clean layout, and no heavy graphics.',
+    category: 'creation',
+  },
+  {
+    id: 'create-templates',
+    question: 'Do you have different styles/templates?',
+    answer: 'Yes. Choose from several professional templates (classic, split, serif, compact) and switch styles anytime before export.',
+    category: 'creation',
+  },
+  {
+    id: 'create-photo',
+    question: 'Can I add a photo?',
+    answer: 'Photo is optional. Each template includes a photo slot you can keep or remove.',
+    category: 'creation',
+  },
+  {
+    id: 'create-duplicate',
+    question: 'Can I duplicate or version my document?',
+    answer: 'Yes. Use Duplicate in the Dashboard to branch a new version without losing the original.',
+    category: 'creation',
+  },
+  {
+    id: 'tools-improve-ai',
+    question: 'What does Improve with AI do?',
+    answer: 'It rewrites selected sections like summary, bullets, and skills to be concise and professional. Cost: 200 tokens per run.',
+    category: 'tools',
+  },
+  {
+    id: 'tools-personal-manager',
+    question: 'Who is the personal manager and what will I get?',
+    answer: 'A specialist reviews your content and sends personalised edits and comments. Cost: 800 tokens. First response within 3-6 hours.',
+    category: 'tools',
+  },
+  {
+    id: 'tools-combine',
+    question: 'Can I use both: AI and personal manager?',
+    answer: 'Yes. Many users create a draft, run Improve with AI, then request the personal manager for final polish.',
+    category: 'tools',
+  },
+  {
+    id: 'tokens-expire',
+    question: 'Do tokens expire?',
+    answer: 'No. Tokens never expire.',
+    category: 'tokens',
+  },
+  {
+    id: 'tokens-packages',
+    question: 'Which top-up packages are available?',
+    answer: 'Examples: 5 EUR = 500 tokens, 15 EUR = 1500 tokens, 30 EUR = 3000 tokens, plus Custom. GBP follows the same rate: 1 GBP = 100 tokens.',
+    category: 'tokens',
+  },
+  {
+    id: 'tokens-payment-methods',
+    question: 'Which payment methods do you support?',
+    answer: 'We accept major cards (Visa, Mastercard, Amex) and popular wallets (Apple Pay and Google Pay). Bank transfer is available for larger orders on request.',
+    category: 'tokens',
+  },
+  {
+    id: 'tokens-taxes',
+    question: 'Are taxes included?',
+    answer: 'Prices are shown excluding VAT. UK and EU VAT or local taxes are added at checkout based on your billing details.',
+    category: 'tokens',
+  },
+  {
+    id: 'tokens-refunds',
+    question: 'Refunds',
+    answer: 'Top-ups are pay-as-you-go and non-refundable once completed.',
+    category: 'tokens',
+  },
+  {
+    id: 'export-formats',
+    question: 'What formats can I export to?',
+    answer: 'PDF (print-ready) and DOCX. Create & Export PDF - 150 tokens generates a final PDF immediately. You can also create first, then export later.',
+    category: 'export',
+  },
+  {
+    id: 'export-preview',
+    question: 'Will the export match the preview?',
+    answer: 'Yes. The A4 live preview uses print-safe spacing and fonts so the exported PDF matches exactly.',
+    category: 'export',
+  },
+  {
+    id: 'export-share',
+    question: 'Can I share my CV online?',
+    answer: 'Yes. Generate a private share link from your Dashboard.',
+    category: 'export',
+  },
+  {
+    id: 'account-data-storage',
     question: 'Where is my data stored?',
-    answer: 'MOCK: Data residency & encryption placeholder. E.g., EU region, encrypted at rest.',
-    category: 'account',
-    top: true,
-  },
-  {
-    id: 'mock-reverse-charge',
-    question: 'How do I add a reverse charge note?',
-    answer: 'MOCK: Reverse charge instructions placeholder. Choose correct VAT mode to auto‑add note.',
-    category: 'vat',
-    top: true,
-  },
-  {
-    id: 'mock-email-invoice',
-    question: 'How do I email an invoice?',
-    answer: 'MOCK: Email/share flow placeholder. Mention preview page actions and receipts if any.',
-    category: 'pdf',
-    top: true,
-  },
-
-  // MOCK Tokens & Billing
-  {
-    id: 'mock-balance-history',
-    question: 'Where can I see my balance and history?',
-    answer: 'MOCK: Link to dashboard/ledger placeholder. Include filters and export options if relevant.',
-    category: 'tokens',
-  },
-  {
-    id: 'mock-vat-charges',
-    question: 'Do you charge VAT on top-ups?',
-    answer: 'MOCK: VAT on purchases placeholder. Describe B2B reverse charge rules if applicable.',
-    category: 'tokens',
-  },
-  {
-    id: 'mock-refunds',
-    question: 'Refunds?',
-    answer: 'MOCK: Refund policy placeholder. Example: unused tokens refundable within 14 days.',
-    category: 'tokens',
-  },
-
-  // MOCK Invoicing & VAT
-  {
-    id: 'mock-invoice-numbering',
-    question: 'Can I set invoice numbering?',
-    answer: 'MOCK: Numbering settings placeholder. Configure prefix and next sequence number.',
-    category: 'vat',
-  },
-  {
-    id: 'mock-multi-currency',
-    question: 'Multi-currency?',
-    answer: 'MOCK: Supported currencies placeholder. Confirm number/date formats and exchange rates.',
-    category: 'vat',
-  },
-
-  // MOCK PDF & Sharing
-  {
-    id: 'mock-logo-upload',
-    question: 'Can I upload a logo?',
-    answer: 'MOCK: Branding options placeholder. Indicate plan limits and image formats.',
-    category: 'pdf',
-  },
-
-  // MOCK Account & Security
-  {
-    id: 'mock-card-numbers',
-    question: 'Do you keep card numbers?',
-    answer: 'MOCK: Payments handling placeholder. Cards and bank details are never stored on our servers.',
+    answer: 'In the UK and EU with encryption in transit and at rest. We store only what is needed to provide the service and follow GDPR principles.',
     category: 'account',
   },
   {
-    id: 'mock-delete-account',
-    question: 'How to delete my account?',
-    answer: 'MOCK: Account deletion flow placeholder. Mention legal retention where applicable.',
+    id: 'account-card-storage',
+    question: 'Do you store card details?',
+    answer: 'No. Payments are processed by a PCI-DSS compliant provider. We do not store full card numbers on our servers.',
     category: 'account',
   },
-
-  // MOCK Integrations
   {
-    id: 'mock-integrations',
-    question: 'Do you support integrations?',
-    answer: 'MOCK: Integrations placeholder. List planned CRMs/accounting tools and webhooks.',
-    category: 'integrations',
+    id: 'account-delete',
+    question: 'How do I delete my account or data?',
+    answer: 'From Settings -> Account you can request deletion. We remove personal data except what we must keep for accounting and tax records.',
+    category: 'account',
+  },
+  {
+    id: 'troubleshooting-pdf',
+    question: 'My PDF looks different than expected.',
+    answer: 'Switch to 100 percent scale in your PDF viewer and set printer margins to None. If it persists, try another template or contact support.',
+    category: 'troubleshooting',
+  },
+  {
+    id: 'troubleshooting-ai',
+    question: 'The AI suggestions do not match my role.',
+    answer: 'Select the section, add more context such as industry, seniority, or keywords, then run Improve with AI again. You can also request the personal manager for tailored edits.',
+    category: 'troubleshooting',
+  },
+  {
+    id: 'troubleshooting-out-of-tokens',
+    question: 'I\'m out of tokens. What now?',
+    answer: 'Top up from the Top-up page. The calculator will show how many tokens you need for your selected actions.',
+    category: 'troubleshooting',
   },
 ];
 
 const CATEGORIES = [
-  { id: 'tokens', label: 'Tokens & billing', color: 'bg-blue-100 text-blue-800' },
-  { id: 'vat', label: 'Invoicing & VAT', color: 'bg-green-100 text-green-800' },
-  { id: 'pdf', label: 'PDF & sharing', color: 'bg-purple-100 text-purple-800' },
-  { id: 'account', label: 'Account & security', color: 'bg-orange-100 text-orange-800' },
-  { id: 'integrations', label: 'Integrations', color: 'bg-pink-100 text-pink-800' },
+  { id: 'creation', label: 'Creating your CV/Resume', color: 'bg-blue-100 text-blue-800' },
+  { id: 'tools', label: 'Writing tools, AI & manager', color: 'bg-purple-100 text-purple-800' },
+  { id: 'tokens', label: 'Tokens & payments', color: 'bg-emerald-100 text-emerald-800' },
+  { id: 'export', label: 'Export & sharing', color: 'bg-amber-100 text-amber-800' },
+  { id: 'account', label: 'Account & privacy', color: 'bg-orange-100 text-orange-800' },
+  { id: 'troubleshooting', label: 'Troubleshooting', color: 'bg-rose-100 text-rose-800' },
 ] as const;
 
 function FAQContent() {
@@ -191,11 +232,12 @@ function FAQContent() {
   // Group by category
   const groupedFAQs = useMemo(() => {
     const groups: Record<FAQCategory, FAQItem[]> = {
+      creation: [],
+      tools: [],
       tokens: [],
-      vat: [],
-      pdf: [],
+      export: [],
       account: [],
-      integrations: [],
+      troubleshooting: [],
     };
 
     categorizedFAQs.forEach(item => {
@@ -632,6 +674,11 @@ function FAQCard({
     </Card>
   );
 }
+
+
+
+
+
 
 
 
