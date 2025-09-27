@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Section from '@/components/layout/Section';
@@ -7,37 +8,98 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { THEME } from '@/lib/theme';
 
-const STEPS = [
+interface FeatureItem {
+  title: string;
+  description: string;
+  iconBg: string;
+  icon: ReactNode;
+}
+
+interface PillarItem {
+  title: string;
+  description: string;
+  iconBg: string;
+  icon: ReactNode;
+}
+
+const STEPS: FeatureItem[] = [
   {
     title: 'Create quality documents in minutes',
     description: 'Modern templates that read well for hiring teams and pass applicant tracking systems.',
+    iconBg: 'bg-blue-100',
+    icon: (
+      <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
   },
   {
     title: 'Guided writing',
     description: 'Friendly prompts and ready-made phrasing to keep things concise and professional.',
+    iconBg: 'bg-emerald-100',
+    icon: (
+      <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5h9a2 2 0 012 2v12l-3.5-2-3.5 2V7a2 2 0 00-2-2H5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 3v4m0 4v4m0 4h3a1 1 0 001-1V7.414a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0016.586 3H16z" />
+      </svg>
+    ),
   },
   {
     title: 'Edit, preview, export',
     description: 'Work in your dashboard, preview on A4, download PDF/DOCX when you\'re ready.',
+    iconBg: 'bg-purple-100',
+    icon: (
+      <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    ),
   },
   {
     title: 'Fair pricing with tokens',
     description: 'Top up once, spend only on actions you need (create, improve, export).',
+    iconBg: 'bg-amber-100',
+    icon: (
+      <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4 1.343 4 3-1.79 3-4 3-4-1.343-4-3" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v4m0 10v2" />
+      </svg>
+    ),
   },
 ];
 
-const PILLARS = [
+const PILLARS: PillarItem[] = [
   {
     title: 'Pillar A - Structure first',
     description: 'Every template enforces a clean visual rhythm, consistent spacing, and clear hierarchy.',
+    iconBg: 'bg-sky-100',
+    icon: (
+      <svg className="h-5 w-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h5v5H4zM4 14h5v5H4zM13 5h7M13 9h7M13 14h7M13 18h7" />
+      </svg>
+    ),
   },
   {
     title: 'Pillar B - Measurable results',
     description: 'We nudge users to add impact: numbers, deltas, and outcomes that matter to recruiters.',
+    iconBg: 'bg-indigo-100',
+    icon: (
+      <svg className="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4-4 3 3 6-7 3 3" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 20h16" />
+      </svg>
+    ),
   },
   {
     title: 'Pillar C - Frictionless export',
     description: 'Live A4 preview and print-safe typography ensure your PDF looks exactly as expected.',
+    iconBg: 'bg-rose-100',
+    icon: (
+      <svg className="h-5 w-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v9m0 0l-3-3m3 3 3-3" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19h14" />
+      </svg>
+    ),
   },
 ];
 
@@ -121,8 +183,15 @@ export default function AboutPageClient() {
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             {STEPS.map((step) => (
               <Card key={step.title} className="p-6">
-                <h3 className="text-lg font-semibold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{step.description}</p>
+                <div className="flex items-start gap-4">
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${step.iconBg}`}>
+                    {step.icon}
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{step.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600">{step.description}</p>
+                  </div>
+                </div>
               </Card>
             ))}
           </div>
@@ -146,8 +215,15 @@ export default function AboutPageClient() {
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {PILLARS.map((pillar) => (
               <Card key={pillar.title} className="p-6">
-                <h3 className="text-lg font-semibold text-slate-900">{pillar.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{pillar.description}</p>
+                <div className="flex items-start gap-4">
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${pillar.iconBg}`}>
+                    {pillar.icon}
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{pillar.title}</h3>
+                    <p className="mt-2 text-sm text-slate-600">{pillar.description}</p>
+                  </div>
+                </div>
               </Card>
             ))}
           </div>
@@ -190,10 +266,6 @@ export default function AboutPageClient() {
                 <p className="mt-2 text-sm text-slate-600">{item.description}</p>
               </Card>
             ))}
-          </div>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button variant="outline" href="/security">Security details</Button>
-            <Button variant="outline" href="/status">Service status</Button>
           </div>
         </motion.div>
       </Section>
