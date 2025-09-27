@@ -7,6 +7,8 @@ import Section from '@/components/layout/Section';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { THEME } from '@/lib/theme';
+import { ScaledA4, ResumeTemplates, sampleResumeData, sampleCVData } from '@/components/resume';
+import type { ResumeTemplateKey } from '@/components/resume';
 
 interface FeatureItem {
   title: string;
@@ -21,6 +23,8 @@ interface PillarItem {
   iconBg: string;
   icon: ReactNode;
 }
+
+const TEMPLATE_KEYS: ResumeTemplateKey[] = ['classic', 'split', 'serif', 'tech'];
 
 const STEPS: FeatureItem[] = [
   {
@@ -70,7 +74,7 @@ const STEPS: FeatureItem[] = [
 
 const PILLARS: PillarItem[] = [
   {
-    title: 'Pillar A - Structure first',
+    title: 'Structure first',
     description: 'Every template enforces a clean visual rhythm, consistent spacing, and clear hierarchy.',
     iconBg: 'bg-sky-100',
     icon: (
@@ -80,7 +84,7 @@ const PILLARS: PillarItem[] = [
     ),
   },
   {
-    title: 'Pillar B - Measurable results',
+    title: 'Measurable results',
     description: 'We nudge users to add impact: numbers, deltas, and outcomes that matter to recruiters.',
     iconBg: 'bg-indigo-100',
     icon: (
@@ -91,7 +95,7 @@ const PILLARS: PillarItem[] = [
     ),
   },
   {
-    title: 'Pillar C - Frictionless export',
+    title: 'Frictionless export',
     description: 'Live A4 preview and print-safe typography ensure your PDF looks exactly as expected.',
     iconBg: 'bg-rose-100',
     icon: (
@@ -147,6 +151,23 @@ const COMPANY_DETAILS = [
   '20 Wenlock Road, London, England, N1 7GU',
   'General enquiries: info@makemy-cv.co.uk',
 ];
+
+const TEMPLATE_COPY = {
+  resume: {
+    title: 'Resume templates',
+    description: 'Optimised for concise, achievement-led resumes (1-2 pages).',
+    href: (key: ResumeTemplateKey) => `/create-resume?template=${key}`,
+    data: sampleResumeData,
+  },
+  cv: {
+    title: 'CV templates',
+    description: 'Extended CV layouts with space for research, publications, and detailed history.',
+    href: (key: ResumeTemplateKey) => `/create-cv?template=${key}`,
+    data: sampleCVData,
+  },
+} as const;
+
+type TemplateGroupKey = keyof typeof TEMPLATE_COPY;
 
 export default function AboutPageClient() {
   return (
@@ -301,22 +322,37 @@ export default function AboutPageClient() {
             <h2 className={`text-3xl font-bold ${THEME.text}`}>Resume & CV templates</h2>
             <p className={`mt-3 text-base ${THEME.muted}`}>Explore clean, ATS-friendly layouts that keep your achievements front and center.</p>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((item) => (
-              <Card key={item} className="overflow-hidden border border-slate-200 bg-white">
-                <div className="aspect-[1/1.414] w-full bg-slate-100" />
-                <div className="p-4">
-                  <div className="text-sm font-semibold text-slate-900">Template {item}</div>
-                  <p className="mt-1 text-xs text-slate-600">Balanced typography, clear sections, ATS-friendly.</p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                    <span>Drag & drop editor</span>
-                    <Link href="/create-cv" className="font-semibold text-slate-900 hover:underline">
-                      Preview
-                    </Link>
+          <div className="space-y-12">
+            {(Object.keys(TEMPLATE_COPY) as TemplateGroupKey[]).map((groupKey) => {
+              const group = TEMPLATE_COPY[groupKey];
+              return (
+                <div key={groupKey}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                    <h3 className="text-lg font-semibold text-slate-900">{group.title}</h3>
+                    <p className="text-sm text-slate-600">{group.description}</p>
+                  </div>
+                  <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                    {TEMPLATE_KEYS.map((key) => {
+                      const Template = ResumeTemplates[key];
+                      return (
+                        <Card key={`${groupKey}-${key}`} className="border border-slate-200 bg-white p-4">
+                          <div className="text-sm font-semibold text-slate-900">{labelForTemplate(key)}</div>
+                          <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white p-2">
+                            <ScaledA4>
+                              <Template data={group.data} />
+                            </ScaledA4>
+                          </div>
+                          <div className="mt-3 text-xs text-slate-500">Printable A4 | ATS ready | Multi-language</div>
+                          <div className="mt-3">
+                            <Button href={group.href(key)} variant="outline" className="w-full">Use template</Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
-              </Card>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       </Section>
@@ -340,3 +376,20 @@ export default function AboutPageClient() {
     </div>
   );
 }
+
+function labelForTemplate(key: ResumeTemplateKey): string {
+  switch (key) {
+    case 'classic':
+      return 'Classic ATS';
+    case 'split':
+      return 'Modern Split';
+    case 'serif':
+      return 'Elegant Serif';
+    case 'tech':
+      return 'Tech Compact';
+    default:
+      return key;
+  }
+}
+
+
