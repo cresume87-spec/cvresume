@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     title: 'Edit, preview, export',
-    description: 'Work in your dashboard, preview on A4, download PDF/DOCX when you’re ready.',
+    description: 'Work in your dashboard, preview on A4, download PDF/DOCX when you're ready.',
   },
   {
     title: 'Fair pricing with tokens',
@@ -28,15 +28,15 @@ const STEPS = [
 
 const PILLARS = [
   {
-    title: 'Pillar A — Structure first',
+    title: 'Pillar A - Structure first',
     description: 'Every template enforces a clean visual rhythm, consistent spacing, and clear hierarchy.',
   },
   {
-    title: 'Pillar B — Measurable results',
+    title: 'Pillar B - Measurable results',
     description: 'We nudge users to add impact: numbers, deltas, and outcomes that matter to recruiters.',
   },
   {
-    title: 'Pillar C — Frictionless export',
+    title: 'Pillar C - Frictionless export',
     description: 'Live A4 preview and print-safe typography ensure your PDF looks exactly as expected.',
   },
 ];
@@ -52,7 +52,7 @@ const PRINCIPLES = [
   },
   {
     title: 'Own your data',
-    description: 'You control what’s stored and when it’s deleted.',
+    description: 'You control what's stored and when it's deleted.',
   },
   {
     title: 'No lock-in',
@@ -67,7 +67,7 @@ const TRUST_ITEMS = [
   },
   {
     title: 'Minimal data collection',
-    description: 'We store only what’s needed to deliver the service. No full card data on our servers.',
+    description: 'We store only what's needed to deliver the service. No full card data on our servers.',
   },
   {
     title: 'Account controls',
@@ -97,7 +97,7 @@ export default function AboutPageClient() {
           transition={{ duration: 0.6 }}
         >
           <h1 className={`text-4xl sm:text-5xl font-bold leading-tight ${THEME.text}`}>
-            We help people land interviews with better CVs and resumes — faster.
+            We help people land interviews with better CVs and resumes - faster.
           </h1>
           <p className={`mt-6 text-lg ${THEME.muted}`}>
             CVBuilder turns your experience into a clear, ATS-friendly document you can create, edit, and export in minutes. Pay only for what you use with simple tokens.
@@ -140,7 +140,7 @@ export default function AboutPageClient() {
           <div className="text-center">
             <h2 className={`text-3xl font-bold ${THEME.text}`}>Our approach</h2>
             <p className={`mt-4 text-base ${THEME.muted}`}>
-              Short, practical, and transparent. We focus on the parts that actually impact outcomes — structure, wording, and clarity.
+              Short, practical, and transparent. We focus on the parts that actually impact outcomes - structure, wording, and clarity.
             </p>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
