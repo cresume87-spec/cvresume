@@ -7,9 +7,7 @@ import Button from '@/components/ui/Button';
 import PolicyTOC from './PolicyTOC';
 import PolicyMeta from './PolicyMeta';
 import PolicyContent from './PolicyContent';
-import Pill from './Pill';
 import { Heading, PolicySection, Region } from '@/types/policy';
-import ContactForm from '@/components/contact/ContactForm';
 
 interface PolicyPageProps {
   title: string;
@@ -66,16 +64,18 @@ export default function PolicyPage({
   return (
     <main className="bg-slate-50 min-h-screen">
       <Section className="py-10">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2">
-            <Pill>UK-first</Pill>
-            <Pill>EU-ready</Pill>
-            <Pill>English only</Pill>
+            <span className="rounded-full bg-emerald-100 text-emerald-600 px-3 py-1 text-xs font-semibold">Updated</span>
+            <span className="rounded-full bg-blue-100 text-blue-600 px-3 py-1 text-xs font-semibold">Effective 1 Sep 2025</span>
           </div>
-          <h1 className="mt-4 text-4xl sm:text-5xl font-bold text-slate-900">{title}</h1>
-          <p className="mt-3 text-slate-600 text-lg">This page outlines our {title.toLowerCase()} for the {region} region.</p>
+          <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">{title}</h1>
+          <p className="max-w-2xl mx-auto text-slate-600 text-lg">
+            These Terms & Conditions explain how you can use MakeMy-CV, purchase token packages,
+            and receive document generation services from EVERFINA LTD.
+          </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            {showRegionToggle && (
+            {!showRegionToggle ? null : (
               <div className="inline-flex rounded-xl border border-black/10 bg-white p-1">
                 {(['UK', 'EU'] as Region[]).map((r) => (
                   <button
@@ -94,9 +94,10 @@ export default function PolicyPage({
           </div>
         </div>
 
-        <div className="mt-10 grid lg:grid-cols-[220px,1fr,260px] gap-6 items-start">
+        <div className="mt-10 grid lg:grid-cols-[260px,1fr,300px] gap-6 items-start">
           <div className="hidden lg:block">
-            <Card className="p-4" padding="sm">
+            <Card className="p-5 sticky top-24" padding="md">
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">On this page</h3>
               <PolicyTOC headings={headings} current={active} onJump={onJump} />
             </Card>
           </div>
@@ -108,45 +109,66 @@ export default function PolicyPage({
               version={version}
               lawText={lawText}
             />
+            <Card className="mt-6 p-6" padding="md">
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">📄</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Scope</div>
+                    <div>Applies to all users of MakeMy-CV.co.uk worldwide.</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">🪙</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Tokens</div>
+                    <div>Credits required to create, export, or enhance CV/resume files.</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-lg">🔐</div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Data</div>
+                    <div>Your materials remain yours; we process them securely.</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
             <div className="mt-6" />
-            <div ref={contentRef as any}>
+            <div ref={contentRef as any} className="space-y-10">
               <PolicyContent sections={sections} />
             </div>
           </div>
 
           <div>
-            <Card className="p-6" padding="md">
-              <h3 className="text-base font-semibold">Need help?</h3>
-              <p className="text-slate-600 text-sm mt-1">
-                Email <a className="underline" href={`mailto:${helpEmail}`}>{helpEmail}</a> and we'll get back to you.
-              </p>
-              <div className="mt-4 h-px bg-black/10" />
-              <h4 className="text-sm font-medium mt-4">Change log</h4>
-              <ul className="mt-2 text-sm text-slate-700 space-y-2">
-                <li>
-                  <span className="text-slate-500">02 Sep 2025 - </span>
-                  Draft structure updated for UK/EU.
-                </li>
-                <li>
-                  <span className="text-slate-500">01 Sep 2025 - </span>
-                  Initial draft created.
-                </li>
-              </ul>
-            </Card>
+            <div className="space-y-6">
+              <Card className="p-6" padding="md">
+                <h3 className="text-base font-semibold">Need help?</h3>
+                <p className="text-slate-600 text-sm mt-1">
+                  Email <a className="underline" href={`mailto:${helpEmail}`}>{helpEmail}</a> and we'll get back to you.
+                </p>
+                <div className="mt-4 h-px bg-black/10" />
+                <h4 className="text-sm font-medium mt-4">Quick access</h4>
+                <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                  <li><Button href="/help/billing-tokens" variant="outline" size="sm">Billing & tokens guide</Button></li>
+                  <li><Button href="/help/troubleshooting" variant="outline" size="sm">Troubleshooting</Button></li>
+                  <li><Button href="/refund" variant="outline" size="sm">Refund policy</Button></li>
+                </ul>
+              </Card>
+
+              <Card className="p-6" padding="md">
+                <h3 className="text-base font-semibold">Change log</h3>
+                <ul className="mt-3 text-sm text-slate-700 space-y-3">
+                  <li>
+                    <div className="font-medium text-slate-900">1 Sep 2025</div>
+                    <div>New Terms & Conditions published for MakeMy-CV launch.</div>
+                  </li>
+                </ul>
+              </Card>
+            </div>
           </div>
         </div>
 
-      </Section>
-
-      {/* Feedback / Contact */}
-      <Section className="py-10">
-        <Card className="p-6" padding="md">
-          <h2 className="text-xl font-semibold">Have questions or feedback?</h2>
-          <p className="text-sm text-slate-600 mt-1">Send us a message — we typically reply within one business day.</p>
-          <div className="mt-6">
-            <ContactForm />
-          </div>
-        </Card>
       </Section>
     </main>
   );

@@ -5,22 +5,27 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
+const TOKENS_PER_CURRENCY_UNIT = 100;
+const TOKENS_PER_DOCUMENT = 150;
+const COST_PER_DOCUMENT = (TOKENS_PER_DOCUMENT / TOKENS_PER_CURRENCY_UNIT).toFixed(2);
+
 const TOKEN_PACKAGES = [
-  { amount: 10, currency: 'GBP', tokens: 1000, invoices: 100, costPerInvoice: 0.10 },
-  { amount: 50, currency: 'GBP', tokens: 5000, invoices: 500, costPerInvoice: 0.10 },
-  { amount: 100, currency: 'GBP', tokens: 10000, invoices: 1000, costPerInvoice: 0.10 },
-  { amount: 10, currency: 'EUR', tokens: 1000, invoices: 100, costPerInvoice: 0.10 },
-  { amount: 50, currency: 'EUR', tokens: 5000, invoices: 500, costPerInvoice: 0.10 },
-  { amount: 100, currency: 'EUR', tokens: 10000, invoices: 1000, costPerInvoice: 0.10 },
+  { amount: 10, currency: 'GBP', tokens: 1000 },
+  { amount: 50, currency: 'GBP', tokens: 5000 },
+  { amount: 100, currency: 'GBP', tokens: 10000 },
+  { amount: 10, currency: 'EUR', tokens: 1000 },
+  { amount: 50, currency: 'EUR', tokens: 5000 },
+  { amount: 100, currency: 'EUR', tokens: 10000 },
 ];
 
 const LEDGER_SAMPLE = [
-  { date: '2024-01-15', type: 'Top-up', delta: 1000, balance: 1000, currency: 'GBP', amount: 10, receiptUrl: '#' },
-  { date: '2024-01-15', type: 'Invoice', delta: -10, balance: 990, currency: 'GBP', amount: null, receiptUrl: null, invoiceNumber: 'INV-001' },
-  { date: '2024-01-16', type: 'Invoice', delta: -10, balance: 980, currency: 'GBP', amount: null, receiptUrl: null, invoiceNumber: 'INV-002' },
-  { date: '2024-01-17', type: 'Invoice', delta: -10, balance: 970, currency: 'GBP', amount: null, receiptUrl: null, invoiceNumber: 'INV-003' },
-  { date: '2024-01-18', type: 'Top-up', delta: 5000, balance: 5970, currency: 'GBP', amount: 50, receiptUrl: '#' },
-  { date: '2024-01-18', type: 'Invoice', delta: -10, balance: 5960, currency: 'GBP', amount: null, receiptUrl: null, invoiceNumber: 'INV-004' },
+  { date: '2024-01-15', type: 'Top-up', delta: 1000, balance: 1000 },
+  { date: '2024-01-15', type: 'CV', delta: -150, balance: 850 },
+  { date: '2024-01-16', type: 'Resume', delta: -150, balance: 700 },
+  { date: '2024-01-17', type: 'AI Assist', delta: -200, balance: 500 },
+  { date: '2024-01-18', type: 'Top-up', delta: 5000, balance: 5500 },
+  { date: '2024-01-19', type: 'Manager Assist', delta: -800, balance: 4700 },
+  { date: '2024-01-20', type: 'Draft', delta: -100, balance: 4600 },
 ];
 
 export default function BillingTokensPage() {
@@ -46,9 +51,9 @@ export default function BillingTokensPage() {
     }
   };
 
-  const calculateTokens = (amount: number) => Math.round(amount * 100);
-  const calculateInvoices = (tokens: number) => Math.round(tokens / 10);
-  const calculateCostPerInvoice = (amount: number) => (amount / calculateInvoices(calculateTokens(amount))).toFixed(2);
+const calculateTokens = (amount: number) => Math.max(0, Math.round(amount * TOKENS_PER_CURRENCY_UNIT));
+const calculateDocuments = (tokens: number) => tokens / TOKENS_PER_DOCUMENT;
+const calculateCostPerDocument = () => COST_PER_DOCUMENT;
 
   const filteredPackages = TOKEN_PACKAGES.filter(pkg => pkg.currency === selectedCurrency);
 
@@ -82,19 +87,16 @@ export default function BillingTokensPage() {
                     <h3 className="font-semibold text-slate-900 mb-2">1 {selectedCurrency} = 100 tokens</h3>
                     <p className="text-sm text-slate-600">Simple conversion rate</p>
                   </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl">📄</span>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">📄</span>
+                      </div>
+                      <h3 className="font-semibold text-slate-900 mb-2">1 document = 150 tokens</h3>
+                      <p className="text-sm text-slate-600">Fixed cost per document</p>
                     </div>
-                    <h3 className="font-semibold text-slate-900 mb-2">1 invoice = 100 tokens</h3>
-                    <p className="text-sm text-slate-600">Fixed cost per invoice</p>
-                  </div>
                 </div>
                 <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-700">
-                    <strong>Tokens never expire</strong> - use them whenever you need to create invoices. 
-                    Drafting and previewing invoices is completely free.
-                  </p>
+                  <p className="text-sm text-slate-700">Note - your tokens never expire</p>
                 </div>
               </div>
             </Card>
@@ -132,12 +134,12 @@ export default function BillingTokensPage() {
                       <span className="font-semibold text-slate-900">{calculateTokens(customAmount).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                      <span className="text-sm text-slate-600">Invoices</span>
-                      <span className="font-semibold text-slate-900">≈{calculateInvoices(calculateTokens(customAmount))}</span>
+                      <span className="text-sm text-slate-600">CV's or resumes</span>
+                      <span className="font-semibold text-slate-900">≈{calculateDocuments(calculateTokens(customAmount)).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
-                      <span className="text-sm text-emerald-700">Cost per invoice</span>
-                      <span className="font-semibold text-emerald-900">{selectedCurrency} {calculateCostPerInvoice(customAmount)}</span>
+                      <span className="text-sm text-emerald-700">Cost per document</span>
+                      <span className="font-semibold text-emerald-900">{selectedCurrency} {calculateCostPerDocument()}</span>
                     </div>
                   </div>
                 </div>
@@ -154,11 +156,8 @@ export default function BillingTokensPage() {
                         <div className="text-2xl font-bold text-slate-900 mb-1">
                           {pkg.currency} {pkg.amount}
                         </div>
-                        <div className="text-sm text-slate-600 mb-2">
+                        <div className="text-sm text-slate-600">
                           {pkg.tokens.toLocaleString()} tokens
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          ≈{pkg.invoices} invoices
                         </div>
                       </div>
                     </div>
@@ -177,29 +176,25 @@ export default function BillingTokensPage() {
 
             <Card>
               <div className="p-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">VAT & Receipts</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">Receipts & Records</h2>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">VAT calculation</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">Downloadable receipts</h3>
                     <p className="text-slate-700 text-sm mb-3">
-                      VAT is calculated at checkout based on your business location and VAT registration status.
+                      Each top-up generates a receipt you can download from your dashboard for bookkeeping.
                     </p>
-                    <ul className="text-sm text-slate-600 space-y-1 ml-4">
-                      <li>• UK businesses: 20% VAT</li>
-                      <li>• EU businesses: Local VAT rate</li>
-                      <li>• EU B2B with valid VAT ID: Reverse charge applies (0% VAT)</li>
-                    </ul>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">Receipts & Records</h3>
+                    <h3 className="font-semibold text-slate-900 mb-2">Ledger history</h3>
                     <p className="text-slate-700 text-sm mb-3">
-                      All transactions are recorded in your token ledger. You can access:
+                      Track every token movement — top-ups, AI usage, drafts and exports — in a searchable ledger.
                     </p>
-                    <ul className="text-sm text-slate-600 space-y-1 ml-4">
-                      <li>• Receipts provided by support</li>
-                      <li>• Transaction history in your Dashboard</li>
-                      <li>• Detailed ledger with invoice numbers</li>
-                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 mb-2">Export options</h3>
+                    <p className="text-slate-700 text-sm mb-3">
+                      Need an audit trail? Export ledger data as CSV or request a detailed statement from support.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -216,8 +211,6 @@ export default function BillingTokensPage() {
                         <th className="text-left px-3 py-2 font-semibold text-slate-700">Type</th>
                         <th className="text-right px-3 py-2 font-semibold text-slate-700">Delta</th>
                         <th className="text-right px-3 py-2 font-semibold text-slate-700">Balance</th>
-                        <th className="text-left px-3 py-2 font-semibold text-slate-700">Invoice #</th>
-                        <th className="text-center px-3 py-2 font-semibold text-slate-700">Receipt</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -234,21 +227,11 @@ export default function BillingTokensPage() {
                             </span>
                           </td>
                           <td className={`px-3 py-2 text-right font-medium ${
-                            entry.delta > 0 ? 'text-emerald-600' : 'text-slate-900'
+                            entry.delta > 0 ? 'text-emerald-600' : entry.delta < 0 ? 'text-rose-600' : 'text-slate-900'
                           }`}>
                             {entry.delta > 0 ? `+${entry.delta}` : entry.delta}
                           </td>
                           <td className="px-3 py-2 text-right font-medium">{entry.balance.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-slate-600">{entry.invoiceNumber || '-'}</td>
-                          <td className="px-3 py-2 text-center">
-                            {entry.receiptUrl ? (
-                              <a href={entry.receiptUrl} className="text-emerald-600 hover:underline text-xs">
-                                View
-                              </a>
-                            ) : (
-                              <span className="text-slate-400 text-xs">-</span>
-                            )}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -326,24 +309,6 @@ export default function BillingTokensPage() {
                     >
                       Open Token Calculator
                     </Button>
-                  </div>
-                </div>
-              </Card>
-
-              <Card>
-                <div className="p-6">
-                  <h3 className="font-semibold text-slate-900 mb-4">Examples</h3>
-                  <div className="space-y-3">
-                    {filteredPackages.slice(0, 3).map((pkg, index) => (
-                      <div key={index} className="text-sm">
-                        <div className="font-medium text-slate-900">
-                          {pkg.currency} {pkg.amount} → {pkg.tokens.toLocaleString()} tokens
-                        </div>
-                        <div className="text-slate-600">
-                          ≈{pkg.invoices} invoices → ≈{pkg.currency} {pkg.costPerInvoice.toFixed(2)} per invoice
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </Card>

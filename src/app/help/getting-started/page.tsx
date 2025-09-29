@@ -1,12 +1,14 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
-const STEPS = [
+const STEP_CONFIG = [
   {
     id: 'create-account',
     title: 'Create your account',
@@ -23,68 +25,75 @@ const STEPS = [
   },
   {
     id: 'company-settings',
-    title: 'Add company details',
-    description: 'Configure your business information for professional invoices.',
+    title: 'Add your details',
+    description: 'Configure your personal information for professional CV and resume.',
     details: [
-      'Company name and registration number',
-      'VAT number (if applicable)',
-      'Business address and contact details',
-      'Bank details (IBAN/BIC) for payments',
-      'Invoice numbering prefix'
+      'Add your details',
+      'Name',
+      'Surname',
+      'E-mail',
+      'Phone'
     ],
-    cta: 'Open company settings',
-    ctaLink: '/create-cv',
+    cta: 'Open your settings',
+    ctaLink: '/dashboard',
     tip: 'You can update these details anytime',
-    icon: '🏢'
+    icon: '🧾'
   },
   {
     id: 'top-up-tokens',
     title: 'Top up tokens',
-    description: 'Purchase tokens to create and send invoices.',
+    description: 'Purchase tokens and create your dream CV and resume.',
     details: [
-      'Choose from £10, £50, £100 or custom amount',
+      'Choose from £/€5, £/€15, £/€30 or custom amount',
       'Tokens never expire - use them when needed',
       'VAT is calculated at checkout based on your location',
       'Manual billing handled by support'
     ],
     cta: 'Buy tokens',
     ctaLink: '/pricing',
-    tip: 'Drafting and previewing invoices is completely free',
-    icon: '💰'
+    tip: 'Previewing CV and resume is completely free',
+    icon: '💳'
   },
   {
     id: 'first-invoice',
-    title: 'Create your first invoice',
-    description: 'Build your invoice with client details and line items.',
+    title: 'Create your first CV or resume',
+    description: 'Build your CV or resume with structured sections.',
     details: [
-      'Add client information (company, address, email)',
-      'Enter line items with descriptions and amounts',
-      'Choose appropriate VAT mode for your region',
-      'Preview your invoice before issuing'
+      'Add your information (name, surname, email, phone)',
+      'Enter your personal details',
+      'Add summary, experience, education and skills',
+      'Preview your CV or resume',
+      'Save draft before generating PDF or DOCX files'
     ],
-    cta: 'Open invoice generator',
+    cta: 'Create CV or resume',
     ctaLink: '/create-cv',
-    tip: 'Save clients and items as presets for faster invoicing',
-    icon: '📄'
+    tip: 'You can revisit drafts anytime before exporting.',
+    icon: '📝'
   },
   {
     id: 'send-download',
-    title: 'Send or download',
-    description: 'Issue your invoice and share it with your client.',
+    title: 'Download or Edit',
+    description: 'Decide whether to keep editing or export your finished document.',
     details: [
-      'Email directly to client with PDF attachment',
-      'Generate shareable link for client access',
-      'Download PDF for your records',
-      'Track read receipts (Pro/Business plans)'
+      'Create an editable Draft',
+      'Generate PDF or DOCX file',
+      'Use AI to upgrade your CV or resume',
+      'Use personal manager assistance to upgrade your CV or resume'
     ],
-    cta: 'Open generator',
+    cta: 'Create CV or resume',
     ctaLink: '/create-cv',
-    note: 'Issuing an invoice deducts 100 tokens from your balance',
+    note: 'Creating a PDF or resume deducts 150 tokens from your balance',
     icon: '📤'
   }
 ];
 
 export default function GettingStartedPage() {
+  const { data: session } = useSession();
+  const steps = useMemo(() => {
+    const base = STEP_CONFIG.map(step => ({ ...step }));
+    base[1] = { ...base[1], ctaLink: session ? '/dashboard' : '/auth/signin?mode=login' };
+    return base;
+  }, [session]);
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
@@ -93,11 +102,11 @@ export default function GettingStartedPage() {
     if (typeof window !== 'undefined') {
       // @ts-ignore
       window.gtag?.('event', 'gs_step_view', {
-        step_id: STEPS[activeStep].id,
+        step_id: steps[activeStep].id,
         step_number: activeStep + 1,
       });
     }
-  }, [activeStep]);
+  }, [activeStep, steps]);
 
   const handleStepClick = (stepIndex: number) => {
     setActiveStep(stepIndex);
@@ -113,7 +122,7 @@ export default function GettingStartedPage() {
     }
   };
 
-  const progress = ((activeStep + 1) / STEPS.length) * 100;
+  const progress = ((activeStep + 1) / steps.length) * 100;
 
   return (
     <main className="bg-slate-50 min-h-screen">
@@ -129,7 +138,7 @@ export default function GettingStartedPage() {
                 <div className="mb-6">
                   <div className="flex justify-between text-sm text-slate-600 mb-2">
                     <span>Progress</span>
-                    <span>{activeStep + 1} of {STEPS.length}</span>
+                    <span>{activeStep + 1} of {steps.length}</span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2">
                     <motion.div
@@ -143,7 +152,7 @@ export default function GettingStartedPage() {
 
                 {/* Step Navigation */}
                 <nav className="space-y-2">
-                  {STEPS.map((step, index) => (
+                  {steps.map((step, index) => (
                     <button
                       key={step.id}
                       onClick={() => handleStepClick(index)}
@@ -177,21 +186,21 @@ export default function GettingStartedPage() {
                 Get started in 5 minutes
               </h1>
               <p className="text-lg text-slate-600 mb-8">
-                Follow these simple steps to create and send your first professional invoice
+                Follow these simple steps to create your first professional CV or resume
               </p>
               
               {/* Mini Checklist */}
               <div className="bg-white rounded-xl p-6 border border-slate-200 max-w-2xl mx-auto">
                 <h3 className="font-semibold text-slate-900 mb-4">Quick checklist</h3>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                  {STEPS.map((step, index) => (
+                  {steps.map((step, index) => (
                     <div key={step.id} className="flex items-center gap-2">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                         completedSteps.has(index) 
                           ? 'bg-emerald-500 text-white' 
                           : 'bg-slate-200 text-slate-600'
                       }`}>
-                        {completedSteps.has(index) ? '✓' : index + 1}
+                        {completedSteps.has(index) ? 'вњ“' : index + 1}
                       </div>
                       <span className="text-slate-700">{step.title}</span>
                     </div>
@@ -210,13 +219,13 @@ export default function GettingStartedPage() {
               <Card className="mb-8">
                 <div className="p-8">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="text-4xl">{STEPS[activeStep].icon}</div>
+                    <div className="text-4xl">{steps[activeStep].icon}</div>
                     <div className="flex-1">
                       <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                        {STEPS[activeStep].title}
+                        {steps[activeStep].title}
                       </h2>
                       <p className="text-lg text-slate-600 mb-4">
-                        {STEPS[activeStep].description}
+                        {steps[activeStep].description}
                       </p>
                     </div>
                   </div>
@@ -225,7 +234,7 @@ export default function GettingStartedPage() {
                   <div className="mb-6">
                     <h3 className="font-semibold text-slate-900 mb-3">What you'll do:</h3>
                     <ul className="space-y-2">
-                      {STEPS[activeStep].details.map((detail, index) => (
+                      {steps[activeStep].details.map((detail, index) => (
                         <li key={index} className="flex items-start gap-3">
                           <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2 flex-shrink-0" />
                           <span className="text-slate-700">{detail}</span>
@@ -235,20 +244,20 @@ export default function GettingStartedPage() {
                   </div>
 
                   {/* Tips and Notes */}
-                  {STEPS[activeStep].tip && (
+                  {steps[activeStep].tip && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                       <div className="flex items-start gap-3">
                         <div className="text-blue-600 font-semibold text-sm">💡 Tip</div>
-                        <p className="text-blue-800 text-sm">{STEPS[activeStep].tip}</p>
+                        <p className="text-blue-800 text-sm">{steps[activeStep].tip}</p>
                       </div>
                     </div>
                   )}
 
-                  {STEPS[activeStep].note && (
+                  {steps[activeStep].note && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
                       <div className="flex items-start gap-3">
-                        <div className="text-amber-600 font-semibold text-sm">📝 Note</div>
-                        <p className="text-amber-800 text-sm">{STEPS[activeStep].note}</p>
+                        <div className="text-amber-600 font-semibold text-sm">📌 Note</div>
+                        <p className="text-amber-800 text-sm">{steps[activeStep].note}</p>
                       </div>
                     </div>
                   )}
@@ -256,14 +265,14 @@ export default function GettingStartedPage() {
                   {/* CTA Button */}
                   <div className="flex gap-4">
                     <Button
-                      href={STEPS[activeStep].ctaLink}
+                      href={steps[activeStep].ctaLink}
                       size="lg"
-                      onClick={() => handleCtaClick(STEPS[activeStep].id, STEPS[activeStep].cta)}
+                      onClick={() => handleCtaClick(steps[activeStep].id, steps[activeStep].cta)}
                     >
-                      {STEPS[activeStep].cta}
+                      {steps[activeStep].cta}
                     </Button>
                     
-                    {activeStep < STEPS.length - 1 && (
+                    {activeStep < steps.length - 1 && (
                       <Button
                         variant="outline"
                         size="lg"
@@ -287,11 +296,11 @@ export default function GettingStartedPage() {
                 onClick={() => setActiveStep(Math.max(0, activeStep - 1))}
                 disabled={activeStep === 0}
               >
-                ← Previous
+                Previous
               </Button>
               
               <div className="flex gap-2">
-                {STEPS.map((_, index) => (
+                {steps.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveStep(index)}
@@ -305,23 +314,23 @@ export default function GettingStartedPage() {
               </div>
               
               <Button
-                onClick={() => setActiveStep(Math.min(STEPS.length - 1, activeStep + 1))}
-                disabled={activeStep === STEPS.length - 1}
+                onClick={() => setActiveStep(Math.min(steps.length - 1, activeStep + 1))}
+                disabled={activeStep === steps.length - 1}
               >
-                Next →
+                Next
               </Button>
             </div>
 
             {/* Next Steps */}
-            {activeStep === STEPS.length - 1 && (
+            {activeStep === steps.length - 1 && (
               <div className="mt-12 text-center">
                 <Card className="bg-gradient-to-r from-emerald-50 to-blue-50 border-emerald-200">
                   <div className="p-8">
                     <h3 className="text-xl font-semibold text-slate-900 mb-4">
-                      🎉 Congratulations! You're all set
+                      рџЋ‰ Congratulations! You're all set
                     </h3>
                     <p className="text-slate-600 mb-6">
-                      You now know how to create and send professional invoices. 
+                      You now know how to create professional CV and resume. 
                       Need help with billing or have questions? Check out our resources below.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -329,7 +338,7 @@ export default function GettingStartedPage() {
                         Next: Billing & Tokens
                       </Button>
                       <Button href="/create-cv" variant="outline" size="lg">
-                        Open generator
+                        Create CV or resume
                       </Button>
                     </div>
                   </div>
@@ -342,6 +351,7 @@ export default function GettingStartedPage() {
     </main>
   );
 }
+
 
 
 

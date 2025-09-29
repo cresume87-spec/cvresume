@@ -43,13 +43,13 @@ const ISSUES: TroubleshootingIssue[] = [
     id: 'not-enough-tokens',
     title: 'Not enough tokens',
     category: 'tokens',
-    description: 'You don\'t have enough tokens to create or send an invoice.',
+    description: 'You don\'t have enough tokens to create a CV or resume.',
     steps: [
       'Check your token balance in Dashboard',
-      'Drafting and previewing invoices is free',
-      'Tokens are only deducted when you Issue/Send/Download',
+      'Drafting and previewing CVs or resumes is free',
+      'Tokens are only deducted when you Create/Improve/Send',
       'Top up your account with more tokens',
-      'Each invoice costs exactly 100 tokens'
+      'Each CV or resume costs exactly 150 tokens'
     ],
     links: [
       { text: 'View balance', href: '/dashboard' },
@@ -58,76 +58,22 @@ const ISSUES: TroubleshootingIssue[] = [
     tags: ['tokens', 'balance', 'insufficient']
   },
   {
-    id: 'email-not-delivered',
-    title: 'Email not delivered',
-    category: 'pdf-email',
-    description: 'Your invoice email was not received by the client.',
-    steps: [
-      'Verify the client email address is correct',
-      'Check your "Sent" folder for delivery confirmation',
-      'Ask client to check spam/junk folder',
-      'Try sending a shareable link instead of PDF attachment',
-      'Use read receipts (Pro/Business plans) to track delivery'
-    ],
-    links: [
-      { text: 'Resend invoice', href: '/dashboard' },
-      { text: 'Email settings', href: '/create-cv' }
-    ],
-    tags: ['email', 'delivery', 'spam']
-  },
-  {
     id: 'pdf-looks-wrong',
     title: 'PDF looks wrong',
     category: 'pdf-email',
     description: 'The generated PDF has formatting issues or missing elements.',
     steps: [
-      'Check currency and date format settings (UK/EU toggle)',
-      'Verify logo format (PNG/JPG recommended)',
+      'Check name, surname, email and phone number in your settings',
+      'Verify your photo format (PNG/JPG recommended)',
       'For printing: disable "shrink to fit" in browser',
       'For Cyrillic text: use built-in fonts only',
       'Ensure all required fields are filled'
     ],
     links: [
-      { text: 'Regenerate PDF', href: '/create-cv' },
-      { text: 'Company settings', href: '/create-cv' }
+      { text: 'Create CV', href: '/create-cv' },
+      { text: 'Your settings', href: '/dashboard' }
     ],
     tags: ['pdf', 'formatting', 'logo']
-  },
-  {
-    id: 'reverse-charge-missing',
-    title: 'Reverse charge text missing',
-    category: 'vat',
-    description: 'Reverse charge note is not appearing on your invoice.',
-    steps: [
-      'Select "intra-EU 0%" or "UK↔EU cross-border" VAT mode',
-      'Ensure both your and client VAT IDs are entered',
-      'Verify client is in a different EU country',
-      'Check that both VAT numbers are valid',
-      'The note appears automatically when conditions are met'
-    ],
-    links: [
-      { text: 'VAT settings', href: '/create-cv' },
-      { text: 'VAT Guide', href: '/help/faq' }
-    ],
-    tags: ['vat', 'reverse-charge', 'eu']
-  },
-  {
-    id: 'invoice-number-gap',
-    title: 'Invoice number gap',
-    category: 'generator',
-    description: 'Invoice numbers are not sequential or have gaps.',
-    steps: [
-      'Check your invoice prefix and next number settings',
-      'We don\'t reuse numbers from deleted invoices',
-      'Each invoice gets the next available number',
-      'Gaps are normal if invoices were deleted',
-      'You can manually set the next number if needed'
-    ],
-    links: [
-      { text: 'Invoice settings', href: '/create-cv' },
-      { text: 'Numbering guide', href: '/help/faq' }
-    ],
-    tags: ['numbering', 'sequence', 'prefix']
   },
   {
     id: 'login-2fa-issues',

@@ -13,11 +13,6 @@ export default function ContactPage() {
     <main className="bg-slate-50 min-h-screen">
       <Section className="py-10">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2">
-            <Pill>UK-first</Pill>
-            <Pill>EU-ready</Pill>
-            <Pill>Avg. reply: 1 business day</Pill>
-          </div>
           <h1 className="mt-4 text-4xl sm:text-5xl font-bold text-slate-900">Contact us</h1>
           <p className="mt-3 text-slate-600 text-lg">We're here to help with sales, support, and billing.</p>
         </div>
@@ -31,11 +26,11 @@ export default function ContactPage() {
               <Card className="p-6" padding="md">
                 <h3 className="text-base font-semibold">Contact details</h3>
                 <div className="mt-3 grid gap-3 text-sm text-slate-700">
-                  <div className="flex items-center justify-between"><div>Sales</div><a className="underline" href="mailto:info@invoicerly.co.uk">info@invoicerly.co.uk</a></div>
-                  <div className="flex items-center justify-between"><div>Support</div><a className="underline" href="mailto:info@invoicerly.co.uk">info@invoicerly.co.uk</a></div>
-                  <div className="flex items-center justify-between"><div>Billing</div><a className="underline" href="mailto:info@invoicerly.co.uk">info@invoicerly.co.uk</a></div>
-                  <div className="flex items-center justify-between"><div>Privacy (DPO)</div><a className="underline" href="mailto:info@invoicerly.co.uk">info@invoicerly.co.uk</a></div>
-                  <div className="flex items-center justify-between"><div>Phone</div><a className="underline" href="tel:+447822016497">+44 7822 016497</a></div>
+                  <div className="flex items-center justify-between"><div>Sales</div><a className="underline" href="mailto:info@makemy-cv.co.uk">info@makemy-cv.co.uk</a></div>
+                  <div className="flex items-center justify-between"><div>Support</div><a className="underline" href="mailto:info@makemy-cv.co.uk">info@makemy-cv.co.uk</a></div>
+                  <div className="flex items-center justify-between"><div>Billing</div><a className="underline" href="mailto:info@makemy-cv.co.uk">info@makemy-cv.co.uk</a></div>
+                  <div className="flex items-center justify-between"><div>Privacy (DPO)</div><a className="underline" href="mailto:info@makemy-cv.co.uk">info@makemy-cv.co.uk</a></div>
+                  <div className="flex items-center justify-between"><div>Phone</div><a className="underline" href="tel:+447833647923">+44 7833 647923</a></div>
                 </div>
                 <div className="mt-4 text-xs text-slate-500">Hours: Mon-Fri, 09:00-18:00 (UK). Limited support on EU public holidays.</div>
               </Card>
@@ -45,8 +40,8 @@ export default function ContactPage() {
                 <div className="mt-3 grid gap-4 text-sm text-slate-700">
                   <div>
                     <div className="font-medium">United Kingdom (Primary)</div>
-                    <div>PREPARING BUSINESS LTD</div>
-                    <div>Dept 6189 43 Owston Road, Carcroft,<br/>Doncaster, UK, DN6 8DA</div>
+                    <div>EVERFINA LTD</div>
+                    <div>20 Wenlock Road, London, England, N1 7GU</div>
                   </div>
                 </div>
                 <div className="mt-4 h-40 rounded-xl overflow-hidden border border-black/10">
@@ -56,7 +51,7 @@ export default function ContactPage() {
                     height="100%"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps?q=Dept%206189%2043%20Owston%20Road%2C%20Carcroft%2C%20Doncaster%2C%20UK%2C%20DN6%208DA&output=embed"
+                  src="https://www.google.com/maps?q=20%20Wenlock%20Road%2C%20London%2C%20England%2C%20N1%207GU&output=embed"
                   />
                 </div>
               </Card>
