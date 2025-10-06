@@ -10,10 +10,10 @@ const manrope = Manrope({ subsets: ['latin', 'latin-ext', 'cyrillic'], variable:
 const jetBrainsMono = JetBrains_Mono({ subsets: ['latin', 'latin-ext', 'cyrillic'], variable: '--font-jetbrains-mono', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Skeleton - Documents made simple',
-  description: 'Neutral, customizable document generation with PDF, email, and sharing.',
-  keywords: 'document, pdf, email, sharing, generator, template',
-  authors: [{ name: 'Skeleton' }],
+  title: 'CVBuilder - Professional CV & Resume Creator',
+  description: 'Create professional CVs and resumes in minutes. Choose from ATS-friendly templates, export to PDF or DOCX. Get hired faster with our modern resume builder.',
+  keywords: 'cv, resume, cv builder, resume creator, ats friendly, professional cv, job application, career',
+  authors: [{ name: 'CVBuilder' }],
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -30,15 +30,15 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: 'Skeleton - Documents made simple',
-    description: 'Neutral, customizable document generation with PDF, email, and sharing.',
+    title: 'CVBuilder - Professional CV & Resume Creator',
+    description: 'Create professional CVs and resumes in minutes. Choose from ATS-friendly templates, export to PDF or DOCX. Get hired faster with our modern resume builder.',
     type: 'website',
     locale: 'en_GB',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Skeleton - Documents made simple',
-    description: 'Neutral, customizable document generation with PDF, email, and sharing.',
+    title: 'CVBuilder - Professional CV & Resume Creator',
+    description: 'Create professional CVs and resumes in minutes. Choose from ATS-friendly templates, export to PDF or DOCX. Get hired faster with our modern resume builder.',
   },
   robots: {
     index: true,

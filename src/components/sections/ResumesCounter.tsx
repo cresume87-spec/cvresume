@@ -88,7 +88,7 @@ export default function ResumesCounter() {
             <div className="text-3xl sm:text-4xl font-bold tracking-tight">
               {formatRu(count)}
             </div>
-            <div className="text-lg sm:text-xl text-[#163a6d]">resumes and CVs created</div>
+            <div className="text-lg sm:text-xl text-[#163a6d]">resumes and CVs created this week</div>
           </div>
         </div>
       </motion.div>
