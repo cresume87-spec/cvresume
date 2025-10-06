@@ -10,7 +10,7 @@ const sections: PolicySection[] = [
   {
     id: 'overview',
     title: '1. Overview',
-    body: `This Cookies Policy explains how MakeMy-CV.co.uk, operated by EVERFINA LTD (Company No. 15645711, registered office: 20 Wenlock Road, London, N1 7GU), uses cookies and similar technologies (for example localStorage, sessionStorage, pixels, and other local identifiers) on our website and services. This Policy complements our Privacy Policy. By using the site or interacting with the cookie banner, you can manage or give consent to non-essential cookies as described below.`
+    body: `This Cookies Policy explains how careerzen.co.uk, operated by EVERFINA LTD (Company No. 15645711, registered office: 20 Wenlock Road, London, N1 7GU), uses cookies and similar technologies (for example localStorage, sessionStorage, pixels, and other local identifiers) on our website and services. This Policy complements our Privacy Policy. By using the site or interacting with the cookie banner, you can manage or give consent to non-essential cookies as described below.`
   },
   {
     id: 'what-are-cookies',
@@ -72,7 +72,7 @@ campaign_src	Tracks campaign attribution	Marketing	30–90 days`
     id: 'contact',
     title: '10. Contact',
     body: `If you have questions about cookies or this Policy, contact us at:
-📧 info@makemy-cv.co.uk
+📧 info@careerzen.co.uk
 📍 EVERFINA LTD, 20 Wenlock Road, London, England, N1 7GU`
   },
 ];
@@ -85,7 +85,7 @@ export default function CookiesPage() {
       effectiveDate="18 September 2025"
       lastUpdated="18 September 2025"
       version="v1.0.0"
-      helpEmail="info@makemy-cv.co.uk"
+      helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />
   );

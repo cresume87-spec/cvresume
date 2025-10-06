@@ -10,7 +10,7 @@ const sections: PolicySection[] = [
   {
     id: 'intro',
     title: '1. General provisions',
-    body: `These Terms and Conditions govern the use of the website MakeMy-CV.co.uk and the provision of CV/resume creation, improvement, and export services by EVERFINA LTD (Company No. 15645711), registered at 20 Wenlock Road, London, England, N1 7GU (the “Company,” “we,” “us,” “our”).\nBy using our website, creating a draft CV, or purchasing token packages, you agree to these Terms. If you do not agree, please do not use the Service.`
+    body: `These Terms and Conditions govern the use of the website careerzen.co.uk and the provision of CV/resume creation, improvement, and export services by EVERFINA LTD (Company No. 15645711), registered at 20 Wenlock Road, London, England, N1 7GU (the “Company,” “we,” “us,” “our”).\nBy using our website, creating a draft CV, or purchasing token packages, you agree to these Terms. If you do not agree, please do not use the Service.`
   },
   {
     id: 'definitions',
@@ -80,7 +80,7 @@ const sections: PolicySection[] = [
   {
     id: 'notices',
     title: '15. Notices',
-    body: `All official communications must be sent to:\n📧 info@makemy-cv.co.uk\n📍 20 Wenlock Road, London, England, N1 7GU`
+    body: `All official communications must be sent to:\n📧 info@careerzen.co.uk\n📍 20 Wenlock Road, London, England, N1 7GU`
   },
   {
     id: 'law',
@@ -95,7 +95,7 @@ const sections: PolicySection[] = [
   {
     id: 'company-details',
     title: 'Company details',
-    body: `EVERFINA LTD\nCompany number: 15645711\nRegistered office: 20 Wenlock Road, London, England, N1 7GU\nEmail: info@makemy-cv.co.uk`
+    body: `EVERFINA LTD\nCompany number: 15645711\nRegistered office: 20 Wenlock Road, London, England, N1 7GU\nEmail: info@careerzen.co.uk`
   },
 ];
 
@@ -107,7 +107,7 @@ export default function TermsPage() {
       effectiveDate="1 September 2025"
       lastUpdated="1 September 2025"
       version="v1.0.1"
-      helpEmail="info@makemy-cv.co.uk"
+      helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />
   );

@@ -149,7 +149,7 @@ const COMPANY_DETAILS = [
   'EVERFINA LTD',
   'Company number: 15645711',
   '20 Wenlock Road, London, England, N1 7GU',
-  'General enquiries: info@makemy-cv.co.uk',
+  'General enquiries: info@careerzen.co.uk',
 ];
 
 const TEMPLATE_COPY = {

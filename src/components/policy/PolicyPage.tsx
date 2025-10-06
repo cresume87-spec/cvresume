@@ -115,7 +115,7 @@ export default function PolicyPage({
                   <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">📄</div>
                   <div>
                     <div className="font-semibold text-slate-900">Scope</div>
-                    <div>Applies to all users of MakeMy-CV.co.uk worldwide.</div>
+                    <div>Applies to all users of careerzen.co.uk worldwide.</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

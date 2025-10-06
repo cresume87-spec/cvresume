@@ -10,8 +10,8 @@ const sections: PolicySection[] = [
   {
     id: 'introduction',
     title: '1. Introduction',
-    body: `We respect your privacy and handle personal data responsibly. This Policy explains what personal data we collect, why we process it, how long we retain it, who we may share it with, and how you can exercise your rights under data-protection law in connection with the services offered by MakeMy-CV.co.uk, operated by EVERFINA LTD (Company No. 15645711), registered office: 20 Wenlock Road, London, England, N1 7GU.
-For any questions or requests, please contact: info@makemy-cv.co.uk.`
+    body: `We respect your privacy and handle personal data responsibly. This Policy explains what personal data we collect, why we process it, how long we retain it, who we may share it with, and how you can exercise your rights under data-protection law in connection with the services offered by careerzen.co.uk, operated by EVERFINA LTD (Company No. 15645711), registered office: 20 Wenlock Road, London, England, N1 7GU.
+For any questions or requests, please contact: info@careerzen.co.uk.`
   },
   {
     id: 'data',
@@ -73,7 +73,7 @@ When data is no longer required, we securely delete or anonymise it.`
 • Request data portability;
 • Object to certain processing (including marketing);
 • Withdraw consent at any time (where processing is based on consent).
-To exercise your rights, contact info@makemy-cv.co.uk. We may require verification of identity. We will respond within statutory deadlines unless a lawful extension or refusal applies.`
+To exercise your rights, contact info@careerzen.co.uk. We may require verification of identity. We will respond within statutory deadlines unless a lawful extension or refusal applies.`
   },
   {
     id: 'security',
@@ -93,7 +93,7 @@ To exercise your rights, contact info@makemy-cv.co.uk. We may require verificati
   {
     id: 'contact',
     title: '11. Contact & complaints',
-    body: `For data-protection enquiries, requests, or complaints, contact: info@makemy-cv.co.uk.
+    body: `For data-protection enquiries, requests, or complaints, contact: info@careerzen.co.uk.
 If you are not satisfied with how we handle your personal data, you have the right to lodge a complaint with the UK Information Commissioner’s Office (ICO).`
   },
   {
@@ -102,7 +102,7 @@ If you are not satisfied with how we handle your personal data, you have the rig
     body: `EVERFINA LTD
 Company number: 15645711
 Registered office: 20 Wenlock Road, London, England, N1 7GU
-Email: info@makemy-cv.co.uk`
+Email: info@careerzen.co.uk`
   },
 ];
 
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
       effectiveDate="1 September 2025"
       lastUpdated="1 September 2025"
       version="v1.0.0"
-      helpEmail="info@makemy-cv.co.uk"
+      helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />
   );
