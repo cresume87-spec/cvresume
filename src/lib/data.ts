@@ -1,23 +1,24 @@
 import { PricingPlan, Testimonial, Feature, TemplateInfo } from '@/types';
+import { convertToTokens, formatCurrency } from './currency';
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
     name: 'Starter',
-    price: 'GBP 5',
+    price: formatCurrency(5.00, 'GBP'),
     points: ['Manual token top-up', 'No subscription', 'Preview included'],
     cta: 'Request top-up',
     popular: false,
   },
   {
     name: 'Pro',
-    price: 'GBP 15',
+    price: formatCurrency(15.00, 'GBP'),
     points: ['Manual token top-up', 'Branding options', 'Priority support'],
     cta: 'Request top-up',
     popular: true,
   },
   {
     name: 'Business',
-    price: 'GBP 30',
+    price: formatCurrency(30.00, 'GBP'),
     points: ['Manual token top-up', 'Team access', 'Integrations roadmap'],
     cta: 'Request top-up',
     popular: false,

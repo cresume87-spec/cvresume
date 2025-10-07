@@ -24,7 +24,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How are tokens priced?',
-    answer: '£1.00 or €1.00 = 100 tokens. Typical actions: Create CV/Resume — 10 tokens, Export (PDF/DOCX) — 5 tokens, Improve with AI — 20 tokens, Personal manager — 80 tokens.',
+    answer: '£1.00 GBP = 100 tokens (base currency). Other currencies are converted at current exchange rates. Typical actions: Create CV/Resume draft — 10 tokens, Export (PDF/DOCX) — 5 tokens each, Improve with AI — 20 tokens, Personal manager — 80 tokens.',
   },
   {
     question: 'Do tokens expire?',
@@ -40,7 +40,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Which currencies can I pay in?',
-    answer: 'GBP and EUR. Your card may convert from another currency at your issuer’s rate.',
+    answer: 'GBP (base currency), EUR, and USD. All prices are calculated from GBP (1.00 GBP = 100 tokens) and converted at current exchange rates. Your card may convert from another currency at your issuer\'s rate.',
   },
   {
     question: 'Do you issue invoices/receipts?',

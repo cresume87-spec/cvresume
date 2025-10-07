@@ -15,7 +15,7 @@ const sections: PolicySection[] = [
   {
     id: 'definitions',
     title: '2. Definitions',
-    body: `“Services” — creation, editing, and export of CVs/resumes in PDF or DOCX, as well as improvements via AI or a personal manager.\n“Draft” — a resume draft created by the user.\n“Final File” — the finished document (PDF or DOCX) saved by the user.\n“Client,” “you” — an individual or entity using the website or purchasing tokens.\n“Tokens” — internal credits used to pay for Services (1 GBP / 1 EUR = 100 tokens).`
+    body: `"Services" — creation, editing, and export of CVs/resumes in PDF or DOCX, as well as improvements via AI or a personal manager.\n"Draft" — a resume draft created by the user.\n"Final File" — the finished document (PDF or DOCX) saved by the user.\n"Client," "you" — an individual or entity using the website or purchasing tokens.\n"Tokens" — internal credits used to pay for Services (1.00 GBP = 100 tokens, other currencies converted at current exchange rates).`
   },
   {
     id: 'accounts',
@@ -25,7 +25,20 @@ const sections: PolicySection[] = [
   {
     id: 'tokens',
     title: '4. Ordering, tokens and payment',
-    body: `Services are provided through a token-based system:\n• Starter — £5 / €5 = 500 tokens\n• Pro — £15 / €15 = 1500 tokens\n• Business — £30 / €30 = 3000 tokens\n• Custom — price by agreement (custom token allocation).\nService costs:\n• Create — 100 tokens (resume draft).\n• Create & Export PDF — 150 tokens.\n• Create & Export DOCX — 150 tokens.\n• Improve with AI — 200 tokens.\n• Send to personal manager — 800 tokens.\nPayments are made via methods listed on the website. Services are activated only after payment is received.\nAll prices are in GBP or EUR. Taxes may be added where required by law.`
+    body: `Services are provided through a token-based system with GBP as the base currency:
+• Starter — £5.00 = 500 tokens
+• Pro — £15.00 = 1,500 tokens  
+• Business — £30.00 = 3,000 tokens
+• Custom — price by agreement (custom token allocation).
+
+Service costs (in tokens):
+• Create CV/Resume draft — 10 tokens
+• Export to PDF — 5 tokens
+• Export to DOCX — 5 tokens
+• Improve with AI — 20 tokens
+• Send to personal manager — 80 tokens
+
+All prices are calculated from GBP (1.00 GBP = 100 tokens). Other currencies are converted at current exchange rates. Payments are made via methods listed on the website. Services are activated only after payment is received.`
   },
   {
     id: 'service',

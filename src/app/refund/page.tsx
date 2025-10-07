@@ -60,7 +60,7 @@ const sections: PolicySection[] = [
   {
     id: 'examples',
     title: '11. Examples',
-    body: `Unused tokens: You purchased £20 = 2000 tokens, used 300 tokens → 1700 unused tokens. If you request a refund, the value of unused tokens may be refunded (less fees).\nUsed tokens: If you spent tokens to generate/download a CV, refunds are only possible where the output is materially defective.\nPromotional tokens: 100 bonus tokens received in a promotion → non-refundable.`
+    body: `Unused tokens: You purchased £20.00 = 2,000 tokens, used 300 tokens → 1,700 unused tokens. If you request a refund, the value of unused tokens may be refunded (less fees).\nUsed tokens: If you spent tokens to generate/download a CV, refunds are only possible where the output is materially defective.\nPromotional tokens: 100 bonus tokens received in a promotion → non-refundable.\nCurrency conversion: All refunds are calculated from GBP base currency (1.00 GBP = 100 tokens) and converted to your original payment currency at current exchange rates.`
   },
   {
     id: 'contact',
