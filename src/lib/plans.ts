@@ -3,7 +3,7 @@ import { PRICING_PLANS, convertToTokens, formatCurrency, Currency } from './curr
 export const pricingPlans = PRICING_PLANS;
 
 export type Plan = (typeof pricingPlans)[0];
-export { Currency };
+export type { Currency };
 
 // Legacy compatibility - keep old structure for existing components
 export const legacyPricingPlans = [
