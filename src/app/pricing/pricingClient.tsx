@@ -10,7 +10,8 @@ import Section from '@/components/layout/Section';
 import Button from '@/components/ui/Button';
 import Segmented from '@/components/ui/Segmented';
 import { CC, VAT_RATES } from '@/lib/constants';
-import { Currency } from '@/lib/plans';
+import { Currency } from '@/lib/currency';
+import { convertToTokens, convertTokensToCurrency, formatCurrency } from '@/lib/currency';
 import { PRICING_PLANS } from '@/lib/data';
 import PlanCard from '@/components/pricing/PlanCard';
 import CustomPlanCard from '@/components/pricing/CustomPlanCard';
@@ -118,7 +119,7 @@ export default function PricingClient() {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Segmented
-              options={[{label:'GBP', value:'GBP'},{label:'EUR', value:'EUR'}]}
+              options={[{label:'GBP', value:'GBP'},{label:'EUR', value:'EUR'},{label:'USD', value:'USD'}]}
               value={currency}
               onChange={(v)=>setCurrency(v as Currency)}
             />
@@ -133,17 +134,26 @@ export default function PricingClient() {
         </div>
 
         <div className="mt-10 grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {PRICING_PLANS.map((plan) => (
-            <PlanCard
-              key={plan.name}
-              name={plan.name}
-              popular={plan.popular}
-              bullets={plan.points}
-              cta={plan.cta}
-              priceText={formatPrice(plan.price)}
-              onAction={() => handlePlanRequest(plan.name)}
-            />
-          ))}
+          {PRICING_PLANS.map((plan) => {
+            // Parse GBP amount from the formatted price string
+            const gbpAmount = parseFloat(plan.price.replace(/[£,]/g, ''));
+            const tokens = convertToTokens(gbpAmount, 'GBP').tokens;
+            const convertedAmount = convertTokensToCurrency(tokens, currency);
+            
+            return (
+              <PlanCard
+                key={plan.name}
+                name={plan.name}
+                popular={plan.popular}
+                bullets={plan.points}
+                cta={plan.cta}
+                amount={convertedAmount}
+                currency={currency}
+                tokens={tokens}
+                onAction={() => handlePlanRequest(plan.name)}
+              />
+            );
+          })}
           <CustomPlanCard currency={currency} onRequest={() => handlePlanRequest('custom')} />
         </div>
 

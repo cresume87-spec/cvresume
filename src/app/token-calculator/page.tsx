@@ -5,12 +5,12 @@ import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Segmented from '@/components/ui/Segmented';
+import { convertToTokens, convertTokensToCurrency, formatCurrency, Currency, SERVICE_COSTS } from '@/lib/currency';
 
-const TOKENS_PER_UNIT = 100;
+const TOKENS_PER_GBP = 100;
 const MIN_TOP_UP = 0.01;
 
-type Currency = 'GBP' | 'EUR';
+type Currency = 'GBP' | 'EUR' | 'USD';
 type ActionKey = 'draft' | 'pdf' | 'docx' | 'ai' | 'manager';
 
 type ActionConfig = {
@@ -25,42 +25,42 @@ const ACTIONS: ActionConfig[] = [
     id: 'draft',
     label: 'Create draft',
     description: 'Creates a draft CV/resume in your Dashboard.',
-    tokens: 100,
+    tokens: SERVICE_COSTS.CREATE_DRAFT,
   },
   {
     id: 'pdf',
     label: 'Create & Export PDF',
     description: 'Instantly generates a ready-to-download PDF.',
-    tokens: 150,
+    tokens: SERVICE_COSTS.CREATE_DRAFT + SERVICE_COSTS.EXPORT_PDF,
   },
   {
     id: 'docx',
     label: 'Create & Export DOCX',
     description: 'Exports a DOCX version for further editing.',
-    tokens: 150,
+    tokens: SERVICE_COSTS.CREATE_DRAFT + SERVICE_COSTS.EXPORT_DOCX,
   },
   {
     id: 'ai',
     label: 'Improve with AI',
     description: 'Refines wording, structure, and impact using AI.',
-    tokens: 200,
+    tokens: SERVICE_COSTS.AI_IMPROVE,
   },
   {
     id: 'manager',
     label: 'Send to personal manager',
     description: 'Specialist review with feedback in 3–6 hours.',
-    tokens: 800,
+    tokens: SERVICE_COSTS.PERSONAL_MANAGER,
   },
 ];
 
 const FAQ_ITEMS = [
   {
     question: 'How does the calculator work?',
-    answer: 'Pick the actions you need — the calculator totals the tokens and shows the GBP/EUR equivalent at £1.00 / €1.00 = 100 tokens.',
+    answer: 'Pick the actions you need — the calculator totals the tokens and shows the GBP equivalent at £1.00 = 100 tokens. Other currencies are converted at current exchange rates.',
   },
   {
     question: 'Which actions can I estimate?',
-    answer: 'Create — 100 tokens. Create & Export PDF — 150 tokens. Create & Export DOCX — 150 tokens. Improve with AI — 200 tokens. Send to personal manager — 800 tokens.',
+    answer: 'Create draft — 10 tokens. Create & Export PDF — 15 tokens. Create & Export DOCX — 15 tokens. Improve with AI — 20 tokens. Send to personal manager — 80 tokens.',
   },
   {
     question: 'How accurate is the estimate?',
@@ -105,9 +105,6 @@ function formatCurrency(amount: number, currency: Currency) {
   }).format(amount);
 }
 
-function currencySymbol(currency: Currency) {
-  return currency === 'GBP' ? '£' : '€';
-}
 
 export default function TokenCalculatorPage() {
   const bcRef = useRef<BroadcastChannel | null>(null);
@@ -142,9 +139,9 @@ export default function TokenCalculatorPage() {
     return ACTIONS.reduce((sum, action) => sum + counts[action.id] * action.tokens, 0);
   }, [counts]);
 
-  const estimatedCost = totalTokens / TOKENS_PER_UNIT;
+  const estimatedCost = convertTokensToCurrency(totalTokens, currency);
   const recommendedTopUp = Math.max(MIN_TOP_UP, Math.ceil(estimatedCost * 100) / 100);
-  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : '€1.00';
+  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : '$1.25';
 
   const handleCountChange = (action: ActionKey, value: string) => {
     const parsed = Math.max(0, Math.floor(Number(value) || 0));
@@ -172,6 +169,7 @@ export default function TokenCalculatorPage() {
               options={[
                 { label: 'GBP', value: 'GBP' },
                 { label: 'EUR', value: 'EUR' },
+                { label: 'USD', value: 'USD' },
               ]}
               value={currency}
               onChange={(value) => setCurrency(value as Currency)}
@@ -193,7 +191,7 @@ export default function TokenCalculatorPage() {
                     </div>
                     <div className="text-right text-sm text-slate-500">
                       <div className="font-semibold text-slate-900">{action.tokens} tokens</div>
-                      <div>{currencySymbol(currency)}{(action.tokens / TOKENS_PER_UNIT).toFixed(2)}</div>
+                      <div>{formatCurrency(action.tokens / TOKENS_PER_GBP, currency)}</div>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-3">
@@ -263,7 +261,7 @@ export default function TokenCalculatorPage() {
           <div className="grid gap-6 md:grid-cols-2">
             {EXAMPLES.map((example) => {
               const exampleTokens = ACTIONS.reduce((sum, action) => sum + (example.actions[action.id] ?? 0) * action.tokens, 0);
-              const exampleCost = exampleTokens / TOKENS_PER_UNIT;
+              const exampleCost = convertTokensToCurrency(exampleTokens, currency);
               return (
                 <motion.div
                   key={example.title}

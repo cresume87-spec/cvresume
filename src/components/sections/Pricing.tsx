@@ -9,18 +9,18 @@ import Button from '@/components/ui/Button';
 import { PRICING_PLANS } from '@/lib/data';
 import { THEME } from '@/lib/theme';
 import PlanCard from '@/components/pricing/PlanCard';
-import CustomPlanCard from '@/components/pricing/CustomPlanCard';
+import { convertToTokens, convertTokensToCurrency, formatCurrency, Currency } from '@/lib/currency';
 
 export default function Pricing() {
   const bcRef = useRef<BroadcastChannel | null>(null);
-  const [currency, setCurrency] = useState<'GBP'|'EUR'>('GBP');
+  const [currency, setCurrency] = useState<Currency>('GBP');
 
   useEffect(()=>{
     try {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (ev: MessageEvent) => {
         const data: any = (ev as any)?.data || {};
-        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR')) {
+        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD')) {
           setCurrency(data.currency);
           try { localStorage.setItem('currency', data.currency); } catch {}
         }
@@ -29,7 +29,7 @@ export default function Pricing() {
     // Read saved currency on mount (client) to avoid SSR mismatch
     try {
       const saved = localStorage.getItem('currency');
-      if (saved === 'GBP' || saved === 'EUR') setCurrency(saved);
+      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD') setCurrency(saved);
     } catch {}
     return () => { try { bcRef.current?.close(); } catch {} };
   }, []);
@@ -58,8 +58,11 @@ export default function Pricing() {
 
       <div className="grid md:grid-cols-4 gap-6">
         {PRICING_PLANS.map((plan) => {
-          const base = parseAmount(plan.price);
-          const tokens = Math.round(base); // 1 unit => 1 token
+          // Parse GBP amount from the formatted price string
+          const gbpAmount = parseFloat(plan.price.replace(/[£,]/g, ''));
+          const tokens = convertToTokens(gbpAmount, 'GBP').tokens;
+          const convertedAmount = convertTokensToCurrency(tokens, currency);
+          
           return (
             <PlanCard
               key={plan.name}
@@ -67,7 +70,7 @@ export default function Pricing() {
               popular={plan.popular}
               bullets={plan.points}
               cta={plan.cta}
-              amount={base}
+              amount={convertedAmount}
               currency={currency}
               tokens={tokens}
               onAction={handleTopUpRequest}
