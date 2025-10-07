@@ -5,12 +5,11 @@ import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import { convertToTokens, convertTokensToCurrency, formatCurrency, Currency, SERVICE_COSTS } from '@/lib/currency';
+import { convertToTokens, convertTokensToCurrency, formatCurrency as formatCurrencyLib, Currency, SERVICE_COSTS } from '@/lib/currency';
 
 const TOKENS_PER_GBP = 100;
 const MIN_TOP_UP = 0.01;
 
-type Currency = 'GBP' | 'EUR' | 'USD';
 type ActionKey = 'draft' | 'pdf' | 'docx' | 'ai' | 'manager';
 
 type ActionConfig = {
@@ -95,15 +94,6 @@ const EXAMPLES: Array<{
   },
 ];
 
-function formatCurrency(amount: number, currency: Currency) {
-  const locale = currency === 'GBP' ? 'en-GB' : 'de-DE';
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
 
 
 export default function TokenCalculatorPage() {
@@ -191,7 +181,7 @@ export default function TokenCalculatorPage() {
                     </div>
                     <div className="text-right text-sm text-slate-500">
                       <div className="font-semibold text-slate-900">{action.tokens} tokens</div>
-                      <div>{formatCurrency(action.tokens / TOKENS_PER_GBP, currency)}</div>
+                      <div>{formatCurrencyLib(action.tokens / TOKENS_PER_GBP, currency)}</div>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-3">
@@ -220,12 +210,12 @@ export default function TokenCalculatorPage() {
               <div className="flex items-center justify-between">
                 <span>Estimated cost</span>
                 <span className="text-base font-semibold text-slate-900">
-                  {formatCurrency(estimatedCost, currency)} <span className="text-xs text-slate-500">(at {tokensPerUnitLabel} = 100 tokens)</span>
+                  {formatCurrencyLib(estimatedCost, currency)} <span className="text-xs text-slate-500">(at {tokensPerUnitLabel} = 100 tokens)</span>
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Suggested top-up</span>
-                <span className="text-base font-semibold text-emerald-600">{formatCurrency(recommendedTopUp, currency)}</span>
+                <span className="text-base font-semibold text-emerald-600">{formatCurrencyLib(recommendedTopUp, currency)}</span>
               </div>
             </div>
             <div className="mt-6 space-y-3">
@@ -276,7 +266,7 @@ export default function TokenCalculatorPage() {
                     </div>
                     <div className="text-right text-sm text-slate-600">
                       <div className="font-semibold text-slate-900">{exampleTokens.toLocaleString()} tokens</div>
-                      <div>{formatCurrency(exampleCost, currency)}</div>
+                      <div>{formatCurrencyLib(exampleCost, currency)}</div>
                     </div>
                   </div>
                 </motion.div>
