@@ -9,7 +9,8 @@ import Button from '@/components/ui/Button';
 import { PRICING_PLANS } from '@/lib/data';
 import { THEME } from '@/lib/theme';
 import PlanCard from '@/components/pricing/PlanCard';
-import { convertToTokens, convertTokensToCurrency, formatCurrency, Currency } from '@/lib/currency';
+import CustomPlanCard from '@/components/pricing/CustomPlanCard';
+import { convertToTokens, convertTokensToCurrency, Currency } from '@/lib/currency';
 
 export default function Pricing() {
   const bcRef = useRef<BroadcastChannel | null>(null);
@@ -33,11 +34,6 @@ export default function Pricing() {
     } catch {}
     return () => { try { bcRef.current?.close(); } catch {} };
   }, []);
-
-  const parseAmount = (priceText: string) => {
-    const match = priceText.match(/([0-9]+(?:\.[0-9]+)?)/);
-    return match ? parseFloat(match[1]) : 0;
-  };
 
   const handleTopUpRequest = () => {
     toast.info('Token top-ups are handled manually. Please contact support.');
