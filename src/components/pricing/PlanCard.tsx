@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import { motion, useReducedMotion } from 'framer-motion';
 import { THEME } from '@/lib/theme';
 
-type Currency = 'GBP' | 'EUR';
+import { Currency } from '@/lib/currency';
 
 export type PlanCardProps = {
   name: string;
@@ -44,7 +44,14 @@ export default function PlanCard({ name, popular, badgeText, bullets, cta, onAct
   const reduceMotion = useReducedMotion();
   const incVat = typeof vatRatePercent === 'number' ? resolvedAmount.amount * (1 + vatRatePercent / 100) : null;
 
-  const money = (n: number, curr: Currency) => new Intl.NumberFormat(curr === 'GBP' ? 'en-GB' : 'en-IE', { style: 'currency', currency: curr, maximumFractionDigits: n % 1 === 0 ? 0 : 2 }).format(n);
+  const money = (n: number, curr: Currency) => {
+    const locale = curr === 'GBP' ? 'en-GB' : curr === 'EUR' ? 'en-IE' : 'en-US';
+    return new Intl.NumberFormat(locale, { 
+      style: 'currency', 
+      currency: curr, 
+      maximumFractionDigits: n % 1 === 0 ? 0 : 2 
+    }).format(n);
+  };
 
   return (
     <motion.div

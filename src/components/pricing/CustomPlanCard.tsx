@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { useState } from 'react';
-import type { Currency } from '@/lib/plans';
+import type { Currency } from '@/lib/currency';
 
 export default function CustomPlanCard({ currency, onRequest }: { currency: Currency; onRequest: () => void; }) {
   const [priceInput, setPriceInput] = useState<string>('5');
@@ -19,7 +19,7 @@ export default function CustomPlanCard({ currency, onRequest }: { currency: Curr
     setPriceInput(e.target.value);
   };
 
-  const currencyLabel = currency === 'GBP' ? String.fromCharCode(163) : String.fromCharCode(8364);
+  const currencyLabel = currency === 'GBP' ? String.fromCharCode(163) : currency === 'EUR' ? String.fromCharCode(8364) : '$';
 
   return (
     <motion.div
