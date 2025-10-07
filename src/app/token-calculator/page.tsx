@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Segmented from '@/components/ui/Segmented';
 import { convertToTokens, convertTokensToCurrency, formatCurrency as formatCurrencyLib, Currency, SERVICE_COSTS } from '@/lib/currency';
 
 const TOKENS_PER_GBP = 100;
