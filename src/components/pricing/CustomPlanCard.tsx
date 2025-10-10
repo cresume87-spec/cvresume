@@ -4,15 +4,15 @@ import { motion, useReducedMotion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { useState } from 'react';
 import type { Currency } from '@/lib/currency';
+import { convertToTokens } from '@/lib/currency';
 
 export default function CustomPlanCard({ currency, onRequest }: { currency: Currency; onRequest: () => void; }) {
   const [priceInput, setPriceInput] = useState<string>('5');
-  const TOKENS_PER_UNIT = 100;
   const min = 0.01;
   const numericPrice = parseFloat(priceInput || '0');
   const validNumber = Number.isFinite(numericPrice);
 
-  const tokens = Math.max(0, Math.round((validNumber ? numericPrice : 0) * TOKENS_PER_UNIT));
+  const tokens = validNumber ? convertToTokens(numericPrice, currency).tokens : 0;
   const reduceMotion = useReducedMotion();
 
   const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
