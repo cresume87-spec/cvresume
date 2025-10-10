@@ -1,12 +1,15 @@
 import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
+import { Currency } from '@/lib/currency';
+import { formatCurrency } from '@/lib/currency';
 
 export const metadata = {
   title: 'Refund & Cancellation Policy - MakeMy-CV',
   description: 'Refund and cancellation terms for MakeMy-CV token purchases and services.',
 };
 
-const sections: PolicySection[] = [
+function getDynamicRefundSections(currency: Currency): PolicySection[] {
+  return [
   {
     id: 'summary',
     title: '1. Customer summary',
@@ -60,23 +63,27 @@ const sections: PolicySection[] = [
   {
     id: 'examples',
     title: '11. Examples',
-    body: `Unused tokens: You purchased £20.00 = 2,000 tokens, used 300 tokens → 1,700 unused tokens. If you request a refund, the value of unused tokens may be refunded (less fees).\nUsed tokens: If you spent tokens to generate/download a CV, refunds are only possible where the output is materially defective.\nPromotional tokens: 100 bonus tokens received in a promotion → non-refundable.\nCurrency conversion: All refunds are calculated from GBP base currency (1.00 GBP = 100 tokens) and converted to your original payment currency at current exchange rates.`
+    body: `Unused tokens: You purchased ${formatCurrency(20.00, currency)} = 2,000 tokens, used 300 tokens → 1,700 unused tokens. If you request a refund, the value of unused tokens may be refunded (less fees).\nUsed tokens: If you spent tokens to generate/download a CV, refunds are only possible where the output is materially defective.\nPromotional tokens: 100 bonus tokens received in a promotion → non-refundable.\nCurrency conversion: All refunds are calculated from GBP base currency (1.00 GBP = 100 tokens) and converted to your original payment currency at current exchange rates.`
   },
   {
     id: 'contact',
     title: '12. Contact details',
     body: `Email: info@careerzen.co.uk\nRegistered office: EVERFINA LTD, 20 Wenlock Road, London, England, N1 7GU`
   },
-];
+  ];
+}
 
 export default function RefundPage() {
+  // For now, use GBP as default currency. In the future, this could be made dynamic based on user preferences
+  const sections = getDynamicRefundSections('GBP');
+  
   return (
     <PolicyPage
       title="Refund & Cancellation Policy"
       sections={sections}
-      effectiveDate="1 September 2025"
-      lastUpdated="1 September 2025"
-      version="v1.0.0"
+      effectiveDate="01.09.2025"
+      lastUpdated="18.09.2025"
+      version="v1.0.6"
       helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />

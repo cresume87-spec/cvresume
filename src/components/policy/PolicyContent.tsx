@@ -27,6 +27,16 @@ export default function PolicyContent({ sections }: PolicyContentProps) {
                     </ul>
                   );
                 }
+                // Handle single line breaks within paragraphs
+                if (lines.length > 1) {
+                  return (
+                    <div key={idx}>
+                      {lines.map((line, i) => (
+                        <p key={i} className={i > 0 ? 'mt-2' : ''}>{line}</p>
+                      ))}
+                    </div>
+                  );
+                }
                 return <p key={idx}>{block}</p>;
               })}
             </div>

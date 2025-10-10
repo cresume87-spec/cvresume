@@ -1,12 +1,15 @@
 import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
+import { Currency } from '@/lib/currency';
+import { formatCurrency } from '@/lib/currency';
 
 export const metadata = {
   title: 'Terms & Conditions - MakeMy-CV',
   description: 'Terms & Conditions for using MakeMy-CV services.',
 };
 
-const sections: PolicySection[] = [
+function getDynamicTermsSections(currency: Currency): PolicySection[] {
+  return [
   {
     id: 'intro',
     title: '1. General provisions',
@@ -26,17 +29,17 @@ const sections: PolicySection[] = [
     id: 'tokens',
     title: '4. Ordering, tokens and payment',
     body: `Services are provided through a token-based system with GBP as the base currency:
-• Starter — £5.00 = 500 tokens
-• Pro — £15.00 = 1,500 tokens  
-• Business — £30.00 = 3,000 tokens
+• Starter — ${formatCurrency(5.00, currency)} = 500 tokens
+• Pro — ${formatCurrency(15.00, currency)} = 1,500 tokens  
+• Business — ${formatCurrency(30.00, currency)} = 3,000 tokens
 • Custom — price by agreement (custom token allocation).
 
 Service costs (in tokens):
-• Create CV/Resume draft — 10 tokens
-• Export to PDF — 5 tokens
-• Export to DOCX — 5 tokens
-• Improve with AI — 20 tokens
-• Send to personal manager — 80 tokens
+• Create CV/Resume draft — 100 tokens
+• Export to PDF — 150 tokens
+• Export to DOCX — 150 tokens
+• Improve with AI — 200 tokens
+• Send to personal manager — 800 tokens
 
 All prices are calculated from GBP (1.00 GBP = 100 tokens). Other currencies are converted at current exchange rates. Payments are made via methods listed on the website. Services are activated only after payment is received.`
   },
@@ -110,16 +113,20 @@ All prices are calculated from GBP (1.00 GBP = 100 tokens). Other currencies are
     title: 'Company details',
     body: `EVERFINA LTD\nCompany number: 15645711\nRegistered office: 20 Wenlock Road, London, England, N1 7GU\nEmail: info@careerzen.co.uk`
   },
-];
+  ];
+}
 
 export default function TermsPage() {
+  // For now, use GBP as default currency. In the future, this could be made dynamic based on user preferences
+  const sections = getDynamicTermsSections('GBP');
+  
   return (
     <PolicyPage
       title="Terms & Conditions"
       sections={sections}
-      effectiveDate="1 September 2025"
-      lastUpdated="1 September 2025"
-      version="v1.0.1"
+      effectiveDate="01.09.2025"
+      lastUpdated="18.09.2025"
+      version="v1.0.6"
       helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />

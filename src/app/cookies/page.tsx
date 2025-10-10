@@ -82,9 +82,9 @@ export default function CookiesPage() {
     <PolicyPage
       title="Cookies Policy"
       sections={sections}
-      effectiveDate="18 September 2025"
-      lastUpdated="18 September 2025"
-      version="v1.0.0"
+      effectiveDate="01.09.2025"
+      lastUpdated="18.09.2025"
+      version="v1.0.6"
       helpEmail="info@careerzen.co.uk"
       showRegionToggle={false}
     />
