@@ -18,44 +18,48 @@ import CustomPlanCard from '@/components/pricing/CustomPlanCard';
 
 const COUNTRIES = Object.keys(CC);
 
-const FAQ_ITEMS = [
-  {
-    question: 'Do prices include taxes?',
-    answer: 'Prices are shown excluding VAT. UK/EU VAT (or local taxes/fees) is calculated at checkout based on your billing details.',
-  },
-  {
-    question: 'How are tokens priced?',
-    answer: '£1.00 GBP = 100 tokens (base currency). Other currencies are converted at current exchange rates. Typical actions: Create CV/Resume draft — 10 tokens, Export (PDF/DOCX) — 5 tokens each, Improve with AI — 20 tokens, Personal manager — 80 tokens.',
-  },
-  {
-    question: 'Do tokens expire?',
-    answer: 'No. Tokens never expire.',
-  },
-  {
-    question: 'Can I cancel or get a refund?',
-    answer: 'Top-ups are pay-as-you-go and non-refundable once completed.',
-  },
-  {
-    question: 'Which payment methods do you support?',
-    answer: 'All major cards (Visa, Mastercard, Amex) and popular wallets (Apple Pay / Google Pay). Bank transfer available for larger orders on request.',
-  },
-  {
-    question: 'Which currencies can I pay in?',
-    answer: 'GBP (base currency), EUR, and USD. All prices are calculated from GBP (1.00 GBP = 100 tokens) and converted at current exchange rates. Your card may convert from another currency at your issuer\'s rate.',
-  },
-  {
-    question: 'Do you issue invoices/receipts?',
-    answer: 'Yes. A receipt (and VAT invoice if applicable) is emailed after payment. Add your company details and VAT number at checkout.',
-  },
-  {
-    question: 'Is there a minimum top-up?',
-    answer: 'Minimum top-up is £5 / €5. Larger amounts are supported via the Custom option.',
-  },
-  {
-    question: 'Is my payment data secure?',
-    answer: 'Payments are processed by a PCI-DSS compliant provider. We don’t store full card details on our servers.',
-  },
-];
+function getDynamicFAQItems(currency: Currency) {
+  const basePrice = currency === 'GBP' ? 1.00 : convertTokensToCurrency(100, currency);
+  
+  return [
+    {
+      question: 'Do prices include taxes?',
+      answer: 'Prices are shown excluding VAT. UK/EU VAT (or local taxes/fees) is calculated at checkout based on your billing details.',
+    },
+    {
+      question: 'How are tokens priced?',
+      answer: `${formatCurrency(basePrice, currency)} = 100 tokens (base currency). Other currencies are converted at current exchange rates. Typical actions: Create CV/Resume draft — 100 tokens, Export (PDF/DOCX) — 150 tokens each, Improve with AI — 200 tokens, Personal manager — 800 tokens.`,
+    },
+    {
+      question: 'Do tokens expire?',
+      answer: 'No. Tokens never expire.',
+    },
+    {
+      question: 'Can I cancel or get a refund?',
+      answer: 'Top-ups are pay-as-you-go and non-refundable once completed.',
+    },
+    {
+      question: 'Which payment methods do you support?',
+      answer: 'All major cards (Visa, Mastercard, Amex) and popular wallets (Apple Pay / Google Pay). Bank transfer available for larger orders on request.',
+    },
+    {
+      question: 'Which currencies can I pay in?',
+      answer: 'GBP (base currency), EUR, and USD. All prices are calculated from GBP (1.00 GBP = 100 tokens) and converted at current exchange rates. Your card may convert from another currency at your issuer\'s rate.',
+    },
+    {
+      question: 'Do you issue invoices/receipts?',
+      answer: 'Yes. A receipt (and VAT invoice if applicable) is emailed after payment. Add your company details and VAT number at checkout.',
+    },
+    {
+      question: 'Is there a minimum top-up?',
+      answer: `Minimum top-up is ${formatCurrency(0.01, currency)}. Larger amounts are supported via the Custom option.`,
+    },
+    {
+      question: 'Is my payment data secure?',
+      answer: 'Payments are processed by a PCI-DSS compliant provider. We don\'t store full card details on our servers.',
+    },
+  ];
+}
 
 function money(n: number, currency: Currency) {
   const locale = currency === 'GBP' ? 'en-GB' : 'en-IE';
@@ -160,7 +164,7 @@ export default function PricingClient() {
         <div className='mt-12 max-w-3xl mx-auto rounded-2xl border border-black/10 bg-white p-6'>
           <h3 className='text-lg font-semibold'>FAQ</h3>
           <div className='mt-4 space-y-4 text-sm text-slate-700'>
-            {FAQ_ITEMS.map((item) => (
+            {getDynamicFAQItems(currency).map((item) => (
               <div key={item.question}>
                 <div className='font-medium'>{item.question}</div>
                 <p className='text-slate-600 mt-1'>{item.answer}</p>
