@@ -11,9 +11,9 @@ interface PolicyMetaProps {
 
 function MetaRow({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="text-slate-500 w-28">{label}</div>
-      <div className="text-slate-900 font-medium truncate">{value || '—'}</div>
+    <div className="flex items-center gap-1">
+      <div className="text-slate-500 w-24">{label}</div>
+      <div className="text-slate-900 font-medium">{value || '—'}</div>
     </div>
   );
 }
