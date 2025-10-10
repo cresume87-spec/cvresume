@@ -2,8 +2,8 @@ import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
 
 export const metadata = {
-  title: 'Privacy Policy - MakeMy-CV',
-  description: 'How MakeMy-CV collects, uses, and protects personal data.',
+  title: 'Privacy Policy - CareerZen',
+  description: 'How CareerZen collects, uses, and protects personal data.',
 };
 
 const sections: PolicySection[] = [

@@ -4,8 +4,8 @@ import { Currency } from '@/lib/currency';
 import { formatCurrency } from '@/lib/currency';
 
 export const metadata = {
-  title: 'Terms & Conditions - MakeMy-CV',
-  description: 'Terms & Conditions for using MakeMy-CV services.',
+  title: 'Terms & Conditions - CareerZen',
+  description: 'Terms & Conditions for using CareerZen services.',
 };
 
 function getDynamicTermsSections(currency: Currency): PolicySection[] {

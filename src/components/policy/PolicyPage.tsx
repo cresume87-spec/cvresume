@@ -71,7 +71,7 @@ export default function PolicyPage({
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">{title}</h1>
           <p className="max-w-2xl mx-auto text-slate-600 text-lg">
-            These Terms & Conditions explain how you can use MakeMy-CV, purchase token packages,
+            These Terms & Conditions explain how you can use CareerZen, purchase token packages,
             and receive document generation services from EVERFINA LTD.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -161,7 +161,7 @@ export default function PolicyPage({
                 <ul className="mt-3 text-sm text-slate-700 space-y-3">
                   <li>
                     <div className="font-medium text-slate-900">1 Sep 2025</div>
-                    <div>New Terms & Conditions published for MakeMy-CV launch.</div>
+                    <div>New Terms & Conditions published for CareerZen launch.</div>
                   </li>
                 </ul>
               </Card>

@@ -2,8 +2,8 @@ import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
 
 export const metadata = {
-  title: 'Cookies Policy - MakeMy-CV',
-  description: 'Details on how MakeMy-CV uses cookies and similar technologies.',
+  title: 'Cookies Policy - CareerZen',
+  description: 'Details on how CareerZen uses cookies and similar technologies.',
 };
 
 const sections: PolicySection[] = [

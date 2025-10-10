@@ -4,8 +4,8 @@ import { Currency } from '@/lib/currency';
 import { formatCurrency } from '@/lib/currency';
 
 export const metadata = {
-  title: 'Refund & Cancellation Policy - MakeMy-CV',
-  description: 'Refund and cancellation terms for MakeMy-CV token purchases and services.',
+  title: 'Refund & Cancellation Policy - CareerZen',
+  description: 'Refund and cancellation terms for CareerZen token purchases and services.',
 };
 
 function getDynamicRefundSections(currency: Currency): PolicySection[] {
