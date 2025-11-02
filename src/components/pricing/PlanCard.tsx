@@ -1,11 +1,13 @@
-'use client';
+"use client";
 
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import { motion, useReducedMotion } from 'framer-motion';
-import { THEME } from '@/lib/theme';
-
-import { Currency } from '@/lib/currency';
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import { motion, useReducedMotion } from "framer-motion";
+import { THEME } from "@/lib/theme";
+import { Currency } from "@/lib/currency";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 export type PlanCardProps = {
   name: string;
@@ -13,90 +15,163 @@ export type PlanCardProps = {
   badgeText?: string;
   bullets: string[];
   cta: string;
-  onAction?: () => void;
-  // Price variants (provide either priceText or amount+currency)
   priceText?: string; // e.g., 'GBP 10'
   amount?: number; // numeric amount (one-time)
   currency?: Currency;
-  vatRatePercent?: number; // if provided, shows est. VAT line
-  // Tokens info (optional). If not provided, computed from price
+  vatRatePercent?: number;
   tokens?: number;
+  onAction?: () => void;
 };
 
-export default function PlanCard({ name, popular, badgeText, bullets, cta, onAction, priceText, amount, currency, vatRatePercent, tokens }: PlanCardProps) {
+export default function PlanCard({
+                                   name,
+                                   popular,
+                                   badgeText,
+                                   bullets,
+                                   cta,
+                                   priceText,
+                                   amount,
+                                   currency = "GBP",
+                                   vatRatePercent = 20,
+                                   tokens,
+                                 }: PlanCardProps) {
+  const reduceMotion = useReducedMotion();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // --- Resolve amount & currency
   const resolvedAmount = (() => {
-    if (typeof amount === 'number' && currency) return { amount, currency } as const;
+    if (typeof amount === "number") return { amount, currency } as const;
     if (priceText) {
       const match = priceText.match(/([A-Z]{3})\s*([0-9]+(?:\.[0-9]+)?)/);
-      const curr = (match?.[1] as Currency) || 'GBP';
-      const amt = parseFloat(match?.[2] || '0');
+      const curr = (match?.[1] as Currency) || "GBP";
+      const amt = parseFloat(match?.[2] || "0");
       return { amount: amt, currency: curr } as const;
     }
-    return { amount: 0, currency: 'GBP' as Currency } as const;
+    return { amount: 0, currency: "GBP" as Currency } as const;
   })();
 
-  const computedTokens = (() => {
-    if (typeof tokens === 'number') return Math.max(0, Math.round(tokens));
-    const TOKENS_PER_UNIT = 100; // 1 GBP/EUR = 100 tokens
-    return Math.max(0, Math.round(resolvedAmount.amount * TOKENS_PER_UNIT));
-  })();
-
-  const reduceMotion = useReducedMotion();
-  const incVat = typeof vatRatePercent === 'number' ? resolvedAmount.amount * (1 + vatRatePercent / 100) : null;
+  // --- Tokens & VAT
+  const computedTokens =
+    typeof tokens === "number"
+      ? Math.max(0, Math.round(tokens))
+      : Math.max(0, Math.round(resolvedAmount.amount * 100));
+  const incVat = resolvedAmount.amount * (1 + vatRatePercent / 100);
 
   const money = (n: number, curr: Currency) => {
-    const locale = curr === 'GBP' ? 'en-GB' : curr === 'EUR' ? 'en-IE' : 'en-US';
-    return new Intl.NumberFormat(locale, { 
-      style: 'currency', 
-      currency: curr, 
-      maximumFractionDigits: n % 1 === 0 ? 0 : 2 
+    const locale =
+      curr === "GBP" ? "en-GB" : curr === "EUR" ? "en-IE" : "en-US";
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: curr,
+      maximumFractionDigits: n % 1 === 0 ? 0 : 2,
     }).format(n);
+  };
+
+  // --- Redirect on click
+  const handleTopUp = () => {
+    if (status !== "authenticated") {
+      toast.info("Please log in to continue");
+      router.push("/auth/signin?mode=login");
+      return;
+    }
+
+    const checkoutData = {
+      planId: name,
+      description: `Top-up: ${name}`,
+      amount: resolvedAmount.amount,
+      currency: resolvedAmount.currency,
+      tokens: computedTokens,
+      vatRate: vatRatePercent,
+      vatAmount: resolvedAmount.amount * (vatRatePercent / 100),
+      total: incVat,
+      email: session?.user?.email || "",
+    };
+
+    try {
+      localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+      router.push("/checkout");
+    } catch (err) {
+      console.error("Failed to save checkout data:", err);
+      toast.error("Something went wrong, please try again.");
+    }
   };
 
   return (
     <motion.div
       initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-      whileHover={reduceMotion ? undefined : { y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 260, damping: 22 } }}
+      whileHover={
+        reduceMotion
+          ? undefined
+          : {
+            y: -8,
+            scale: 1.02,
+            transition: { type: "spring", stiffness: 260, damping: 22 },
+          }
+      }
       whileTap={reduceMotion ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.4 }}
       viewport={{ once: true }}
     >
-      <Card className={`${popular ? 'shadow-md border-[#E2E8F0]' : ''} flex flex-col justify-between h-full p-6`}>
+      <Card
+        className={`${
+          popular ? "shadow-lg border-indigo-100" : "border-slate-200"
+        } flex flex-col justify-between h-full p-6 rounded-2xl`}
+      >
         <div>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">{name}</h3>
+            <h3 className="text-lg font-semibold text-slate-800">{name}</h3>
             {(popular || badgeText) && (
               <motion.span
-                className={`text-xs rounded-full px-2 py-1 ${THEME.primary.text} bg-black/5`}
+                className={`text-xs rounded-full px-2 py-1 ${THEME.primary.text} bg-indigo-50 border border-indigo-200`}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 17 }}
+                transition={{
+                  delay: 0.3,
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 17,
+                }}
               >
-                {badgeText || 'POPULAR'}
+                {badgeText || "POPULAR"}
               </motion.span>
             )}
           </div>
-          <div className="mt-3 text-3xl font-bold">
+
+          <div className="mt-3 text-3xl font-bold text-slate-900">
             {money(resolvedAmount.amount, resolvedAmount.currency)}
-            <span className="text-base font-normal text-slate-500">/one-time</span>
+            <span className="text-base font-normal text-slate-500">
+              /one-time
+            </span>
           </div>
-          {incVat !== null && (
-            <div className="text-[11px] text-slate-500 mt-1">Est. incl. VAT: {money(incVat, resolvedAmount.currency)}</div>
-          )}
-          <div className="mt-1 text-xs text-slate-600">= {computedTokens} tokens</div>
+
+          <div className="text-sm text-slate-600 mt-1">
+            ≈ {computedTokens} tokens
+          </div>
+          <div className="text-[11px] text-slate-500">
+            incl. VAT: {money(incVat, resolvedAmount.currency)}
+          </div>
+
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
             {bullets.map((point) => (
-              <li key={point} className="flex items-start gap-2"><span>-</span><span>{point}</span></li>
+              <li
+                key={point}
+                className="flex items-start gap-2 leading-snug"
+              >
+                <span>•</span>
+                <span>{point}</span>
+              </li>
             ))}
           </ul>
         </div>
+
         <div className="mt-6">
-          <Button className="w-full" size="lg" onClick={onAction}>{cta}</Button>
+          <Button className="w-full" size="lg" onClick={handleTopUp}>
+            {cta || "Request Top-Up"}
+          </Button>
         </div>
       </Card>
     </motion.div>
   );
 }
-
-

@@ -1,12 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove deprecated experimental.turbo config
   webpack: (config, { dev }) => {
     if (dev) {
-      // Avoid eval()-based devtool to prevent stray encoding issues in eval strings
       config.devtool = 'source-map';
     }
     return config;
+  },
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn-icons-png.flaticon.com", // якщо плануєш інші іконки
+      },
+    ],
   },
 };
 
