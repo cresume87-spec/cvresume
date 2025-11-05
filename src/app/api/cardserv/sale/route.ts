@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       data: {
         userEmail: body.email,
         amount: body.amount,
-        currency: body.currency || "EUR",
+        currency: body.currency,
         description: body.description,
         tokens: body.tokens || 0,
         orderMerchantId,
