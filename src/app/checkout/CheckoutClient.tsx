@@ -78,6 +78,10 @@ export default function CheckoutClient() {
 
       const data = await res.json().catch(() => ({}));
 
+      if (data.orderMerchantId) {
+        localStorage.setItem("orderMerchantId", data.orderMerchantId);
+      }
+
       const orderId =
         data?.orderMerchantId ||
         data?.data?.orderMerchantId ||

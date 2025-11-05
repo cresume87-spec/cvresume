@@ -12,28 +12,27 @@ export default function PaymentProcessingClient() {
 
   // 🟢 Отримуємо orderMerchantId
   useEffect(() => {
-    const urlParam =
+    const paramId =
       params.get("order") ||
       params.get("orderId") ||
       params.get("orderMerchantId");
 
-    const fromStorage =
+    const storedId =
       typeof window !== "undefined"
         ? localStorage.getItem("orderMerchantId")
         : null;
 
-    const finalOrderId = urlParam || fromStorage;
-
-    if (finalOrderId) {
-      console.log("💾 Using orderMerchantId:", finalOrderId);
-      setOrderId(finalOrderId);
+    const finalId = paramId || storedId;
+    if (finalId) {
+      console.log("💾 Found orderMerchantId:", finalId);
+      setOrderId(finalId);
     } else {
       setStatus("failed");
       setMessage("❌ Order ID not found.");
     }
   }, [params]);
 
-  // 🟢 Перевірка статусу платежу
+  // 🧾 Перевіряємо статус
   useEffect(() => {
     if (!orderId) return;
 
@@ -44,36 +43,25 @@ export default function PaymentProcessingClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderMerchantId: orderId }),
         });
-
         const data = await res.json();
-        console.log("🧾 Payment status:", data);
 
-        if (data?.state === "APPROVED") {
+        if (data.state === "APPROVED") {
           setStatus("approved");
-          setMessage("✅ Payment successful! Tokens credited.");
-
-          try {
-            const bc = new BroadcastChannel("app-events");
-            bc.postMessage({
-              type: "tokens-updated",
-              tokenBalance: data.tokenBalance,
-            });
-          } catch {}
-
+          setMessage("✅ Payment successful!");
           localStorage.removeItem("orderMerchantId");
-          setTimeout(() => router.push("/dashboard"), 2500);
-        } else if (data?.state === "PROCESSING" || !data?.state) {
+          setTimeout(() => router.push("/dashboard"), 2000);
+        } else if (data.state === "PROCESSING") {
           setStatus("pending");
-          setMessage("⏳ Processing... please wait");
-          setTimeout(checkStatus, 3000);
+          setMessage("⏳ Processing...");
+          setTimeout(checkStatus, 2500);
         } else {
           setStatus("failed");
           setMessage("❌ Payment failed or cancelled.");
         }
       } catch (err) {
-        console.error("❌ Error checking status:", err);
+        console.error("Error checking payment:", err);
         setStatus("failed");
-        setMessage("Error while checking payment status.");
+        setMessage("Error while checking payment.");
       }
     }
 
@@ -83,8 +71,13 @@ export default function PaymentProcessingClient() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-2xl shadow p-8 max-w-md w-full text-center">
-        <h2 className="text-2xl font-semibold mb-4">Payment Status</h2>
-        <p>{message}</p>
+        <h2 className="text-2xl font-semibold mb-2">Payment Status</h2>
+        <p className="mb-3">{message}</p>
+        {orderId && (
+          <p className="text-xs text-gray-500">
+            Order ID: <b>{orderId}</b>
+          </p>
+        )}
         {status === "pending" && (
           <div className="mt-4 text-gray-500 text-sm">
             Don’t close this page — checking transaction...
