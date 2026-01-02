@@ -2,91 +2,117 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
 
-// 🔹 CardServ викликає цей маршрут після 3DS
+export type CardServCurrency = "GBP" | "EUR" | "USD";
+
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
 
-    const paRes = form.get("PaRes")?.toString();
+    // 3DS поля
     const md = form.get("MD")?.toString(); // 3DS1
-    const cres = form.get("cres")?.toString(); // 3DS2
-    const threeDSSessionData = form.get("threeDSSessionData")?.toString();
+    const threeDSSessionData = form.get("threeDSSessionData")?.toString(); // 3DS2
 
-    // ✅ Витягуємо orderMerchantId з MD або threeDSSessionData
-    const orderMerchantId = md || threeDSSessionData || "";
+    const orderMerchantId = md || threeDSSessionData;
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
     if (!orderMerchantId) {
-      console.error("❌ Missing orderMerchantId in 3DS result callback");
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+      console.error("❌ Missing orderMerchantId in 3DS callback");
       return NextResponse.redirect(`${appUrl}/payment/processing`, 302);
     }
 
-    // 🧠 Перевіряємо статус транзакції на шлюзі
-    const status = await getCardServStatus(orderMerchantId);
-
-    await db.order.updateMany({
+    // ✅ 1. Забираємо order з БД (ЦЕ КЛЮЧОВЕ)
+    const order = await db.order.findFirst({
       where: { orderMerchantId },
+    });
+
+    if (!order) {
+      console.error("❌ Order not found:", orderMerchantId);
+      return NextResponse.redirect(
+        `${appUrl}/payment/processing?order=${encodeURIComponent(orderMerchantId)}`,
+        302
+      );
+    }
+
+    // ✅ 2. Перевіряємо статус у CardServ (З ВАЛЮТОЮ)
+    const status = await getCardServStatus(
+      orderMerchantId,
+      order.currency as CardServCurrency
+    );
+
+
+    // ✅ 3. Оновлюємо order
+    await db.order.update({
+      where: { id: order.id },
       data: {
         status: status.orderState,
-        response: status.raw,
+        response: {
+          ...(order.response as any),
+          result: status.raw,
+        },
       },
     });
 
-    if (status.orderState === "APPROVED") {
-      // ✅ Зараховуємо токени користувачу
-      const order = await db.order.findFirst({ where: { orderMerchantId } });
-      if (order && order.userEmail) {
-        const user = await db.user.findUnique({
-          where: { email: order.userEmail },
+    // ✅ 4. Якщо APPROVED → зараховуємо токени
+    if (status.orderState === "APPROVED" && order.tokens && order.userEmail) {
+      const user = await db.user.findUnique({
+        where: { email: order.userEmail },
+      });
+
+      if (user) {
+        const newBalance = user.tokenBalance + order.tokens;
+
+        await db.user.update({
+          where: { id: user.id },
+          data: { tokenBalance: newBalance },
         });
-        if (user) {
-          const newBalance = user.tokenBalance + (order.tokens ?? 0);
 
-          await db.user.update({
-            where: { id: user.id },
-            data: { tokenBalance: newBalance },
-          });
+        await db.ledgerEntry.create({
+          data: {
+            userId: user.id,
+            type: "Top-up",
+            delta: order.tokens,
+            balanceAfter: newBalance,
+            currency: order.currency,
+            amount: Math.round(order.amount * 100),
+          },
+        });
 
-          await db.ledgerEntry.create({
-            data: {
-              userId: user.id,
-              type: "Top-up",
-              delta: order.tokens ?? 0,
-              balanceAfter: newBalance,
-              currency: order.currency === "EUR" ? "EUR" : "GBP",
-              amount: Math.round(order.amount * 100),
-            },
-          });
-
-          console.log(`✅ Tokens credited for ${user.email}: +${order.tokens}`);
-        }
+        console.log(
+          `✅ Tokens credited: ${user.email} +${order.tokens}`
+        );
       }
     }
 
-    // 🔁 Редіректимо користувача на frontend сторінку
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(orderMerchantId)}`;
+    // ✅ 5. Редірект користувача назад у frontend
+    const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(
+      orderMerchantId
+    )}`;
 
-    console.log("🔁 Redirecting user to:", redirectUrl);
+    console.log("🔁 Redirecting to:", redirectUrl);
     return NextResponse.redirect(redirectUrl, 302);
   } catch (err: any) {
-    console.error("❌ /api/cardserv/result error:", err);
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+    console.error("❌ /api/cardserv/result POST error:", err);
+    return NextResponse.json(
+      { ok: false, error: err.message },
+      { status: 500 }
+    );
   }
 }
 
-// 🔹 fallback якщо CardServ викликає GET
+// 🔹 fallback якщо CardServ робить GET
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const orderId = searchParams.get("order");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
   if (!orderId) {
-    console.log("⚠️ Missing order param in GET, redirecting to generic page");
     return NextResponse.redirect(`${appUrl}/payment/processing`, 302);
   }
 
-  const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(orderId)}`;
-  console.log("🔁 Redirect (GET):", redirectUrl);
+  const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(
+    orderId
+  )}`;
+
   return NextResponse.redirect(redirectUrl, 302);
 }

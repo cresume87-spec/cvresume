@@ -45,9 +45,9 @@ export default function CheckoutClient() {
   const formatExpiry = (value: string) =>
     value.replace(/\D/g, "").slice(0, 4).replace(/(\d{2})(?=\d)/, "$1/").trim();
 
-  // 🔁 Перевірка статусу платежу
   const pollStatus = async (orderMerchantId: string) => {
     setPolling(true);
+
     const interval = setInterval(async () => {
       const res = await fetch("/api/cardserv/status", {
         method: "POST",
@@ -55,13 +55,29 @@ export default function CheckoutClient() {
         body: JSON.stringify({ orderMerchantId }),
       });
 
-      const data = await res.json();
-      if (data.state === "APPROVED") {
+      const json = await res.json();
+      const data = json?.data;
+
+      console.log("📡 FRONT STATUS:", data);
+
+      if (data?.redirectUrl) {
+        console.log("➡️ REDIRECT TO:", data.redirectUrl);
+        window.location.href = data.redirectUrl;
+        return;
+      }
+
+      if (data?.state === "APPROVED") {
         clearInterval(interval);
         setPolling(false);
         router.push("/dashboard");
       }
-    }, 3000);
+
+      if (data?.state === "DECLINED") {
+        clearInterval(interval);
+        setPolling(false);
+        alert("Payment declined");
+      }
+    }, 2000);
   };
 
   // 💳 Надсилання форми

@@ -1,42 +1,72 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
+import type { CardServCurrency } from "@/lib/config";
 
 export async function POST(req: Request) {
   try {
     const { orderMerchantId } = await req.json();
 
-    if (!orderMerchantId)
-      return NextResponse.json({ ok: false, error: "Missing orderMerchantId" }, { status: 400 });
+    if (!orderMerchantId) {
+      return NextResponse.json(
+        { ok: false, error: "Missing orderMerchantId" },
+        { status: 400 }
+      );
+    }
 
-    const status = await getCardServStatus(orderMerchantId);
-
-    await db.order.updateMany({
+    // 1️⃣ Беремо замовлення з БД
+    const order = await db.order.findFirst({
       where: { orderMerchantId },
-      data: { status: status.orderState, response: status.raw },
     });
 
+    if (!order) {
+      return NextResponse.json(
+        { ok: false, error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    // 2️⃣ Витягуємо валюту (ОБОВʼЯЗКОВО)
+    const currency = (order.currency ?? "EUR") as CardServCurrency;
+
+    // 3️⃣ Коректний виклик
+    const status = await getCardServStatus(orderMerchantId, currency);
+
+    // 4️⃣ Оновлюємо статус замовлення
+    await db.order.updateMany({
+      where: { orderMerchantId },
+      data: {
+        status: status.orderState,
+        response: status.raw,
+      },
+    });
+
+    // 5️⃣ Якщо платіж успішний — зараховуємо токени
     if (status.orderState === "APPROVED") {
-      const order = await db.order.findFirst({ where: { orderMerchantId } });
-      if (order) {
-        const userEmail = order.userEmail ?? undefined; // 🧩 Виправлення тут
-        const user = await db.user.findUnique({ where: { email: userEmail } });
+      const userEmail = order.userEmail ?? undefined;
+
+      if (userEmail) {
+        const user = await db.user.findUnique({
+          where: { email: userEmail },
+        });
 
         if (user) {
-          const newBalance = user.tokenBalance + (order.tokens ?? 0);
+          const tokens = order.tokens ?? 0;
+          const newBalance = user.tokenBalance + tokens;
+
           await db.user.update({
             where: { id: user.id },
             data: { tokenBalance: newBalance },
           });
 
-          // За бажанням — створення ledger-запису:
+          // Ledger
           await db.ledgerEntry.create({
             data: {
               userId: user.id,
               type: "Top-up",
-              delta: order.tokens ?? 0,
+              delta: tokens,
               balanceAfter: newBalance,
-              currency: order.currency === "EUR" ? "EUR" : "GBP",
+              currency,
               amount: Math.round(order.amount * 100),
               receiptUrl: `order:${orderMerchantId}`,
             },
@@ -45,9 +75,15 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, state: status.orderState });
+    return NextResponse.json({
+      ok: true,
+      state: status.orderState,
+    });
   } catch (err: any) {
     console.error("Webhook Error:", err);
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err.message },
+      { status: 500 }
+    );
   }
 }

@@ -1,115 +1,164 @@
-import { randomUUID } from "crypto";
+import { getCardServConfig, CardServCurrency } from "./config";
 
-export async function getCardServStatus(orderMerchantId: string) {
-  const { CARDSERV_BASE_URL, CARDSERV_REQUESTOR_ID, CARDSERV_BEARER_TOKEN } = process.env;
-  const url = `${CARDSERV_BASE_URL}/api/payments/status/${CARDSERV_REQUESTOR_ID}`;
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${CARDSERV_BEARER_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ orderMerchantId }),
-  });
-
-  const text = await res.text();
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { raw: text };
-  }
-
-  return {
-    ok: res.ok,
-    statusCode: res.status,
-    orderSystemId: data?.orderSystemId ?? null,
-    orderState: data?.orderState ?? "PROCESSING",
-    redirectUrl: data?.outputRedirectToUrl ?? null,
-    raw: data,
+export async function createCardServOrder(payload: {
+  orderMerchantId: string;
+  amount: number;
+  currency: CardServCurrency;
+  description?: string;
+  email: string;
+  card: {
+    cardNumber: string;
+    cvv: string;
+    expiry: string; // MM/YY
+    name: string;
   };
-}
+  address?: string;
+  city?: string;
+  postalCode?: string;
+}) {
+  const cfg = getCardServConfig(payload.currency);
 
+  const headers = {
+    Authorization: `Bearer ${cfg.token}`,
+    "Content-Type": "application/json",
+  };
 
-// /lib/cardserv.ts
-export async function createCardServOrder(payload: any) {
-  const {
-    CARDSERV_BASE_URL, CARDSERV_REQUESTOR_ID, CARDSERV_BEARER_TOKEN,
-    CARDSERV_CURRENCY, NEXT_PUBLIC_APP_URL,
-  } = process.env;
+  const saleUrl   = `${cfg.BASE_URL}/api/payments/sale/${cfg.requestorId}`;
+  const statusUrl = `${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`;
 
-  const orderMerchantId = randomUUID();
-  const saleUrl   = `${CARDSERV_BASE_URL}/api/payments/sale/${CARDSERV_REQUESTOR_ID}`;
-  const statusUrl = `${CARDSERV_BASE_URL}/api/payments/status/${CARDSERV_REQUESTOR_ID}`;
-  const headers = { Authorization: `Bearer ${CARDSERV_BEARER_TOKEN}`, "Content-Type": "application/json" };
+  const [expMonth, expYearShort] = payload.card.expiry.split("/");
 
   const body = {
     order: {
-      orderMerchantId,
-      orderDescription: payload.description || "Token top-up",
-      orderAmount: (payload.amount ?? 1).toFixed(2),
-      orderCurrencyCode: CARDSERV_CURRENCY || "EUR",
+      orderMerchantId: payload.orderMerchantId,
+      orderDescription: payload.description || "Payment",
+      orderAmount: payload.amount.toFixed(2),
+      orderCurrencyCode: cfg.currency,
+      challengeIndicator: "01", // ✅ ВАЖЛИВО
     },
-    // 👇 ДОДАЙ 3DS2 browser-характеристики (є в офіційній колекції)
+
     browser: {
-      ipAddress: payload.browser?.ip || "2.58.95.68",
-      acceptHeader: payload.browser?.acceptHeader || "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      ipAddress: "8.8.8.8",
+      acceptHeader:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       colorDepth: 32,
-      javascriptEnabled: "true",
+      javascriptEnabled: "true", // ✅ STRING
       acceptLanguage: "en-US",
       screenHeight: 1080,
       screenWidth: 1920,
-      timeZone: -120,
-      userAgent: payload.browser?.userAgent || "Mozilla/5.0",
-      javaEnabled: "false",
+      timeZone: 0,
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome Safari",
+      javaEnabled: "false", // ✅ STRING
     },
+
     customer: {
-      firstname: payload.card?.name?.split(" ")[0] || "John",
-      lastname:  payload.card?.name?.split(" ")[1] || "Doe",
-      customerEmail: payload.email || "test@example.com",
+      firstname: payload.card.name.split(" ")[0] || "John",
+      lastname: payload.card.name.split(" ")[1] || "Doe",
+      customerEmail: payload.email,
+      address: {
+        countryCode: cfg.country, // GB / DE / US
+        zipCode: payload.postalCode || "SW1A1AA",
+        city: payload.city || "London",
+        line1: payload.address || "10 Downing Street",
+      },
     },
+
     card: {
-      cardNumber:    payload.card?.cardNumber || "4444444411111111", // 3DS1 PaReq card (емулятор)
-      cvv2:          payload.card?.cvv || "123",
-      expireMonth:   payload.card?.expiry?.split("/")[0] || "12",
-      expireYear:   `20${payload.card?.expiry?.split("/")[1] || "26"}`,
-      cardPrintedName: payload.card?.name || "John Doe",
+      cardNumber: payload.card.cardNumber.replace(/\s/g, ""),
+      cvv2: payload.card.cvv,
+      expireMonth: expMonth,
+      expireYear: expYearShort, // ❗ "26", НЕ "2026"
+      cardPrintedName: payload.card.name,
     },
+
     urls: {
-      // Результат (PaRes/CRes прилетить на цю адресу методом POST з ACS)
-      resultUrl:  `${NEXT_PUBLIC_APP_URL}/api/cardserv/result`,
-      // Обовʼязково: отримуєш фінальні стани незалежно від браузера
-      webhookUrl: `${NEXT_PUBLIC_APP_URL}/api/cardserv/webhook`,
+      resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/processing?order=${encodeURIComponent(payload.orderMerchantId)}`,
+      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/cardserv/webhook`,
     },
   };
 
-  const saleRes  = await fetch(saleUrl, { method: "POST", headers, body: JSON.stringify(body) });
-  const saleText = await saleRes.text();
-  let saleData: any; try { saleData = JSON.parse(saleText); } catch { saleData = { raw: saleText }; }
+  console.log("🟡 SALE PAYLOAD:", JSON.stringify(body, null, 2));
 
-  // Полінг статусу: шукаємо або outputRedirectToUrl (фрейм редірект),
-  // або threeDSAuth (acsUrl + paReq/creq). НІЧОГО не «склеюємо» в GET.
-  let statusData: any = null;
-  for (let i = 0; i < 10; i++) {
-    await new Promise(r => setTimeout(r, 800));
-    const r = await fetch(statusUrl, { method: "POST", headers, body: JSON.stringify({ orderMerchantId }) });
-    const t = await r.text();
-    try { statusData = JSON.parse(t); } catch { statusData = { raw: t }; }
+  // 1️⃣ SALE
+  const saleRes = await fetch(saleUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
 
-    // Достатньо, якщо зʼявився будь-який із сценаріїв 3DS
-    if (statusData?.outputRedirectToUrl || statusData?.threeDSAuth?.acsUrl || statusData?.orderState !== "PROCESSING") break;
+  const saleData = JSON.parse(await saleRes.text());
+
+  // 2️⃣ POLLING STATUS (як у прикладі)
+  let statusData = saleData;
+
+  for (let i = 0; i < 2; i++) {
+    await sleep(i === 0 ? 1200 : 1800);
+
+    const r = await fetch(statusUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        orderMerchantId: payload.orderMerchantId,
+        orderSystemId: saleData?.orderSystemId,
+      }),
+    });
+
+    statusData = JSON.parse(await r.text());
+
+    if (
+      statusData?.outputRedirectToUrl ||
+      statusData?.redirectData?.redirectUrl ||
+      ["APPROVED", "DECLINED", "ERROR"].includes(statusData?.orderState)
+    ) {
+      break;
+    }
   }
 
   return {
-    ok: saleRes.ok,
-    orderMerchantId,
-    orderSystemId: statusData?.orderSystemId ?? null,
+    orderMerchantId: payload.orderMerchantId,
+    orderSystemId:
+      statusData?.orderSystemId
+        ? String(statusData.orderSystemId)
+        : null,
     orderState: statusData?.orderState ?? "PROCESSING",
-    // НЕ заповнюємо redirectUrl acsUrl-ом — повертай threeDSAuth для POST-форми
-    redirectUrl: statusData?.outputRedirectToUrl || null,
-    threeDSAuth: statusData?.threeDSAuth || null,
-    raw: { sale: saleData, status: statusData },
+    raw: {
+      sale: saleData,
+      status: statusData,
+    },
   };
 }
 
+/* ===================== STATUS ===================== */
+export async function getCardServStatus(
+  orderMerchantId: string,
+  currency: CardServCurrency
+) {
+  const cfg = getCardServConfig(currency);
+
+  const res = await fetch(
+    `${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${cfg.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ orderMerchantId }),
+    }
+  );
+
+  const data = JSON.parse(await res.text());
+
+  return {
+    orderSystemId: data?.orderSystemId
+      ? String(data.orderSystemId)
+      : null,
+    orderState: data?.orderState ?? "PROCESSING",
+    redirectUrl: data?.outputRedirectToUrl ?? null,
+    threeDSAuth: data?.threeDSAuth ?? null,
+    raw: data,
+  };
+}

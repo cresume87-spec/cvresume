@@ -1,41 +1,55 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
+import { pickRedirectUrl } from "@/lib/pickRedirectUrl";
 
 export async function POST(req: Request) {
   try {
     const { orderMerchantId } = await req.json();
 
-    if (!orderMerchantId)
-      return NextResponse.json({ ok: false, error: "Missing orderMerchantId" }, { status: 400 });
+    console.log("🔁 STATUS CHECK:", orderMerchantId);
 
-    const status = await getCardServStatus(orderMerchantId);
-
-    await db.order.updateMany({
-      where: { orderMerchantId },
-      data: { status: status.orderState, response: status.raw },
-    });
-
-    if (status.orderState === "APPROVED") {
-      // ✅ Додаємо токени користувачу
-      const order = await db.order.findFirst({ where: { orderMerchantId } });
-      if (order) {
-        const userEmail = order.userEmail ?? undefined; // <-- виправлення тут
-        const user = await db.user.findUnique({ where: { email: userEmail } });
-
-        if (user) {
-          const newBalance = user.tokenBalance + (order.tokens ?? 0);
-          await db.user.update({
-            where: { id: user.id },
-            data: { tokenBalance: newBalance },
-          });
-        }
-      }
+    const order = await db.order.findFirst({ where: { orderMerchantId } });
+    if (!order) {
+      console.log("❌ ORDER NOT FOUND");
+      return NextResponse.json({ ok: false }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, state: status.orderState });
-  } catch (err: any) {
-    console.error("CardServ Status Error:", err);
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+    const status = await getCardServStatus(
+      orderMerchantId,
+      order.currency
+    );
+
+    console.log("🔵 STATUS RAW:", JSON.stringify(status.raw, null, 2));
+    console.log("🔵 STATUS STATE:", status.orderState);
+
+    const redirectUrl = pickRedirectUrl(status.raw);
+    console.log("🔵 STATUS REDIRECT:", redirectUrl);
+
+    await db.order.update({
+      where: { id: order.id },
+      data: {
+        status: status.orderState,
+        response: {
+          ...(order.response as any),
+          status: status.raw,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      data: {
+        orderMerchantId,
+        state: status.orderState,
+        redirectUrl,
+      },
+    });
+  } catch (e: any) {
+    console.error("❌ STATUS ERROR:", e);
+    return NextResponse.json(
+      { ok: false, error: e.message },
+      { status: 500 }
+    );
   }
 }

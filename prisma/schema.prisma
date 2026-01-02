@@ -11,6 +11,7 @@ datasource db {
 enum Currency {
   GBP
   EUR
+  USD
 }
 
 enum InvoiceStatus {
@@ -132,7 +133,7 @@ model Order {
   id              String   @id @default(cuid())
   userEmail       String?
   amount          Float
-  currency        String
+  currency        Currency
   description     String?
   tokens          Int?
   orderMerchantId String?  @unique
