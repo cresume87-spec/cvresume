@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
-
-export type CardServCurrency = "GBP" | "EUR" | "USD";
+import type { CardServCurrency } from "@/lib/config";
 
 export async function POST(req: Request) {
   try {
@@ -35,9 +34,15 @@ export async function POST(req: Request) {
     }
 
     // ✅ 2. Перевіряємо статус у CardServ (З ВАЛЮТОЮ)
+    // Validate currency - use EUR as fallback if invalid
+    const validatedCurrency: CardServCurrency = 
+      (order.currency === "EUR" || order.currency === "USD" || order.currency === "GBP")
+        ? (order.currency as CardServCurrency)
+        : "EUR";
+
     const status = await getCardServStatus(
       orderMerchantId,
-      order.currency as CardServCurrency
+      validatedCurrency
     );
 
 
