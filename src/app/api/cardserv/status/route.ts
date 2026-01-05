@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
 import { pickRedirectUrl } from "@/lib/pickRedirectUrl";
-import type { CardServCurrency } from "@/lib/config";
 
 export async function POST(req: Request) {
   try {
@@ -16,15 +15,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false }, { status: 404 });
     }
 
-    // Validate currency - use EUR as fallback if invalid
-    const validatedCurrency: CardServCurrency = 
-      (order.currency === "EUR" || order.currency === "USD" || order.currency === "GBP")
-        ? (order.currency as CardServCurrency)
-        : "EUR";
-
     const status = await getCardServStatus(
       orderMerchantId,
-      validatedCurrency
+      order.currency
     );
 
     console.log("🔵 STATUS RAW:", JSON.stringify(status.raw, null, 2));

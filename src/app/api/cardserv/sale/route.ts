@@ -2,15 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createCardServOrder } from "@/lib/cardserv";
 import { pickRedirectUrl } from "@/lib/pickRedirectUrl";
-import type { CardServCurrency } from "@/lib/config";
-
-// Validate currency to ensure it's a valid CardServCurrency
-function validateCurrency(currency: any): CardServCurrency {
-  if (currency === "EUR" || currency === "USD" || currency === "GBP") {
-    return currency as CardServCurrency;
-  }
-  throw new Error(`Invalid currency: ${currency}. Supported currencies: EUR, USD, GBP`);
-}
 
 export async function POST(req: Request) {
   try {
@@ -19,12 +10,8 @@ export async function POST(req: Request) {
 
     console.log("🟡 SALE START", orderMerchantId);
 
-    // Validate currency before passing to createCardServOrder
-    const validatedCurrency = validateCurrency(body.currency);
-
     const sale = await createCardServOrder({
       ...body,
-      currency: validatedCurrency,
       orderMerchantId,
     });
 

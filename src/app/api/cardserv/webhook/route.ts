@@ -27,11 +27,7 @@ export async function POST(req: Request) {
     }
 
     // 2️⃣ Витягуємо валюту (ОБОВʼЯЗКОВО)
-    // Validate currency - use EUR as fallback if invalid
-    const currency: CardServCurrency = 
-      (order.currency === "EUR" || order.currency === "USD" || order.currency === "GBP")
-        ? (order.currency as CardServCurrency)
-        : "EUR";
+    const currency = (order.currency ?? "EUR") as CardServCurrency;
 
     // 3️⃣ Коректний виклик
     const status = await getCardServStatus(orderMerchantId, currency);
