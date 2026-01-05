@@ -112,7 +112,7 @@ export default function TokenCalculatorPage() {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (event: MessageEvent) => {
         const data: any = (event as MessageEvent).data;
-        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR')) {
+        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD')) {
           setCurrency(data.currency);
         }
       };
@@ -132,7 +132,7 @@ export default function TokenCalculatorPage() {
 
   const estimatedCost = convertTokensToCurrency(totalTokens, currency);
   const recommendedTopUp = Math.max(MIN_TOP_UP, Math.ceil(estimatedCost * 100) / 100);
-  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : '$1.25';
+  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : '$1.27';
 
   const handleCountChange = (action: ActionKey, value: string) => {
     const parsed = Math.max(0, Math.floor(Number(value) || 0));

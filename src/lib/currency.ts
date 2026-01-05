@@ -7,7 +7,7 @@ export type Currency = 'GBP' | 'EUR' | 'USD';
 export const EXCHANGE_RATES: Record<Currency, number> = {
   GBP: 1.0,    // Base currency
   EUR: 1.15,   // 1 GBP = 1.15 EUR (approximate)
-  USD: 1.25,   // 1 GBP = 1.25 USD (approximate)
+  USD: 1.27,   // 1 GBP = 1.27 USD (approximate, updated Jan 2025)
 };
 
 // Token conversion rate

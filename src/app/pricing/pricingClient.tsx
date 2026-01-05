@@ -48,7 +48,7 @@ export default function PricingClient() {
         const data: any = (ev as any)?.data || {};
         if (
           data.type === "currency-updated" &&
-          (data.currency === "GBP" || data.currency === "EUR")
+          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD")
         ) {
           setCurrency(data.currency);
           try {
