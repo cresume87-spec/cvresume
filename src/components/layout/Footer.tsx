@@ -29,9 +29,8 @@ const LEGAL_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  { label: 'Facebook', href: '#' },
-  { label: 'Instagram', href: '#' },
-  { label: 'LinkedIn', href: '#' },
+  { label: 'Instagram', href: 'https://www.instagram.com/careerzen.uk/' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/careerzen-co-uk' },
 ];
 
 const COMPANY_DETAILS = [
