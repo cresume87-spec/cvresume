@@ -19,7 +19,7 @@ export default function CustomPlanCard({ currency, onRequest }: { currency: Curr
     setPriceInput(e.target.value);
   };
 
-  const currencyLabel = currency === 'GBP' ? String.fromCharCode(163) : currency === 'EUR' ? String.fromCharCode(8364) : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : 'C$';
+  const currencyLabel = currency === 'GBP' ? String.fromCharCode(163) : currency === 'EUR' ? String.fromCharCode(8364) : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'CAD' ? 'C$' : 'NZ$';
 
   return (
     <motion.div

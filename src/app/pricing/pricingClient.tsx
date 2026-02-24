@@ -47,7 +47,7 @@ export default function PricingClient() {
         const data: any = (ev as any)?.data || {};
         if (
           data.type === "currency-updated" &&
-          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD" || data.currency === "AUD" || data.currency === "CAD")
+          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD" || data.currency === "AUD" || data.currency === "CAD" || data.currency === "NZD")
         ) {
           setCurrency(data.currency);
           try {
@@ -74,8 +74,8 @@ export default function PricingClient() {
     const convertedAmount = convertTokensToCurrency(tokens, currency);
     const vatAmount = (convertedAmount * vatRate) / 100;
 
-    // For AUD/CAD: convert to GBP for checkout (CardServ doesn't support them)
-    const displayOnlyCurrency = currency === "AUD" || currency === "CAD";
+    // For AUD/CAD/NZD: convert to GBP for checkout (CardServ doesn't support them)
+    const displayOnlyCurrency = currency === "AUD" || currency === "CAD" || currency === "NZD";
     const checkoutCurrency = displayOnlyCurrency ? "GBP" : currency;
     const checkoutAmount = displayOnlyCurrency ? gbpAmount : convertedAmount;
     const checkoutVatAmount = (checkoutAmount * vatRate) / 100;
@@ -118,6 +118,7 @@ export default function PricingClient() {
               <option value="USD">USD ($)</option>
               <option value="AUD">AUD (A$)</option>
               <option value="CAD">CAD (C$)</option>
+              <option value="NZD">NZD (NZ$)</option>
             </select>
             <select
               className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm"

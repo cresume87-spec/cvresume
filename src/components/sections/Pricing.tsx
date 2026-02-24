@@ -21,7 +21,7 @@ export default function Pricing() {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (ev: MessageEvent) => {
         const data: any = (ev as any)?.data || {};
-        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD')) {
+        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD' || data.currency === 'NZD')) {
           setCurrency(data.currency);
           try { localStorage.setItem('currency', data.currency); } catch {}
         }
@@ -30,7 +30,7 @@ export default function Pricing() {
     // Read saved currency on mount (client) to avoid SSR mismatch
     try {
       const saved = localStorage.getItem('currency');
-      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD' || saved === 'AUD' || saved === 'CAD') setCurrency(saved);
+      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD' || saved === 'AUD' || saved === 'CAD' || saved === 'NZD') setCurrency(saved);
     } catch {}
     return () => { try { bcRef.current?.close(); } catch {} };
   }, []);

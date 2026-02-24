@@ -1,7 +1,7 @@
 // Currency conversion system with GBP as base currency
 // 1.00 GBP = 100 tokens
 
-export type Currency = 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD';
+export type Currency = 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD' | 'NZD';
 
 // Exchange rates relative to GBP (base currency)
 export const EXCHANGE_RATES: Record<Currency, number> = {
@@ -10,6 +10,7 @@ export const EXCHANGE_RATES: Record<Currency, number> = {
   USD: 1.27,   // 1 GBP = 1.27 USD (approximate, updated Jan 2025)
   AUD: 1.91,   // 1 GBP = 1.91 AUD (approximate, updated Jan 2026)
   CAD: 1.85,   // 1 GBP = 1.85 CAD (approximate, updated Jan 2026)
+  NZD: 2.27,   // 1 GBP = 2.27 NZD (approximate, updated Jan 2026)
 };
 
 // Token conversion rate
@@ -67,6 +68,7 @@ export function formatCurrency(amount: number, currency: Currency): string {
     USD: '$',
     AUD: 'A$',
     CAD: 'C$',
+    NZD: 'NZ$',
   };
   
   return `${symbols[currency]}${amount.toFixed(2)}`;

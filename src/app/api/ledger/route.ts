@@ -22,7 +22,9 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const type = (body.type as string) || 'Top-up';
   const amount = Number(body.amount ?? 0);
-  const currency = (body.currency as 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD') || ((session.user as any).currency ?? 'GBP');
+  const bodyCurrency = (body.currency as string) || ((session.user as any).currency ?? 'GBP');
+  // Prisma Currency enum only has GBP, EUR, USD; store display-only (AUD, CAD, NZD) as GBP
+  const currency = (bodyCurrency === 'EUR' || bodyCurrency === 'USD') ? bodyCurrency : 'GBP';
 
   if (type === 'Top-up' && !amount) return NextResponse.json({ error: 'Amount required' }, { status: 400 });
 

@@ -111,7 +111,7 @@ export default function TokenCalculatorPage() {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (event: MessageEvent) => {
         const data: any = (event as MessageEvent).data;
-        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD')) {
+        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD' || data.currency === 'NZD')) {
           setCurrency(data.currency);
         }
       };
@@ -131,7 +131,7 @@ export default function TokenCalculatorPage() {
 
   const estimatedCost = convertTokensToCurrency(totalTokens, currency);
   const recommendedTopUp = Math.max(MIN_TOP_UP, Math.ceil(estimatedCost * 100) / 100);
-  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : currency === 'USD' ? '$1.27' : currency === 'AUD' ? 'A$1.91' : 'C$1.85';
+  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : currency === 'USD' ? '$1.27' : currency === 'AUD' ? 'A$1.91' : currency === 'CAD' ? 'C$1.85' : 'NZ$2.27';
 
   const handleCountChange = (action: ActionKey, value: string) => {
     const parsed = Math.max(0, Math.floor(Number(value) || 0));
@@ -165,6 +165,7 @@ export default function TokenCalculatorPage() {
               <option value="USD">USD ($)</option>
               <option value="AUD">AUD (A$)</option>
               <option value="CAD">CAD (C$)</option>
+              <option value="NZD">NZD (NZ$)</option>
             </select>
           </div>
         </div>

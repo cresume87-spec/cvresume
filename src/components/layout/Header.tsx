@@ -40,7 +40,7 @@ export default function Header() {
         if (data.type === 'tokens-updated' && typeof data.tokenBalance === 'number') {
           setTokens(data.tokenBalance);
         }
-        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD')) {
+        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD' || data.currency === 'NZD')) {
           setCurrency(data.currency);
           try { localStorage.setItem('currency', data.currency); } catch {}
         }
@@ -54,7 +54,7 @@ export default function Header() {
     // Read saved currency client-side to avoid SSR hydration mismatch
     try {
       const saved = localStorage.getItem('currency');
-      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD' || saved === 'AUD' || saved === 'CAD') setCurrency(saved);
+      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD' || saved === 'AUD' || saved === 'CAD' || saved === 'NZD') setCurrency(saved);
     } catch {}
   }, []);
 
@@ -152,6 +152,7 @@ export default function Header() {
               <option value="USD">USD ($)</option>
               <option value="AUD">AUD (A$)</option>
               <option value="CAD">CAD (C$)</option>
+              <option value="NZD">NZD (NZ$)</option>
             </select>
           </div>
           {!signedIn ? (
@@ -255,6 +256,7 @@ export default function Header() {
                       <option value="USD">USD ($)</option>
                       <option value="AUD">AUD (A$)</option>
                       <option value="CAD">CAD (C$)</option>
+                      <option value="NZD">NZD (NZ$)</option>
                     </select>
                   </div>
 

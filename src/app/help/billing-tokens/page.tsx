@@ -29,7 +29,7 @@ const LEDGER_SAMPLE = [
 ];
 
 export default function BillingTokensPage() {
-  const [selectedCurrency, setSelectedCurrency] = useState<'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD'>('GBP');
+  const [selectedCurrency, setSelectedCurrency] = useState<'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD' | 'NZD'>('GBP');
   const [customAmount, setCustomAmount] = useState<number>(10);
 
   useEffect(() => {
@@ -120,7 +120,7 @@ const calculateCostPerDocument = () => COST_PER_DOCUMENT;
                       />
                       <select
                         value={selectedCurrency}
-                        onChange={(e) => setSelectedCurrency(e.target.value as 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD')}
+                        onChange={(e) => setSelectedCurrency(e.target.value as 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD' | 'NZD')}
                         className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       >
                         <option value="GBP">GBP</option>
@@ -128,6 +128,7 @@ const calculateCostPerDocument = () => COST_PER_DOCUMENT;
                         <option value="USD">USD</option>
                         <option value="AUD">AUD</option>
                         <option value="CAD">CAD</option>
+                        <option value="NZD">NZD</option>
                       </select>
                     </div>
                   </div>

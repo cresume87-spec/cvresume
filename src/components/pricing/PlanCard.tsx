@@ -60,7 +60,7 @@ export default function PlanCard({
 
   const money = (n: number, curr: Currency) => {
     const locale =
-      curr === "GBP" ? "en-GB" : curr === "EUR" ? "en-IE" : curr === "USD" ? "en-US" : curr === "AUD" ? "en-AU" : "en-CA";
+      curr === "GBP" ? "en-GB" : curr === "EUR" ? "en-IE" : curr === "USD" ? "en-US" : curr === "AUD" ? "en-AU" : curr === "CAD" ? "en-CA" : "en-NZ";
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: curr,
@@ -76,8 +76,8 @@ export default function PlanCard({
       return;
     }
 
-    // For AUD/CAD: convert to GBP for checkout (CardServ doesn't support them)
-    const isDisplayOnly = resolvedAmount.currency === "AUD" || resolvedAmount.currency === "CAD";
+    // For AUD/CAD/NZD: convert to GBP for checkout (CardServ doesn't support them)
+    const isDisplayOnly = resolvedAmount.currency === "AUD" || resolvedAmount.currency === "CAD" || resolvedAmount.currency === "NZD";
     const checkoutCurrency = isDisplayOnly ? "GBP" : resolvedAmount.currency;
     const checkoutAmount = isDisplayOnly
       ? resolvedAmount.amount / EXCHANGE_RATES[resolvedAmount.currency]
