@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
-import Segmented from "@/components/ui/Segmented";
 import { CC, VAT_RATES } from "@/lib/constants";
 import { Currency } from "@/lib/currency";
 import {
@@ -48,7 +47,7 @@ export default function PricingClient() {
         const data: any = (ev as any)?.data || {};
         if (
           data.type === "currency-updated" &&
-          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD")
+          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD" || data.currency === "AUD" || data.currency === "CAD")
         ) {
           setCurrency(data.currency);
           try {
@@ -75,16 +74,24 @@ export default function PricingClient() {
     const convertedAmount = convertTokensToCurrency(tokens, currency);
     const vatAmount = (convertedAmount * vatRate) / 100;
 
+    // For AUD/CAD: convert to GBP for checkout (CardServ doesn't support them)
+    const displayOnlyCurrency = currency === "AUD" || currency === "CAD";
+    const checkoutCurrency = displayOnlyCurrency ? "GBP" : currency;
+    const checkoutAmount = displayOnlyCurrency ? gbpAmount : convertedAmount;
+    const checkoutVatAmount = (checkoutAmount * vatRate) / 100;
+
     const checkoutData = {
       email: session?.user?.email || "",
       planId: plan.name,
       description: `Top-up: ${plan.name}`,
-      amount: convertedAmount,
-      currency,
+      amount: checkoutAmount,
+      currency: checkoutCurrency,
+      displayCurrency: currency, // Keep track of what user saw
+      displayAmount: convertedAmount,
       tokens,
       vatRate,
-      vatAmount,
-      total: convertedAmount + vatAmount,
+      vatAmount: checkoutVatAmount,
+      total: checkoutAmount + checkoutVatAmount,
     };
 
     localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
@@ -101,15 +108,17 @@ export default function PricingClient() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Segmented
-              options={[
-                { label: "GBP", value: "GBP" },
-                { label: "EUR", value: "EUR" },
-                { label: "USD", value: "USD" },
-              ]}
+            <select
               value={currency}
-              onChange={(v) => setCurrency(v as Currency)}
-            />
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
+            >
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="USD">USD ($)</option>
+              <option value="AUD">AUD (A$)</option>
+              <option value="CAD">CAD (C$)</option>
+            </select>
             <select
               className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm"
               value={country}

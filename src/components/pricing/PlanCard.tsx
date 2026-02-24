@@ -4,7 +4,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { motion, useReducedMotion } from "framer-motion";
 import { THEME } from "@/lib/theme";
-import { Currency } from "@/lib/currency";
+import { Currency, EXCHANGE_RATES } from "@/lib/currency";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -60,7 +60,7 @@ export default function PlanCard({
 
   const money = (n: number, curr: Currency) => {
     const locale =
-      curr === "GBP" ? "en-GB" : curr === "EUR" ? "en-IE" : "en-US";
+      curr === "GBP" ? "en-GB" : curr === "EUR" ? "en-IE" : curr === "USD" ? "en-US" : curr === "AUD" ? "en-AU" : "en-CA";
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: curr,
@@ -76,15 +76,26 @@ export default function PlanCard({
       return;
     }
 
+    // For AUD/CAD: convert to GBP for checkout (CardServ doesn't support them)
+    const isDisplayOnly = resolvedAmount.currency === "AUD" || resolvedAmount.currency === "CAD";
+    const checkoutCurrency = isDisplayOnly ? "GBP" : resolvedAmount.currency;
+    const checkoutAmount = isDisplayOnly
+      ? resolvedAmount.amount / EXCHANGE_RATES[resolvedAmount.currency]
+      : resolvedAmount.amount;
+    const checkoutVatAmount = checkoutAmount * (vatRatePercent / 100);
+    const checkoutTotal = checkoutAmount * (1 + vatRatePercent / 100);
+
     const checkoutData = {
       planId: name,
       description: `Top-up: ${name}`,
-      amount: resolvedAmount.amount,
-      currency: resolvedAmount.currency,
+      amount: checkoutAmount,
+      currency: checkoutCurrency,
+      displayCurrency: resolvedAmount.currency,
+      displayAmount: resolvedAmount.amount,
       tokens: computedTokens,
       vatRate: vatRatePercent,
-      vatAmount: resolvedAmount.amount * (vatRatePercent / 100),
-      total: incVat,
+      vatAmount: checkoutVatAmount,
+      total: checkoutTotal,
       email: session?.user?.email || "",
     };
 

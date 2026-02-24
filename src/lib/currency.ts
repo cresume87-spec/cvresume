@@ -1,13 +1,15 @@
 // Currency conversion system with GBP as base currency
 // 1.00 GBP = 100 tokens
 
-export type Currency = 'GBP' | 'EUR' | 'USD';
+export type Currency = 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD';
 
 // Exchange rates relative to GBP (base currency)
 export const EXCHANGE_RATES: Record<Currency, number> = {
   GBP: 1.0,    // Base currency
   EUR: 1.15,   // 1 GBP = 1.15 EUR (approximate)
   USD: 1.27,   // 1 GBP = 1.27 USD (approximate, updated Jan 2025)
+  AUD: 1.91,   // 1 GBP = 1.91 AUD (approximate, updated Jan 2026)
+  CAD: 1.85,   // 1 GBP = 1.85 CAD (approximate, updated Jan 2026)
 };
 
 // Token conversion rate
@@ -59,10 +61,12 @@ export function convertTokensToCurrency(tokens: number, currency: Currency): num
  * @returns Formatted currency string
  */
 export function formatCurrency(amount: number, currency: Currency): string {
-  const symbols = {
+  const symbols: Record<Currency, string> = {
     GBP: '£',
     EUR: '€',
     USD: '$',
+    AUD: 'A$',
+    CAD: 'C$',
   };
   
   return `${symbols[currency]}${amount.toFixed(2)}`;

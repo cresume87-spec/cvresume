@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 
 // ТИПЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 
-type Currency = 'GBP' | 'EUR' | 'USD';
+type Currency = 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD';
 
 type Document = { id: string; title: string; updatedAt: string; status?: "Draft" | "Ready"; format?: string; docType?: string; data?: any };
 
@@ -33,7 +33,7 @@ type ProfileForm = { firstName: string; lastName: string; email: string; phone: 
 
 
 
-const currencySym = (c: Currency) => (c === 'GBP' ? 'GBP ' : c === 'EUR' ? 'EUR ' : 'USD ');
+const currencySym = (c: Currency) => (c === 'GBP' ? 'GBP ' : c === 'EUR' ? 'EUR ' : c === 'USD' ? 'USD ' : c === 'AUD' ? 'AUD ' : 'CAD ');
 
 const fmtMoney = (n: number, c: Currency) => {
 
@@ -51,7 +51,7 @@ const fmtMoney = (n: number, c: Currency) => {
 
 function money(n: number, c: Currency) {
 
-  const sym = c === 'GBP' ? '?' : c === 'EUR' ? '€' : '$';
+  const sym = c === 'GBP' ? '£' : c === 'EUR' ? '€' : c === 'USD' ? '$' : c === 'AUD' ? 'A$' : 'C$';
 
   const abs = Math.abs(n);
 

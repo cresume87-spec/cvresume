@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Segmented from '@/components/ui/Segmented';
 import { convertToTokens, convertTokensToCurrency, formatCurrency as formatCurrencyLib, Currency, SERVICE_COSTS } from '@/lib/currency';
 
 const TOKENS_PER_GBP = 100;
@@ -112,7 +111,7 @@ export default function TokenCalculatorPage() {
       bcRef.current = new BroadcastChannel('app-events');
       bcRef.current.onmessage = (event: MessageEvent) => {
         const data: any = (event as MessageEvent).data;
-        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD')) {
+        if (data?.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD')) {
           setCurrency(data.currency);
         }
       };
@@ -132,7 +131,7 @@ export default function TokenCalculatorPage() {
 
   const estimatedCost = convertTokensToCurrency(totalTokens, currency);
   const recommendedTopUp = Math.max(MIN_TOP_UP, Math.ceil(estimatedCost * 100) / 100);
-  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : '$1.27';
+  const tokensPerUnitLabel = currency === 'GBP' ? '£1.00' : currency === 'EUR' ? '€1.15' : currency === 'USD' ? '$1.27' : currency === 'AUD' ? 'A$1.91' : 'C$1.85';
 
   const handleCountChange = (action: ActionKey, value: string) => {
     const parsed = Math.max(0, Math.floor(Number(value) || 0));
@@ -156,15 +155,17 @@ export default function TokenCalculatorPage() {
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Token calculator</h1>
           <p className="mt-2 text-slate-600">Calculate tokens needed and see effective cost per document.</p>
           <div className="mt-6 flex justify-center">
-            <Segmented
-              options={[
-                { label: 'GBP', value: 'GBP' },
-                { label: 'EUR', value: 'EUR' },
-                { label: 'USD', value: 'USD' },
-              ]}
+            <select
               value={currency}
-              onChange={(value) => setCurrency(value as Currency)}
-            />
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
+            >
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="USD">USD ($)</option>
+              <option value="AUD">AUD (A$)</option>
+              <option value="CAD">CAD (C$)</option>
+            </select>
           </div>
         </div>
 
