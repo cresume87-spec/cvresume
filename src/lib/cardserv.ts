@@ -1,6 +1,110 @@
 import { getCardServConfig, CardServCurrency } from "./config";
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+type UnknownRecord = Record<string, unknown>;
+
+type NormalizedCardServ = {
+  orderSystemId: string | null;
+  orderState: string;
+  redirectUrl: string | null;
+  threeDSAuth: UnknownRecord | null;
+  errorCode: number | null;
+  errorMessage: string | null;
+};
+
+function asRecord(value: unknown): UnknownRecord | null {
+  return value && typeof value === "object" ? (value as UnknownRecord) : null;
+}
+
+function readPath(source: unknown, path: string): unknown {
+  const root = asRecord(source);
+  if (!root) return undefined;
+
+  const parts = path.split(".");
+  let cursor: unknown = root;
+
+  for (const part of parts) {
+    const current = asRecord(cursor);
+    if (!current || !(part in current)) return undefined;
+    cursor = current[part];
+  }
+
+  return cursor;
+}
+
+function firstString(source: unknown, paths: string[]): string | null {
+  for (const path of paths) {
+    const value = readPath(source, path);
+    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return null;
+}
+
+function firstNumber(source: unknown, paths: string[]): number | null {
+  for (const path of paths) {
+    const value = readPath(source, path);
+    if (typeof value === "number") return value;
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+  }
+  return null;
+}
+
+function firstRecord(source: unknown, paths: string[]): UnknownRecord | null {
+  for (const path of paths) {
+    const value = readPath(source, path);
+    const record = asRecord(value);
+    if (record) return record;
+  }
+  return null;
+}
+
+function normalizeCardServPayload(payload: unknown): NormalizedCardServ {
+  return {
+    orderSystemId: firstString(payload, [
+      "orderSystemId",
+      "order.orderSystemId",
+      "data.orderSystemId",
+      "result.orderSystemId",
+      "payment.orderSystemId",
+    ]),
+    orderState:
+      firstString(payload, [
+        "orderState",
+        "order.orderState",
+        "data.orderState",
+        "result.orderState",
+        "payment.orderState",
+      ]) ?? "PROCESSING",
+    redirectUrl: firstString(payload, [
+      "outputRedirectToUrl",
+      "redirectUrl",
+      "redirectData.redirectUrl",
+      "redirectData.threeDSRedirectUrl",
+      "data.outputRedirectToUrl",
+      "data.redirectUrl",
+      "data.redirectData.redirectUrl",
+      "data.redirectData.threeDSRedirectUrl",
+      "result.outputRedirectToUrl",
+      "result.redirectUrl",
+    ]),
+    threeDSAuth: firstRecord(payload, [
+      "threeDSAuth",
+      "threeDS",
+      "data.threeDSAuth",
+      "data.threeDS",
+      "result.threeDSAuth",
+      "result.threeDS",
+      "payment.threeDSAuth",
+    ]),
+    errorCode: firstNumber(payload, ["errorCode", "data.errorCode", "result.errorCode"]),
+    errorMessage: firstString(payload, ["errorMessage", "data.errorMessage", "result.errorMessage"]),
+  };
+}
 
 export async function createCardServOrder(payload: {
   orderMerchantId: string;
@@ -11,8 +115,11 @@ export async function createCardServOrder(payload: {
   card: {
     cardNumber: string;
     cvv: string;
-    expiry: string; // MM/YY
+    expiry: string;
     name: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
   };
   address?: string;
   city?: string;
@@ -25,10 +132,17 @@ export async function createCardServOrder(payload: {
     "Content-Type": "application/json",
   };
 
-  const saleUrl   = `${cfg.BASE_URL}/api/payments/sale/${cfg.requestorId}`;
+  const saleUrl = `${cfg.BASE_URL}/api/payments/sale/${cfg.requestorId}`;
   const statusUrl = `${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) throw new Error("Missing NEXT_PUBLIC_APP_URL");
 
-  const [expMonth, expYearShort] = payload.card.expiry.split("/");
+  const [expMonth, expYearRaw] = payload.card.expiry.split("/");
+  const expYear = expYearRaw.length === 2 ? `20${expYearRaw}` : expYearRaw;
+
+  const billingAddress = payload.address || payload.card.address || "10 Downing Street";
+  const billingCity = payload.city || payload.card.city || "London";
+  const billingPostalCode = payload.postalCode || payload.card.postalCode || "SW1A1AA";
 
   const body = {
     order: {
@@ -36,94 +150,108 @@ export async function createCardServOrder(payload: {
       orderDescription: payload.description || "Payment",
       orderAmount: payload.amount.toFixed(2),
       orderCurrencyCode: cfg.currency,
-      challengeIndicator: "01", // ✅ ВАЖЛИВО
+      challengeIndicator: "01",
     },
-
     browser: {
       ipAddress: "8.8.8.8",
-      acceptHeader:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       colorDepth: 32,
-      javascriptEnabled: "true", // ✅ STRING
+      javascriptEnabled: "true",
       acceptLanguage: "en-US",
       screenHeight: 1080,
       screenWidth: 1920,
       timeZone: 0,
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome Safari",
-      javaEnabled: "false", // ✅ STRING
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome Safari",
+      javaEnabled: "false",
     },
-
     customer: {
       firstname: payload.card.name.split(" ")[0] || "John",
       lastname: payload.card.name.split(" ")[1] || "Doe",
       customerEmail: payload.email,
       address: {
-        countryCode: cfg.country, // GB / DE / US
-        zipCode: payload.postalCode || "SW1A1AA",
-        city: payload.city || "London",
-        line1: payload.address || "10 Downing Street",
+        countryCode: cfg.country,
+        zipCode: billingPostalCode,
+        city: billingCity,
+        line1: billingAddress,
       },
     },
-
     card: {
       cardNumber: payload.card.cardNumber.replace(/\s/g, ""),
       cvv2: payload.card.cvv,
       expireMonth: expMonth,
-      expireYear: expYearShort, // ❗ "26", НЕ "2026"
+      expireYear: expYear,
       cardPrintedName: payload.card.name,
     },
-
     urls: {
-      resultUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/processing?order=${encodeURIComponent(payload.orderMerchantId)}`,
-      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/cardserv/webhook`,
+      // CardServ should return to backend callback first so we can finalize state.
+      resultUrl: `${appUrl}/api/cardserv/result?order=${encodeURIComponent(payload.orderMerchantId)}`,
+      webhookUrl: `${appUrl}/api/cardserv/webhook`,
     },
   };
 
-  console.log("🟡 SALE PAYLOAD:", JSON.stringify(body, null, 2));
+  console.log("[CARDSERV] SALE URL:", saleUrl);
+  console.log("[CARDSERV] MODE:", process.env.CARDSERV_MODE || "live");
+  console.log("[CARDSERV] REQUESTOR:", cfg.requestorId, "CURRENCY:", payload.currency);
 
-  // 1️⃣ SALE
   const saleRes = await fetch(saleUrl, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
   });
 
-  const saleData = JSON.parse(await saleRes.text());
+  const saleText = await saleRes.text();
+  console.log("[CARDSERV] SALE RESPONSE:", saleRes.status, saleText);
 
-  // 2️⃣ POLLING STATUS (як у прикладі)
+  const saleData = JSON.parse(saleText);
+  const saleMeta = normalizeCardServPayload(saleData);
+
+  const saleHardFail =
+    !saleRes.ok ||
+    saleMeta.orderState === "ERROR" ||
+    saleMeta.orderState === "DECLINED";
+
+  if (saleHardFail && !saleMeta.redirectUrl && !saleMeta.threeDSAuth) {
+    throw new Error(
+      `CardServ sale failed: ${saleMeta.errorCode ?? "n/a"} ${saleMeta.errorMessage ?? saleMeta.orderState}`,
+    );
+  }
+
   let statusData = saleData;
+  let statusMeta = saleMeta;
 
-  for (let i = 0; i < 2; i++) {
-    await sleep(i === 0 ? 1200 : 1800);
+  const pollDelays = [900, 1300, 2000, 2800, 3500];
+  for (let i = 0; i < pollDelays.length; i++) {
+    if (statusMeta.redirectUrl || statusMeta.threeDSAuth) break;
+    if (["APPROVED", "DECLINED", "ERROR"].includes(statusMeta.orderState)) break;
 
-    const r = await fetch(statusUrl, {
+    await sleep(pollDelays[i]);
+
+    const statusRequestBody = {
+      orderMerchantId: payload.orderMerchantId,
+      ...(statusMeta.orderSystemId ? { orderSystemId: statusMeta.orderSystemId } : {}),
+    };
+
+    const statusRes = await fetch(statusUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        orderMerchantId: payload.orderMerchantId,
-        orderSystemId: saleData?.orderSystemId,
-      }),
+      body: JSON.stringify(statusRequestBody),
     });
 
-    statusData = JSON.parse(await r.text());
+    const statusText = await statusRes.text();
+    console.log("[CARDSERV] STATUS POLL RESPONSE:", statusRes.status, statusText);
 
-    if (
-      statusData?.outputRedirectToUrl ||
-      statusData?.redirectData?.redirectUrl ||
-      ["APPROVED", "DECLINED", "ERROR"].includes(statusData?.orderState)
-    ) {
-      break;
-    }
+    statusData = JSON.parse(statusText);
+    statusMeta = normalizeCardServPayload(statusData);
   }
 
   return {
     orderMerchantId: payload.orderMerchantId,
-    orderSystemId:
-      statusData?.orderSystemId
-        ? String(statusData.orderSystemId)
-        : null,
-    orderState: statusData?.orderState ?? "PROCESSING",
+    orderSystemId: statusMeta.orderSystemId ?? saleMeta.orderSystemId,
+    orderState: statusMeta.orderState ?? saleMeta.orderState,
+    redirectUrl: statusMeta.redirectUrl ?? saleMeta.redirectUrl,
+    threeDSAuth: statusMeta.threeDSAuth ?? saleMeta.threeDSAuth,
+    errorCode: statusMeta.errorCode ?? saleMeta.errorCode,
+    errorMessage: statusMeta.errorMessage ?? saleMeta.errorMessage,
     raw: {
       sale: saleData,
       status: statusData,
@@ -131,34 +259,42 @@ export async function createCardServOrder(payload: {
   };
 }
 
-/* ===================== STATUS ===================== */
 export async function getCardServStatus(
   orderMerchantId: string,
-  currency: CardServCurrency
+  currency: CardServCurrency,
+  orderSystemId?: string | null,
 ) {
   const cfg = getCardServConfig(currency);
 
-  const res = await fetch(
-    `${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${cfg.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ orderMerchantId }),
-    }
-  );
+  const requestBody = {
+    orderMerchantId,
+    ...(orderSystemId ? { orderSystemId } : {}),
+  };
 
-  const data = JSON.parse(await res.text());
+  const res = await fetch(`${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${cfg.token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  const responseText = await res.text();
+  console.log("[CARDSERV] STATUS URL:", `${cfg.BASE_URL}/api/payments/status/${cfg.requestorId}`);
+  console.log("[CARDSERV] STATUS REQUEST:", JSON.stringify(requestBody));
+  console.log("[CARDSERV] STATUS RESPONSE:", res.status, responseText);
+
+  const data = JSON.parse(responseText);
+  const meta = normalizeCardServPayload(data);
 
   return {
-    orderSystemId: data?.orderSystemId
-      ? String(data.orderSystemId)
-      : null,
-    orderState: data?.orderState ?? "PROCESSING",
-    redirectUrl: data?.outputRedirectToUrl ?? null,
-    threeDSAuth: data?.threeDSAuth ?? null,
+    orderSystemId: meta.orderSystemId ?? orderSystemId ?? null,
+    orderState: meta.orderState,
+    redirectUrl: meta.redirectUrl,
+    threeDSAuth: meta.threeDSAuth,
+    errorCode: meta.errorCode,
+    errorMessage: meta.errorMessage,
     raw: data,
   };
 }

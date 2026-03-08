@@ -14,7 +14,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1️⃣ Беремо замовлення з БД
     const order = await db.order.findFirst({
       where: { orderMerchantId },
     });
@@ -26,22 +25,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2️⃣ Витягуємо валюту (ОБОВʼЯЗКОВО)
     const currency = (order.currency ?? "EUR") as CardServCurrency;
+    const status = await getCardServStatus(
+      orderMerchantId,
+      currency,
+      order.orderSystemId
+    );
 
-    // 3️⃣ Коректний виклик
-    const status = await getCardServStatus(orderMerchantId, currency);
+    const existingResponse =
+      order.response && typeof order.response === "object"
+        ? (order.response as Record<string, unknown>)
+        : {};
 
-    // 4️⃣ Оновлюємо статус замовлення
     await db.order.updateMany({
       where: { orderMerchantId },
       data: {
         status: status.orderState,
-        response: status.raw,
+        response: {
+          ...existingResponse,
+          webhook: status.raw,
+        },
       },
     });
 
-    // 5️⃣ Якщо платіж успішний — зараховуємо токени
     if (status.orderState === "APPROVED") {
       const userEmail = order.userEmail ?? undefined;
 
@@ -59,7 +65,6 @@ export async function POST(req: Request) {
             data: { tokenBalance: newBalance },
           });
 
-          // Ledger
           await db.ledgerEntry.create({
             data: {
               userId: user.id,
@@ -78,11 +83,15 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       state: status.orderState,
+      orderSystemId: status.orderSystemId ?? order.orderSystemId ?? null,
+      errorCode: status.errorCode ?? null,
+      errorMessage: status.errorMessage ?? null,
     });
-  } catch (err: any) {
-    console.error("Webhook Error:", err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Webhook Error:", message);
     return NextResponse.json(
-      { ok: false, error: err.message },
+      { ok: false, error: message },
       { status: 500 }
     );
   }

@@ -1,6 +1,5 @@
 import Section from '@/components/layout/Section';
 import Card from '@/components/ui/Card';
-import Pill from '@/components/policy/Pill';
 import ContactForm from '@/components/contact/ContactForm';
 
 export const metadata = {
@@ -14,7 +13,7 @@ export default function ContactPage() {
       <Section className="py-10">
         <div className="text-center">
           <h1 className="mt-4 text-4xl sm:text-5xl font-bold text-slate-900">Contact us</h1>
-          <p className="mt-3 text-slate-600 text-lg">We're here to help with sales, support, and billing.</p>
+          <p className="mt-3 text-slate-600 text-lg">We&apos;re here to help with sales, support, and billing.</p>
         </div>
 
         <div className="mt-10 grid lg:grid-cols-3 gap-6">
