@@ -7,12 +7,20 @@ export type CardServCurrency = "GBP" | "EUR" | "USD";
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
+    const { searchParams } = new URL(req.url);
 
-    // 3DS поля
-    const md = form.get("MD")?.toString(); // 3DS1
-    const threeDSSessionData = form.get("threeDSSessionData")?.toString(); // 3DS2
+    // 3DS fields (gateway-dependent naming)
+    const md = form.get("MD")?.toString();
+    const threeDSSessionData = form.get("threeDSSessionData")?.toString();
 
-    const orderMerchantId = md || threeDSSessionData;
+    const orderMerchantId =
+      md ||
+      threeDSSessionData ||
+      searchParams.get("order") ||
+      searchParams.get("orderId") ||
+      searchParams.get("orderMerchantId") ||
+      form.get("order")?.toString() ||
+      form.get("orderId")?.toString();
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
@@ -37,17 +45,23 @@ export async function POST(req: Request) {
     // ✅ 2. Перевіряємо статус у CardServ (З ВАЛЮТОЮ)
     const status = await getCardServStatus(
       orderMerchantId,
-      order.currency as CardServCurrency
+      order.currency as CardServCurrency,
+      order.orderSystemId,
     );
 
 
     // ✅ 3. Оновлюємо order
+    const existingResponse =
+      order.response && typeof order.response === "object"
+        ? (order.response as Record<string, unknown>)
+        : {};
+
     await db.order.update({
       where: { id: order.id },
       data: {
         status: status.orderState,
         response: {
-          ...(order.response as any),
+          ...existingResponse,
           result: status.raw,
         },
       },
@@ -91,10 +105,11 @@ export async function POST(req: Request) {
 
     console.log("🔁 Redirecting to:", redirectUrl);
     return NextResponse.redirect(redirectUrl, 302);
-  } catch (err: any) {
-    console.error("❌ /api/cardserv/result POST error:", err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("❌ /api/cardserv/result POST error:", message);
     return NextResponse.json(
-      { ok: false, error: err.message },
+      { ok: false, error: message },
       { status: 500 }
     );
   }
@@ -103,16 +118,17 @@ export async function POST(req: Request) {
 // 🔹 fallback якщо CardServ робить GET
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const orderId = searchParams.get("order");
+  const orderId =
+    searchParams.get("order") ||
+    searchParams.get("orderId") ||
+    searchParams.get("orderMerchantId");
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
   if (!orderId) {
     return NextResponse.redirect(`${appUrl}/payment/processing`, 302);
   }
 
-  const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(
-    orderId
-  )}`;
+  const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(orderId)}`;
 
   return NextResponse.redirect(redirectUrl, 302);
 }

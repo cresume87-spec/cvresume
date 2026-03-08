@@ -2,22 +2,26 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 import Section from "@/components/layout/Section";
-import Button from "@/components/ui/Button";
-import { CC, VAT_RATES } from "@/lib/constants";
 import { Currency } from "@/lib/currency";
 import {
   convertToTokens,
   convertTokensToCurrency,
-  formatCurrency,
 } from "@/lib/currency";
 import { PRICING_PLANS } from "@/lib/data";
 import PlanCard from "@/components/pricing/PlanCard";
 import CustomPlanCard from "@/components/pricing/CustomPlanCard";
 
-const COUNTRIES = Object.keys(CC);
+type BroadcastPayload = {
+  type?: string;
+  currency?: string;
+};
+
+type PricingPlanSelection = {
+  name: string;
+  price: string;
+};
 
 export default function PricingClient() {
   const bcRef = useRef<BroadcastChannel | null>(null);
@@ -29,22 +33,15 @@ export default function PricingClient() {
       return "GBP";
     }
   });
-  const [country, setCountry] = useState<string>("United Kingdom");
   const { status, data: session } = useSession();
   const router = useRouter();
   const signedIn = status === "authenticated";
 
-  const vatRate = useMemo(() => {
-    const code = (CC as Record<string, string>)[country] || "UK";
-    const rates = (VAT_RATES as Record<string, number[]>)[code] || [0, 20];
-    return rates[rates.length - 1] || 20;
-  }, [country]);
-
   useEffect(() => {
     try {
       bcRef.current = new BroadcastChannel("app-events");
-      bcRef.current.onmessage = (ev: MessageEvent) => {
-        const data: any = (ev as any)?.data || {};
+      bcRef.current.onmessage = (ev: MessageEvent<BroadcastPayload>) => {
+        const data = ev.data || {};
         if (
           data.type === "currency-updated" &&
           (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD" || data.currency === "AUD" || data.currency === "CAD" || data.currency === "NZD")
@@ -63,7 +60,7 @@ export default function PricingClient() {
     };
   }, []);
 
-  const handlePlanRequest = (plan: any) => {
+  const handlePlanRequest = (plan: PricingPlanSelection) => {
     if (!signedIn) {
       router.push("/auth/signin?mode=login");
       return;
@@ -72,13 +69,11 @@ export default function PricingClient() {
     const gbpAmount = parseFloat(plan.price.replace(/[£,]/g, ""));
     const tokens = convertToTokens(gbpAmount, "GBP").tokens;
     const convertedAmount = convertTokensToCurrency(tokens, currency);
-    const vatAmount = (convertedAmount * vatRate) / 100;
 
     // For AUD/CAD/NZD: convert to GBP for checkout (CardServ doesn't support them)
     const displayOnlyCurrency = currency === "AUD" || currency === "CAD" || currency === "NZD";
     const checkoutCurrency = displayOnlyCurrency ? "GBP" : currency;
     const checkoutAmount = displayOnlyCurrency ? gbpAmount : convertedAmount;
-    const checkoutVatAmount = (checkoutAmount * vatRate) / 100;
 
     const checkoutData = {
       email: session?.user?.email || "",
@@ -86,12 +81,12 @@ export default function PricingClient() {
       description: `Top-up: ${plan.name}`,
       amount: checkoutAmount,
       currency: checkoutCurrency,
-      displayCurrency: currency, // Keep track of what user saw
+      displayCurrency: currency,
       displayAmount: convertedAmount,
       tokens,
-      vatRate,
-      vatAmount: checkoutVatAmount,
-      total: checkoutAmount + checkoutVatAmount,
+      vatRate: 0,
+      vatAmount: 0,
+      total: checkoutAmount,
     };
 
     localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
@@ -120,17 +115,6 @@ export default function PricingClient() {
               <option value="CAD">CAD (C$)</option>
               <option value="NZD">NZD (NZ$)</option>
             </select>
-            <select
-              className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -149,7 +133,7 @@ export default function PricingClient() {
           ))}
           <CustomPlanCard
             currency={currency}
-            onRequest={() => handlePlanRequest({ name: "Custom" })}
+            onRequest={() => handlePlanRequest({ name: "Custom", price: "£5" })}
           />
         </div>
       </Section>

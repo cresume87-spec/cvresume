@@ -1,0 +1,285 @@
+{
+	"info": {
+		"_postman_id": "9fc8ac73-0025-435c-9284-1a80fed40c9b",
+		"name": "Redirect SMS",
+		"description": "Postman collection to make Redirect Sale Requests and query its status.\n\nFor detailed documentation refer to [https://help.hypepayments.com/api/#/paths/3ds-_Overview/head](https://help.hypepayments.com/api/#/paths/3ds-_Overview/head)\n\nOAuth 2.0 signature and headers are generated automatically in \"Authorization\" tab for all methods of this collection excluding browser examples. To use it check your Bearer Token in Environment.\n\nIn case if you are planning to use 3ds emulator for integration purposes you should use following card numbers and transaction amounts for PaReq/PaRes flow:\n\n- **4444 4444 1111 1111** - test card\n    \n\n**Environment**:  \n`EnvURL` - base URL for all requests;  \n`RequestorID` - integration point;  \n`Token` - used as \"Bearer Token\" in OAuth 2.0 authorization in Query status request.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29933420",
+		"_collection_link": "https://hyperion-rapid-solutions.postman.co/workspace/bc2e0c59-95e1-4472-8f8f-4483452a12bb/collection/24400607-9fc8ac73-0025-435c-9284-1a80fed40c9b?action=share&source=collection_link&creator=29933420"
+	},
+	"item": [
+		{
+			"name": "Redirect Sale",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set(\"vOrderSystemId\", pm.response.json().orderSystemId);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"order\": {\n    \"orderMerchantId\": \"{{vOrderMerchantId}}\",\n    \"orderDescription\": \"Sale #562344\",\n    \"orderAmount\": \"{{vOrderAmount}}\",\n    \"orderCurrencyCode\": \"{{vOrderCurrency}}\"\n  },\n  \"browser\": {\n    \"ipAddress\": \"2.58.95.68\",\n    \"acceptHeader\": \"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\",\n    \"colorDepth\": 32,\n    \"javascriptEnabled\": \"true\",\n    \"acceptLanguage\": \"en-US\",\n    \"screenHeight\": 1080,\n    \"screenWidth\": 1920,\n    \"timeZone\": -180,\n    \"userAgent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\",\n    \"javaEnabled\": \"false\"\n  },\n  \"customer\": {\n    \"firstname\": \"IVANKO\",\n    \"lastname\": \"BUZINA\",\n    \"customerPhone\": 3489262289,\n    \"birthBirthday\": \"1982.01.01\",\n    \"customerEmail\": \"s.a.l.e.s@stripe.com\",\n     \"address\": {\n      \"countryCode\": \"IT\",\n//      \"stateCode\": \"NL\",\n      \"zipCode\": \"30342\",\n      \"city\": \"Atlanta\",\n      \"line1\": \"Two Premier Plaza\",\n      \"line2\": \"5607 Glenridge Drive\"\n    }\n   },\n  \"card\": {\n    \"cardNumber\": \"{{vPAN}}\",\n    \"cvv2\": \"872\",\n    \"expireMonth\": \"10\",\n    \"expireYear\": \"2026\",\n    \"cardPrintedName\": \"IVANKO BUZINA\"\n  },\n  \"urls\": {\n    \"resultUrl\": \"https://httpbin.org/anything\",\n    \"webhookUrl\": \"{{webhookSiteURL}}\"\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{EnvURL}}/api/payments/sale/{{RequestorID}}",
+					"protocol": "https",
+					"host": [
+						"{{EnvURL}}"
+					],
+					"path": [
+						"api",
+						"payments",
+						"sale",
+						"{{RequestorID}}"
+					]
+				},
+				"description": "For detailed documentation refer to [https://help.hypepayments.com/api/#/paths/payments-sale-requestorId/post](https://help.hypepayments.com/api/#/paths/payments-sale-requestorId/post)\n\nTo receive transaction status you should specify `webhookUrl` and optionally can use `orderSystemId` and `orderMerchantId` from response to query transaction status. To redirect customer browser back to your site after transaction processing you should specify `resultUrl`.\n\nFor webhook detailed documentation please refer to [https://webhook.site/#!/view/c85971fa-e84a-4363-b3bd-0e430aca1992](https://webhook.site/#!/view/c85971fa-e84a-4363-b3bd-0e430aca1992)\n\nTo monitor webhooks go https://webhook.site/!#/57d1aa8d-04e9-45d5-8ca6-4d05273791d3"
+			},
+			"response": []
+		},
+		{
+			"name": "Query Status",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"orderSystemId\": {{vOrderSystemId}},\n  \"orderMerchantId\": \"{{vOrderMerchantId}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{EnvURL}}/api/payments/status/{{RequestorID}}",
+					"protocol": "https",
+					"host": [
+						"{{EnvURL}}"
+					],
+					"path": [
+						"api",
+						"payments",
+						"status",
+						"{{RequestorID}}"
+					]
+				},
+				"description": "For detailed documentation refer to [https://help.hypepayments.com/api/#/paths/payments-status-requestorId/post](https://help.hypepayments.com/api/#/paths/payments-status-requestorId/postTo)\n\nTo start transaction processing you need to redirect customer to `outputRedirectToUrl` if exists.\n\n**orderState**\n\n- **APPROVED** – Transaction is approved, final status\n- **DECLINED** – Transaction is declined, final status\n- **ERROR** – Transaction is declined but something went wrong, please inform your account manager, final status\n- **FILTERED** – Transaction is declined by fraud internal or external control systems, final status\n- **PROCESSING** – Transaction is being processed, you should continue polling, non final status\n- **UNKNOWN** – The status of transaction is unknown, please inform your account manager, non final status\n- **CHAIN_STEP** – Transaction is declined in a cascading chain, non final status\n    \n\nIt's important to note that for integration purposes, the merchant should use the staging environment instead of the production.\n\nRecommended schedule: 3 sec, 5 sec, 5 ses, 10 sec, 30 sec, 1 min, 2 min, 5 min, 15 min, 30 min, 1 hour, 4 hour and then once a day not more then a a week."
+			},
+			"response": []
+		},
+		{
+			"name": "Direct Reversal",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"orderSystemId\": {{vOrderSystemId}},\n  \"orderMerchantId\": \"{{vOrderMerchantId}}\",\n  \"reversalAmount\": \"{{vOrderAmount}}\",\n  \"reversalReason\": \"By Clients Request\",\n  \"reversalCurrencyCode\": \"{{vOrderCurrency}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{EnvURL}}/api/payments/reversal/{{RequestorID}}",
+					"protocol": "https",
+					"host": [
+						"{{EnvURL}}"
+					],
+					"path": [
+						"api",
+						"payments",
+						"reversal",
+						"{{RequestorID}}"
+					]
+				},
+				"description": "For detailed documentation refer to [https://help.hypepayments.com/api/#/paths/payments-reversal-requestorId/post](https://help.hypepayments.com/api/#/paths/payments-reversal-requestorId/post)\n\nBased on the configuration you can pass any `reversalAmount`, not only the original one. Final reversal status will also be submitted to `webhookUrl` you have specified in initial sale request."
+			},
+			"response": []
+		},
+		{
+			"name": "Query Status Final",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"orderSystemId\": {{vOrderSystemId}},\n  \"orderMerchantId\": \"{{vOrderMerchantId}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{EnvURL}}/api/payments/status/{{RequestorID}}",
+					"protocol": "https",
+					"host": [
+						"{{EnvURL}}"
+					],
+					"path": [
+						"api",
+						"payments",
+						"status",
+						"{{RequestorID}}"
+					]
+				},
+				"description": "For detailed documentation refer to [https://help.hypepayments.com/api/#/paths/payments-status-requestorId/post](https://help.hypepayments.com/api/#/paths/payments-status-requestorId/post)\n\nYou can use the same method on the API to receive reversal status. The only valuable difference will be `transactionType` equals to **REVERSAL**.\n\n**orderState**\n\n- **APPROVED** – Transaction is approved, final status\n- **DECLINED** – Transaction is declined, final status\n- **ERROR** – Transaction is declined but something went wrong, please inform your account manager, final status\n- **FILTERED** – Transaction is declined by fraud internal or external control systems, final status\n- **PROCESSING** – Transaction is being processed, you should continue polling, non final status\n- **UNKNOWN** – The status of transaction is unknown, please inform your account manager, non final status\n- **CHAIN_STEP** – Transaction is declined in a cascading chain, non final status\n    \n\nIt's important to note that for integration purposes, the merchant should use the staging environment instead of the production.\n\nRecommended schedule: 3 sec, 5 sec, 5 ses, 10 sec, 30 sec, 1 min, 2 min, 5 min, 15 min, 30 min, 1 hour, 4 hour and then once a day not more then a a week."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "vOrderSystemId",
+			"value": ""
+		},
+		{
+			"key": "vOrderMerchantId",
+			"value": "{{$guid}}"
+		},
+		{
+			"key": "webhookSiteURL",
+			"value": "https://webhook.site/57d1aa8d-04e9-45d5-8ca6-4d05273791d3"
+		},
+		{
+			"key": "vOrderAmount",
+			"value": "1"
+		},
+		{
+			"key": "vOrderCurrency",
+			"value": "EUR"
+		},
+		{
+			"key": "vPAN",
+			"value": "4444444411111111"
+		},
+		{
+			"key": "vPaReq",
+			"value": ""
+		},
+		{
+			"key": "vACSUrl",
+			"value": ""
+		},
+		{
+			"key": "vPANBackup",
+			"value": ""
+		}
+	]
+}

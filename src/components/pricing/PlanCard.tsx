@@ -32,7 +32,7 @@ export default function PlanCard({
                                    priceText,
                                    amount,
                                    currency = "GBP",
-                                   vatRatePercent = 20,
+                                   vatRatePercent = 0,
                                    tokens,
                                  }: PlanCardProps) {
   const reduceMotion = useReducedMotion();
@@ -51,12 +51,11 @@ export default function PlanCard({
     return { amount: 0, currency: "GBP" as Currency } as const;
   })();
 
-  // --- Tokens & VAT
+  // --- Tokens
   const computedTokens =
     typeof tokens === "number"
       ? Math.max(0, Math.round(tokens))
       : Math.max(0, Math.round(resolvedAmount.amount * 100));
-  const incVat = resolvedAmount.amount * (1 + vatRatePercent / 100);
 
   const money = (n: number, curr: Currency) => {
     const locale =
@@ -82,8 +81,6 @@ export default function PlanCard({
     const checkoutAmount = isDisplayOnly
       ? resolvedAmount.amount / EXCHANGE_RATES[resolvedAmount.currency]
       : resolvedAmount.amount;
-    const checkoutVatAmount = checkoutAmount * (vatRatePercent / 100);
-    const checkoutTotal = checkoutAmount * (1 + vatRatePercent / 100);
 
     const checkoutData = {
       planId: name,
@@ -94,8 +91,8 @@ export default function PlanCard({
       displayAmount: resolvedAmount.amount,
       tokens: computedTokens,
       vatRate: vatRatePercent,
-      vatAmount: checkoutVatAmount,
-      total: checkoutTotal,
+      vatAmount: 0,
+      total: checkoutAmount,
       email: session?.user?.email || "",
     };
 
@@ -159,9 +156,6 @@ export default function PlanCard({
 
           <div className="text-sm text-slate-600 mt-1">
             ≈ {computedTokens} tokens
-          </div>
-          <div className="text-[11px] text-slate-500">
-            incl. VAT: {money(incVat, resolvedAmount.currency)}
           </div>
 
           <ul className="mt-4 space-y-2 text-sm text-slate-700">

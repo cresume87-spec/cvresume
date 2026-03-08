@@ -12,12 +12,29 @@ export default function CheckoutClient() {
   const [checkout, setCheckout] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [polling, setPolling] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // 🧾 Завантаження даних із localStorage
   useEffect(() => {
     const data = localStorage.getItem("checkoutData");
-    if (!data) router.push("/pricing");
-    else setCheckout(JSON.parse(data));
+    if (!data) {
+      router.push("/pricing");
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(data);
+      const normalized = {
+        ...parsed,
+        vatRate: 0,
+        vatAmount: 0,
+        total: typeof parsed?.amount === "number" ? parsed.amount : parsed?.total,
+      };
+      localStorage.setItem("checkoutData", JSON.stringify(normalized));
+      setCheckout(normalized);
+    } catch {
+      router.push("/pricing");
+    }
   }, [router]);
 
   if (!checkout) return null;
@@ -47,8 +64,16 @@ export default function CheckoutClient() {
 
   const pollStatus = async (orderMerchantId: string) => {
     setPolling(true);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("[FRONT] Starting status polling for:", orderMerchantId);
+
+    let attempts = 0;
+    const maxAttempts = 30;
 
     const interval = setInterval(async () => {
+      attempts += 1;
+      console.log(`[FRONT] Polling status #${attempts}...`);
+
       const res = await fetch("/api/cardserv/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,26 +81,35 @@ export default function CheckoutClient() {
       });
 
       const json = await res.json();
-      const data = json?.data;
+      console.log("[FRONT] Status response:", JSON.stringify(json, null, 2));
 
-      console.log("📡 FRONT STATUS:", data);
-
-      if (data?.redirectUrl) {
-        console.log("➡️ REDIRECT TO:", data.redirectUrl);
-        window.location.href = data.redirectUrl;
+      if (json?.redirectUrl) {
+        console.log("[FRONT] Redirecting to:", json.redirectUrl);
+        clearInterval(interval);
+        setPolling(false);
+        window.location.href = json.redirectUrl;
         return;
       }
 
-      if (data?.state === "APPROVED") {
+      if (json?.state === "APPROVED") {
         clearInterval(interval);
         setPolling(false);
         router.push("/dashboard");
+        return;
       }
 
-      if (data?.state === "DECLINED") {
+      if (json?.state === "DECLINED" || json?.state === "ERROR") {
         clearInterval(interval);
         setPolling(false);
-        alert("Payment declined");
+        setPaymentError("Payment was declined by the gateway. Please try another card.");
+        return;
+      }
+
+      const transientNotFound = json?.transientNotFound === true;
+      if (attempts >= maxAttempts || (json?.state === "UNKNOWN" && !transientNotFound)) {
+        clearInterval(interval);
+        setPolling(false);
+        setPaymentError("Payment is still processing. Please check the Payment Processing page again in a moment.");
       }
     }, 2000);
   };
@@ -84,6 +118,7 @@ export default function CheckoutClient() {
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
       setLoading(true);
+      setPaymentError(null);
       const payload = { ...checkout, card: values };
 
       const res = await fetch("/api/cardserv/sale", {
@@ -93,6 +128,12 @@ export default function CheckoutClient() {
       });
 
       const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        const reason = data?.errorMessage || data?.error || "Payment initialization failed";
+        console.error("[FRONT] Sale failed:", reason, data);
+        setPaymentError(reason);
+        return;
+      }
 
       if (data.orderMerchantId) {
         localStorage.setItem("orderMerchantId", data.orderMerchantId);
@@ -114,9 +155,14 @@ export default function CheckoutClient() {
         return;
       }
 
-      const threeDS = data?.threeDS || data?.data?.threeDS || data?.raw?.status?.threeDSAuth;
+      const threeDS =
+        data?.threeDSAuth ||
+        data?.threeDS ||
+        data?.data?.threeDS ||
+        data?.raw?.status?.threeDSAuth ||
+        data?.raw?.sale?.threeDSAuth;
       if (threeDS?.acsUrl && (threeDS?.paReq || threeDS?.creq)) {
-        const termUrl = `${window.location.origin}/api/cardserv/result?orderId=${orderId || ""}`;
+        const termUrl = `${window.location.origin}/api/cardserv/result?order=${orderId || ""}`;
 
         const form = document.createElement("form");
         form.method = "POST";
@@ -159,6 +205,7 @@ export default function CheckoutClient() {
       if (orderId) await pollStatus(orderId);
     } catch (err) {
       console.error("❌ Payment error:", err);
+      setPaymentError("Unexpected payment error. Please try again.");
     } finally {
       setLoading(false);
       setSubmitting(false);
@@ -172,6 +219,11 @@ export default function CheckoutClient() {
         {/* 💳 Payment Form */}
         <div className="p-8 md:p-10">
           <h1 className="text-2xl font-semibold text-gray-800 mb-8">Payment details</h1>
+          {paymentError ? (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {paymentError}
+            </div>
+          ) : null}
           <Formik
             initialValues={{
               cardNumber: "",
@@ -279,8 +331,7 @@ export default function CheckoutClient() {
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Order Summary</h2>
             <div className="space-y-3 text-gray-700">
               <div className="flex justify-between"><span>Plan</span><span className="font-medium">{checkout.planId}</span></div>
-              <div className="flex justify-between"><span>Price</span><span>{checkout.amount.toFixed(2)} {checkout.currency}</span></div>
-              <div className="flex justify-between"><span>VAT ({checkout.vatRate}%)</span><span>{checkout.vatAmount.toFixed(2)} {checkout.currency}</span></div>
+              <div className="flex justify-between"><span>Price</span><span>{checkout.total.toFixed(2)} {checkout.currency}</span></div>
               <div className="border-t border-gray-300 my-3"></div>
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total</span>

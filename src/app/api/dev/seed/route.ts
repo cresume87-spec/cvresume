@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -18,12 +18,12 @@ export async function GET(req: Request) {
     { email: 'user-without-tokens@example.com', name: 'Test User (no tokens)', tokenBalance: 0 },
   ];
 
-  const results = [] as any[];
+  const results: Array<{ id: string; email: string | null; tokenBalance: number }> = [];
   for (const u of users) {
     const user = await prisma.user.upsert({
       where: { email: u.email },
       update: { tokenBalance: u.tokenBalance, password: passwordHash },
-      create: { email: u.email.toLowerCase(), name: u.name, tokenBalance: u.tokenBalance, currency: 'GBP' as any, password: passwordHash },
+      create: { email: u.email.toLowerCase(), name: u.name, tokenBalance: u.tokenBalance, currency: 'GBP', password: passwordHash },
     });
     results.push({ id: user.id, email: user.email, tokenBalance: user.tokenBalance });
   }

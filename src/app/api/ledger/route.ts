@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import type { Currency } from '@prisma/client';
+
+type SessionUser = {
+  id: string;
+  currency?: string | null;
+};
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const userId = (session.user as any).id as string;
+  const userId = (session.user as SessionUser).id;
   const ledger = await prisma.ledgerEntry.findMany({ where: { userId }, orderBy: { ts: 'desc' } });
   return NextResponse.json({ ledger });
 }
@@ -18,13 +24,13 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const userId = (session.user as any).id as string;
+  const sessionUser = session.user as SessionUser;
+  const userId = sessionUser.id;
   const body = await req.json().catch(() => ({}));
   const type = (body.type as string) || 'Top-up';
   const amount = Number(body.amount ?? 0);
-  const bodyCurrency = (body.currency as string) || ((session.user as any).currency ?? 'GBP');
-  // Prisma Currency enum only has GBP, EUR, USD; store display-only (AUD, CAD, NZD) as GBP
-  const currency = (bodyCurrency === 'EUR' || bodyCurrency === 'USD') ? bodyCurrency : 'GBP';
+  const bodyCurrency = (body.currency as string) || sessionUser.currency || 'GBP';
+  const currency: Currency = bodyCurrency === 'EUR' || bodyCurrency === 'USD' ? bodyCurrency : 'GBP';
 
   if (type === 'Top-up' && !amount) return NextResponse.json({ error: 'Amount required' }, { status: 400 });
 
