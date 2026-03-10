@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
+
+type AuthUserShape = {
+  id: string;
+  tokenBalance?: number | null;
+  currency?: string | null;
+};
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -53,7 +60,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  debug: process.env.NODE_ENV === "development",
+  debug: process.env.NEXTAUTH_DEBUG === "true",
   session: {
     strategy: "jwt",
   },
@@ -61,17 +68,19 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.tokenBalance = (user as any).tokenBalance ?? 0;
-        token.currency = (user as any).currency ?? "GBP";
+        const typedUser = user as AuthUserShape;
+        token.id = typedUser.id;
+        token.tokenBalance = typedUser.tokenBalance ?? 0;
+        token.currency = typedUser.currency ?? "GBP";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token) {
-        session.user.id = token.id;
-        (session.user as any).tokenBalance = token.tokenBalance;
-        (session.user as any).currency = token.currency;
+        const typedToken = token as JWT;
+        session.user.id = typedToken.id;
+        session.user.tokenBalance = typedToken.tokenBalance;
+        session.user.currency = typedToken.currency;
       }
       return session;
     },

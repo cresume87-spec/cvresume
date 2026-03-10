@@ -8,38 +8,79 @@ type CardServConfig = {
   BASE_URL: string;
 };
 
-export function getCardServConfig(currency: CardServCurrency): CardServConfig {
-  const BASE_URL = process.env.CARDSERV_BASE_URL!;
-  if (!BASE_URL) throw new Error("Missing CARDSERV_BASE_URL");
+function readRequired(name: string, value: string | undefined): string {
+  if (!value) throw new Error(`Missing ${name}`);
+  return value;
+}
 
-  const map: Record<CardServCurrency, Omit<CardServConfig, "BASE_URL">> = {
+export function getCardServConfig(currency: CardServCurrency): CardServConfig {
+  const requestedMode = (process.env.CARDSERV_MODE || "live").toLowerCase();
+  const mode = requestedMode === "sandbox" ? "sandbox" : "live";
+
+  const rawBaseUrl = process.env.CARDSERV_BASE_URL?.trim();
+  const defaultBaseUrl = mode === "sandbox" ? "https://test.cardserv.io" : "https://live.cardserv.io";
+
+  const mismatchedSandbox = mode === "sandbox" && rawBaseUrl?.includes("live.cardserv.io");
+  const mismatchedLive = mode === "live" && rawBaseUrl?.includes("test.cardserv.io");
+
+  if (mismatchedSandbox) {
+    console.warn("[CARDSERV] Ignoring live CARDSERV_BASE_URL because sandbox mode is active");
+  }
+
+  if (mismatchedLive) {
+    console.warn("[CARDSERV] Ignoring sandbox CARDSERV_BASE_URL because live mode is active");
+  }
+
+  const BASE_URL = mismatchedSandbox || mismatchedLive ? defaultBaseUrl : (rawBaseUrl || defaultBaseUrl);
+
+  const baseByCurrency: Record<CardServCurrency, Omit<CardServConfig, "BASE_URL">> = {
+    EUR: { currency: "EUR", country: "DE", requestorId: "", token: "" },
+    USD: { currency: "USD", country: "US", requestorId: "", token: "" },
+    GBP: { currency: "GBP", country: "GB", requestorId: "", token: "" },
+  };
+
+  if (mode === "sandbox") {
+    const sandboxRequestorId =
+      process.env.CARDSERV_SANDBOX_REQUESTOR_ID ||
+      process.env.CARDSERV_REQUESTOR_ID;
+    const sandboxToken =
+      process.env.CARDSERV_SANDBOX_TOKEN ||
+      process.env.CARDSERV_TOKEN;
+
+    const requestorId = readRequired("CARDSERV_SANDBOX_REQUESTOR_ID", sandboxRequestorId);
+    const token = readRequired("CARDSERV_SANDBOX_TOKEN", sandboxToken);
+
+    return {
+      BASE_URL,
+      ...baseByCurrency[currency],
+      requestorId,
+      token,
+    };
+  }
+
+  const liveMap: Record<CardServCurrency, Omit<CardServConfig, "BASE_URL">> = {
     EUR: {
-      requestorId: process.env.CARDSERV_EUR_REQUESTOR_ID!,
-      token: process.env.CARDSERV_EUR_TOKEN!,
+      requestorId: readRequired("CARDSERV_EUR_REQUESTOR_ID", process.env.CARDSERV_EUR_REQUESTOR_ID),
+      token: readRequired("CARDSERV_EUR_TOKEN", process.env.CARDSERV_EUR_TOKEN),
       currency: "EUR",
       country: "DE",
     },
     USD: {
-      requestorId: process.env.CARDSERV_USD_REQUESTOR_ID!,
-      token: process.env.CARDSERV_USD_TOKEN!,
+      requestorId: readRequired("CARDSERV_USD_REQUESTOR_ID", process.env.CARDSERV_USD_REQUESTOR_ID),
+      token: readRequired("CARDSERV_USD_TOKEN", process.env.CARDSERV_USD_TOKEN),
       currency: "USD",
       country: "US",
     },
     GBP: {
-      requestorId: process.env.CARDSERV_GBP_REQUESTOR_ID!,
-      token: process.env.CARDSERV_GBP_TOKEN!,
+      requestorId: readRequired("CARDSERV_GBP_REQUESTOR_ID", process.env.CARDSERV_GBP_REQUESTOR_ID),
+      token: readRequired("CARDSERV_GBP_TOKEN", process.env.CARDSERV_GBP_TOKEN),
       currency: "GBP",
       country: "GB",
     },
   };
 
-  const cfg = map[currency];
-  if (!cfg?.requestorId || !cfg?.token) {
-    throw new Error(`Missing CardServ credentials for ${currency}`);
-  }
-
   return {
     BASE_URL,
-    ...cfg,
+    ...liveMap[currency],
   };
 }

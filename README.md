@@ -129,7 +129,7 @@ This project integrates OpenAI for text generation and file management.
 
 ### 1) Environment variables
 
-Copy `env.example` to `.env.local` and set at least:
+Use the existing `.env` file in the project root and set at least:
 
 ```
 OPENAI_API_KEY=sk-...
@@ -183,6 +183,53 @@ If you see connectivity errors (e.g. `Unable to reach the model provider`), chec
 - `OPENAI_API_KEY` is set and valid
 - No corporate proxy/firewall blocks outbound HTTPS to `api.openai.com`
 - If using a custom provider, set `OPENAI_BASE_URL`
+
+## CardServ payment setup
+
+The payment flow is now **live-first** and uses `.env` only.
+
+### Live setup
+
+Set these environment variables in `.env`:
+
+```bash
+CARDSERV_MODE=live
+CARDSERV_BASE_URL=https://live.cardserv.io
+CARDSERV_EUR_REQUESTOR_ID=...
+CARDSERV_EUR_TOKEN=...
+CARDSERV_USD_REQUESTOR_ID=...
+CARDSERV_USD_TOKEN=...
+CARDSERV_GBP_REQUESTOR_ID=...
+CARDSERV_GBP_TOKEN=...
+NEXTAUTH_DEBUG=false
+```
+
+### Optional sandbox override
+
+Use sandbox only when you intentionally test the integration flow:
+
+```bash
+CARDSERV_MODE=sandbox
+CARDSERV_BASE_URL=https://test.cardserv.io
+CARDSERV_SANDBOX_REQUESTOR_ID=853
+CARDSERV_SANDBOX_TOKEN=YOUR_SANDBOX_TOKEN
+```
+
+### Verified sandbox test card
+
+- Card number: `4444444411111111`
+- Expiry: `10/26`
+- CVV: `872`
+- Cardholder: `IVANKO BUZINA`
+
+Expected behavior:
+- `POST /api/cardserv/sale` returns `200`
+- response contains `orderSystemId`
+- response contains `redirectUrl`
+- response contains `threeDSAuth`
+- browser is redirected to the 3DS emulator / redirect URL
+
+Do not mix sandbox tokens with live host or live tokens with sandbox host.
 
 ## License
 
