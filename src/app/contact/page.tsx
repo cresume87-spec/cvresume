@@ -22,37 +22,37 @@ export default function ContactPage() {
             <ContactForm />
           </div>
 
-            <div className="space-y-6">
-              <Card className="p-6" padding="md">
-                <h3 className="text-base font-semibold">Contact details</h3>
-                <div className="mt-3 grid gap-3 text-sm text-slate-700">
-                  <div className="flex items-center justify-between"><div>Support</div><a className="underline" href="mailto:info@careerzen.co.uk">info@careerzen.co.uk</a></div>
-                  <div className="flex items-center justify-between"><div>Phone</div><a className="underline" href="tel:+447833647923">+44 7833 647923</a></div>
-                </div>
-                <div className="mt-4 text-xs text-slate-500">Hours: Mon-Fri, 09:00-18:00 (UK). Limited support on UK public holidays..</div>
-              </Card>
+          <div className="space-y-6">
+            <Card className="p-6" padding="md">
+              <h3 className="text-base font-semibold">Contact details</h3>
+              <div className="mt-3 grid gap-3 text-sm text-slate-700">
+                <div className="flex items-center justify-between"><div>Support</div><a className="underline" href="mailto:info@careerzen.co.uk">info@careerzen.co.uk</a></div>
+                <div className="flex items-center justify-between"><div>Phone</div><a className="underline" href="tel:+44 7782 334922">+44 7782 334922</a></div>
+              </div>
+              <div className="mt-4 text-xs text-slate-500">Hours: Mon-Fri, 09:00-18:00 (UK). Limited support on UK public holidays..</div>
+            </Card>
 
-              <Card className="p-6" padding="md">
-                <h3 className="text-base font-semibold">Offices</h3>
-                <div className="mt-3 grid gap-4 text-sm text-slate-700">
-                  <div>
-                    <div className="font-medium">United Kingdom (Primary)</div>
-                    <div>EVERFINA LTD</div>
-                    <div>20 Wenlock Road, London, England, N1 7GU</div>
-                  </div>
+            <Card className="p-6" padding="md">
+              <h3 className="text-base font-semibold">Offices</h3>
+              <div className="mt-3 grid gap-4 text-sm text-slate-700">
+                <div>
+                  <div className="font-medium">United Kingdom (Primary)</div>
+                  <div>EVERFINA LTD</div>
+                  <div>20 Wenlock Road, London, England, N1 7GU</div>
                 </div>
-                <div className="mt-4 h-40 rounded-xl overflow-hidden border border-black/10">
-                  <iframe
-                    title="Invoicerly Office Location"
-                    width="100%"
-                    height="100%"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+              </div>
+              <div className="mt-4 h-40 rounded-xl overflow-hidden border border-black/10">
+                <iframe
+                  title="Invoicerly Office Location"
+                  width="100%"
+                  height="100%"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                   src="https://www.google.com/maps?q=20%20Wenlock%20Road%2C%20London%2C%20England%2C%20N1%207GU&output=embed"
-                  />
-                </div>
-              </Card>
-            </div>
+                />
+              </div>
+            </Card>
+          </div>
         </div>
 
         <div className="mt-10 grid md:grid-cols-3 gap-4">

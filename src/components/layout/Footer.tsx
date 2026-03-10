@@ -37,7 +37,7 @@ const COMPANY_DETAILS = [
   { text: 'EVERFINA LTD', type: 'text' },
   { text: 'Company number 15645711', type: 'text' },
   { text: '20 Wenlock Road, London, England, N1 7GU', type: 'text' },
-  { text: '+44 7833 647923', type: 'tel', href: 'tel:+447833647923' },
+  { text: '+44 7782 334922', type: 'tel', href: 'tel:+44 7782 334922' },
   { text: 'info@careerzen.co.uk', type: 'mailto', href: 'mailto:info@careerzen.co.uk' },
 ];
 
