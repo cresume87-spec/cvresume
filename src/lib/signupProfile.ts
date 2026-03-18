@@ -20,6 +20,8 @@ function isAdultOn(dateOfBirth: Date, minimumAge: number): boolean {
 }
 
 export const signupProfileSchema = z.object({
+  firstName: z.string().trim().min(1, 'Name is required.').max(100, 'Name is too long.'),
+  lastName: z.string().trim().min(1, 'Surname is required.').max(100, 'Surname is too long.'),
   email: z.string().trim().email('Please enter a valid email address.'),
   password: z.string().min(1, 'Password is required.'),
   phone: z.string().trim().min(5, 'Phone number is required.').max(30, 'Phone number is too long.'),
@@ -50,6 +52,8 @@ export function normalizeSignupProfile(input: SignupProfileInput) {
   }
 
   return {
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
     email: input.email.trim().toLowerCase(),
     password: input.password,
     phone: input.phone.trim(),

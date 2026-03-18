@@ -37,7 +37,9 @@ export async function POST(request: Request) {
       data: {
         email: input.email,
         password: hashedPassword,
-        name: input.email.split('@')[0],
+        name: `${input.firstName} ${input.lastName}`.trim(),
+        firstName: input.firstName,
+        lastName: input.lastName,
         phone: input.phone,
         dateOfBirth: input.dateOfBirth,
         addressLine1: input.addressLine1,
@@ -52,12 +54,14 @@ export async function POST(request: Request) {
       },
     });
 
-    void sendRegistrationConfirmationEmail({
-      email: input.email,
-      name: newUser.name,
-    }).catch((error) => {
+    try {
+      await sendRegistrationConfirmationEmail({
+        email: input.email,
+        name: newUser.name,
+      });
+    } catch (error) {
       console.error('[REGISTER_CONFIRMATION_EMAIL_ERROR]', error);
-    });
+    }
 
     return NextResponse.json({
       user: {

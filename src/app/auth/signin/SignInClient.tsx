@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 type SignupFormState = {
+  firstName: string;
+  lastName: string;
   phone: string;
   dateOfBirth: string;
   addressLine1: string;
@@ -18,6 +20,8 @@ type SignupFormState = {
 };
 
 const EMPTY_SIGNUP_FORM: SignupFormState = {
+  firstName: '',
+  lastName: '',
   phone: '',
   dateOfBirth: '',
   addressLine1: '',
@@ -126,6 +130,21 @@ export default function SignInClient() {
 
             {isSignup ? (
               <>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input
+                    label="Name"
+                    value={signupForm.firstName}
+                    onChange={(event) => updateSignupField('firstName', event.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Surname"
+                    value={signupForm.lastName}
+                    onChange={(event) => updateSignupField('lastName', event.target.value)}
+                    required
+                  />
+                </div>
+
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Input
                     label="Phone number"
