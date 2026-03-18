@@ -1,48 +1,60 @@
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { normalizeSignupProfile, signupProfileSchema } from '@/lib/signupProfile';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await request.json().catch(() => null);
+    const parsed = signupProfileSchema.safeParse(body);
 
-    if (!email || !password) {
-      // ИЗМЕНЕНО: Возвращаем JSON с сообщением об ошибке
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
       return NextResponse.json(
-        { message: "Missing email or password" },
+        { message: firstIssue?.message || 'Invalid registration details.' },
         { status: 400 },
       );
     }
 
+    const input = normalizeSignupProfile(parsed.data);
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: input.email },
+      select: { id: true },
     });
 
     if (existingUser) {
-      // ИЗМЕНЕНО: Возвращаем JSON с сообщением об ошибке
       return NextResponse.json(
-        { message: "User with this email already exists" },
+        { message: 'User with this email already exists' },
         { status: 409 },
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(input.password, 12);
 
     const newUser = await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: input.email,
         password: hashedPassword,
-        name: email.split("@")[0],
+        name: input.email.split('@')[0],
+        phone: input.phone,
+        dateOfBirth: input.dateOfBirth,
+        addressLine1: input.addressLine1,
+        addressCity: input.addressCity,
+        addressCountryCode: input.addressCountryCode,
+        addressPostalCode: input.addressPostalCode,
+      },
+      select: {
+        id: true,
+        email: true,
       },
     });
 
-    // В случае успеха возвращаем созданного пользователя
-    return NextResponse.json(newUser);
+    return NextResponse.json({ user: newUser });
   } catch (error) {
-    console.error("[REGISTER_ERROR]", error);
-    // ИЗМЕНЕНО: Возвращаем JSON с сообщением об ошибке
+    console.error('[REGISTER_ERROR]', error);
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { message: 'Internal Server Error' },
       { status: 500 },
     );
   }

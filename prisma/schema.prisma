@@ -31,6 +31,12 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  phone         String?
+  dateOfBirth   DateTime?
+  addressLine1  String?
+  addressCity   String?
+  addressCountryCode String?
+  addressPostalCode  String?
 
   // App-specific fields
   tokenBalance Int      @default(0)
@@ -140,6 +146,7 @@ model Order {
   orderSystemId   String?
   status          String   @default("PROCESSING")
   response        Json?
+  creditedAt      DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -172,4 +179,10 @@ model Document {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model SiteMetric {
+  key       String   @id
+  value     Int
+  updatedAt DateTime @updatedAt
 }

@@ -2,7 +2,7 @@ import PolicyPage from '@/components/policy/PolicyPage';
 import { PolicySection } from '@/types/policy';
 
 export const metadata = {
-  title: 'Cookies Policy - CareerZen',
+  title: 'Cookie Policy - CareerZen',
   description: 'Details on how CareerZen uses cookies and similar technologies.',
 };
 
@@ -10,7 +10,7 @@ const sections: PolicySection[] = [
   {
     id: 'overview',
     title: '1. Overview',
-    body: `This Cookies Policy explains how careerzen.co.uk, operated by EVERFINA LTD (Company No. 15645711, registered office: 20 Wenlock Road, London, N1 7GU), uses cookies and similar technologies (for example localStorage, sessionStorage, pixels, and other local identifiers) on our website and services. This Policy complements our Privacy Policy. By using the site or interacting with the cookie banner, you can manage or give consent to non-essential cookies as described below.`
+    body: `This Cookie Policy explains how careerzen.co.uk, operated by EVERFINA LTD (Company No. 15645711, registered office: 20 Wenlock Road, London, N1 7GU), uses cookies and similar technologies (for example localStorage, sessionStorage, pixels, and other local identifiers) on our website and services. This Policy complements our Privacy Policy. By using the site or interacting with the cookie banner, you can manage or give consent to non-essential cookies as described below.`
   },
   {
     id: 'what-are-cookies',
@@ -66,7 +66,7 @@ campaign_src	Tracks campaign attribution	Marketing	30–90 days`
   {
     id: 'changes',
     title: '9. Changes to this Policy',
-    body: `We may update this Cookies Policy from time to time (for example, if new tools are integrated). Material changes will be communicated by a notice on the website or by email to registered users. The effective date will always be updated accordingly.`
+    body: `We may update this Cookie Policy from time to time (for example, if new tools are integrated). Material changes will be communicated by a notice on the website or by email to registered users. The effective date will always be updated accordingly.`
   },
   {
     id: 'contact',
@@ -80,7 +80,7 @@ campaign_src	Tracks campaign attribution	Marketing	30–90 days`
 export default function CookiesPage() {
   return (
     <PolicyPage
-      title="Cookies Policy"
+      title="Cookie Policy"
       sections={sections}
       effectiveDate="01.09.2025"
       lastUpdated="18.09.2025"

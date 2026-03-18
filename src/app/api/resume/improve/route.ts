@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getOpenAIClient, getDefaultOpenAIModel } from '@/lib/openai';
+import { DEFAULT_RESUMES_CREATED_COUNT, RESUMES_CREATED_METRIC_KEY } from '@/lib/siteMetrics';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -388,6 +389,19 @@ export async function POST(req: Request) {
           type: action === 'manager' ? 'Manager Assist' : 'AI Assist',
           delta: -charge,
           balanceAfter: newBalance,
+        },
+      });
+
+      await tx.siteMetric.upsert({
+        where: { key: RESUMES_CREATED_METRIC_KEY },
+        update: {
+          value: {
+            increment: 1,
+          },
+        },
+        create: {
+          key: RESUMES_CREATED_METRIC_KEY,
+          value: DEFAULT_RESUMES_CREATED_COUNT + 1,
         },
       });
 

@@ -8,13 +8,15 @@ interface CardProps {
   className?: string;
   hover?: boolean;
   padding?: 'sm' | 'md' | 'lg';
+  id?: string;
 }
 
 export default function Card({ 
   children, 
   className = '', 
   hover = false,
-  padding = 'md'
+  padding = 'md',
+  id,
 }: CardProps) {
   const paddingClasses = {
     sm: 'p-4',
@@ -27,6 +29,7 @@ export default function Card({
   if (hover) {
     return (
       <motion.div
+        id={id}
         className={baseClasses}
         whileHover={{ 
           scale: 1.02,
@@ -41,6 +44,7 @@ export default function Card({
 
   return (
     <motion.div
+      id={id}
       className={baseClasses}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}

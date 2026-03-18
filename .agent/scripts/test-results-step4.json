@@ -1,0 +1,42 @@
+{
+  "flat": {
+    "step4.persons": [
+      {
+        "first_name": "John",
+        "is_us_person": true,
+        "is_shareholder": false,
+        "is_ubo": false
+      }
+    ]
+  },
+  "serverNormalized": {
+    "step4.persons": [
+      {
+        "first_name": "John",
+        "is_us_person": true,
+        "is_shareholder": false,
+        "is_ubo": false
+      }
+    ]
+  },
+  "hydrated": {
+    "step4.persons": [
+      {
+        "first_name": "John",
+        "is_us_person": true,
+        "is_shareholder": false,
+        "is_ubo": false
+      }
+    ]
+  },
+  "keysAfterFilter": {
+    "step4.persons": [
+      {
+        "first_name": "John",
+        "is_us_person": true,
+        "is_shareholder": false,
+        "is_ubo": false
+      }
+    ]
+  }
+}

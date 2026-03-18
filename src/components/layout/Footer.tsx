@@ -24,7 +24,7 @@ const HELP_LINKS = [
 const LEGAL_LINKS = [
   { label: 'Privacy Policy', href: '/privacy' },
   { label: 'Terms & Conditions', href: '/terms' },
-  { label: 'Cookies Policy', href: '/cookies' },
+  { label: 'Cookie Policy', href: '/cookies' },
   { label: 'Refund & Cancellation Policy', href: '/refund' },
 ];
 

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { THEME } from '@/lib/theme';
 import type { Currency } from '@/lib/currency';
+import { usePreferredCurrency } from '@/lib/currencyPreference';
 import { useSession, signOut } from 'next-auth/react';
 
 export default function Header() {
@@ -21,7 +22,7 @@ export default function Header() {
   const isTokenCalc = pathname === '/token-calculator';
   const isAbout = pathname === '/about';
   const isDashboard = pathname === '/dashboard';
-  const [currency, setCurrency] = useState<Currency>('GBP');
+  const [currency, setCurrency] = usePreferredCurrency();
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileHelpOpen, setMobileHelpOpen] = useState(false);
@@ -40,10 +41,6 @@ export default function Header() {
         if (data.type === 'tokens-updated' && typeof data.tokenBalance === 'number') {
           setTokens(data.tokenBalance);
         }
-        if (data.type === 'currency-updated' && (data.currency === 'GBP' || data.currency === 'EUR' || data.currency === 'USD' || data.currency === 'AUD' || data.currency === 'CAD' || data.currency === 'NZD')) {
-          setCurrency(data.currency);
-          try { localStorage.setItem('currency', data.currency); } catch {}
-        }
       };
     } catch {}
     return () => { try { bcRef.current?.close(); } catch {} };
@@ -51,18 +48,7 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true);
-    // Read saved currency client-side to avoid SSR hydration mismatch
-    try {
-      const saved = localStorage.getItem('currency');
-      if (saved === 'GBP' || saved === 'EUR' || saved === 'USD' || saved === 'AUD' || saved === 'CAD' || saved === 'NZD') setCurrency(saved);
-    } catch {}
   }, []);
-
-  const onCurrencyChange = (next: Currency) => {
-    setCurrency(next);
-    try { localStorage.setItem('currency', next); } catch {}
-    try { bcRef.current?.postMessage({ type: 'currency-updated', currency: next }); } catch {}
-  };
 
   const closeHelp = () => setHelpOpen(false);
   const toggleHelp = () => setHelpOpen((v)=>!v);
@@ -144,7 +130,7 @@ export default function Header() {
           <div className="hidden md:block">
             <select
               value={currency}
-              onChange={(e) => onCurrencyChange(e.target.value as Currency)}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
               className="rounded-xl border border-[#E2E8F0] bg-white px-3 py-1.5 text-sm text-slate-700 cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
             >
               <option value="GBP">GBP (£)</option>
@@ -248,7 +234,7 @@ export default function Header() {
                     <div className="mb-2 text-xs text-slate-500">Currency</div>
                     <select
                       value={currency}
-                      onChange={(e) => onCurrencyChange(e.target.value as Currency)}
+                      onChange={(e) => setCurrency(e.target.value as Currency)}
                       className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
                     >
                       <option value="GBP">GBP (£)</option>

@@ -1,0 +1,71 @@
+{
+  "flat": {
+    "step2.suppliers": [
+      {
+        "name": "Apple",
+        "country": "US",
+        "url": "apple.com"
+      },
+      {
+        "name": "Google",
+        "country": "US",
+        "url": "google.com"
+      }
+    ],
+    "step2.stock_locations": [
+      {
+        "country": "UK",
+        "city": "London",
+        "postal": "123",
+        "street": "Baker"
+      }
+    ],
+    "step2.has_own_stock": true
+  },
+  "serverNormalized": {
+    "step2.suppliers": [
+      {
+        "name": "Apple",
+        "country": "US",
+        "url": "apple.com"
+      },
+      {
+        "name": "Google",
+        "country": "US",
+        "url": "google.com"
+      }
+    ],
+    "step2.stock_locations": [
+      {
+        "country": "UK",
+        "city": "London",
+        "postal": "123",
+        "street": "Baker"
+      }
+    ],
+    "step2.has_own_stock": true
+  },
+  "hydrated": {
+    "step2.suppliers": [
+      {
+        "name": "Apple",
+        "country": "US",
+        "url": "apple.com"
+      },
+      {
+        "name": "Google",
+        "country": "US",
+        "url": "google.com"
+      }
+    ],
+    "step2.stock_locations": [
+      {
+        "country": "UK",
+        "city": "London",
+        "postal": "123",
+        "street": "Baker"
+      }
+    ],
+    "step2.has_own_stock": true
+  }
+}

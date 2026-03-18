@@ -112,6 +112,7 @@ export async function createCardServOrder(payload: {
   currency: CardServCurrency;
   description?: string;
   email: string;
+  countryCode?: string;
   card: {
     cardNumber: string;
     cvv: string;
@@ -120,6 +121,7 @@ export async function createCardServOrder(payload: {
     address?: string;
     city?: string;
     postalCode?: string;
+    countryCode?: string;
   };
   address?: string;
   city?: string;
@@ -143,6 +145,7 @@ export async function createCardServOrder(payload: {
   const billingAddress = payload.address || payload.card.address || "10 Downing Street";
   const billingCity = payload.city || payload.card.city || "London";
   const billingPostalCode = payload.postalCode || payload.card.postalCode || "SW1A1AA";
+  const billingCountryCode = (payload.countryCode || payload.card.countryCode || cfg.country).toUpperCase();
 
   const body = {
     order: {
@@ -169,7 +172,7 @@ export async function createCardServOrder(payload: {
       lastname: payload.card.name.split(" ")[1] || "Doe",
       customerEmail: payload.email,
       address: {
-        countryCode: cfg.country,
+        countryCode: billingCountryCode,
         zipCode: billingPostalCode,
         city: billingCity,
         line1: billingAddress,

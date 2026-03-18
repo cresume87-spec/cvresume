@@ -2,21 +2,16 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import Section from "@/components/layout/Section";
 import { Currency } from "@/lib/currency";
 import {
   convertToTokens,
   convertTokensToCurrency,
 } from "@/lib/currency";
+import { usePreferredCurrency } from "@/lib/currencyPreference";
 import { PRICING_PLANS } from "@/lib/data";
 import PlanCard from "@/components/pricing/PlanCard";
 import CustomPlanCard from "@/components/pricing/CustomPlanCard";
-
-type BroadcastPayload = {
-  type?: string;
-  currency?: string;
-};
 
 type PricingPlanSelection = {
   name: string;
@@ -24,41 +19,10 @@ type PricingPlanSelection = {
 };
 
 export default function PricingClient() {
-  const bcRef = useRef<BroadcastChannel | null>(null);
-  const [currency, setCurrency] = useState<Currency>(() => {
-    if (typeof window === "undefined") return "GBP";
-    try {
-      return (localStorage.getItem("currency") as Currency) || "GBP";
-    } catch {
-      return "GBP";
-    }
-  });
+  const [currency, setCurrency] = usePreferredCurrency();
   const { status, data: session } = useSession();
   const router = useRouter();
   const signedIn = status === "authenticated";
-
-  useEffect(() => {
-    try {
-      bcRef.current = new BroadcastChannel("app-events");
-      bcRef.current.onmessage = (ev: MessageEvent<BroadcastPayload>) => {
-        const data = ev.data || {};
-        if (
-          data.type === "currency-updated" &&
-          (data.currency === "GBP" || data.currency === "EUR" || data.currency === "USD" || data.currency === "AUD" || data.currency === "CAD" || data.currency === "NZD")
-        ) {
-          setCurrency(data.currency);
-          try {
-            localStorage.setItem("currency", data.currency);
-          } catch {}
-        }
-      };
-    } catch {}
-    return () => {
-      try {
-        bcRef.current?.close();
-      } catch {}
-    };
-  }, []);
 
   const handlePlanRequest = (plan: PricingPlanSelection) => {
     if (!signedIn) {

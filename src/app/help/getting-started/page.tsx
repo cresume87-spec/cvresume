@@ -46,7 +46,7 @@ const STEP_CONFIG = [
     details: [
       'Choose from £/€5, £/€15, £/€30 or custom amount',
       'Tokens never expire - use them when needed',
-      'VAT is calculated at checkout based on your location',
+      'Displayed prices already include VAT',
       'Manual billing handled by support'
     ],
     cta: 'Buy tokens',
@@ -82,7 +82,7 @@ const STEP_CONFIG = [
     ],
     cta: 'Create CV or resume',
     ctaLink: '/create-cv',
-    note: 'Creating a PDF or resume deducts 150 tokens from your balance',
+    note: 'Creating a PDF or DOCX export deducts 150 tokens from your balance',
     icon: '📤'
   }
 ];
@@ -351,7 +351,6 @@ export default function GettingStartedPage() {
     </main>
   );
 }
-
 
 
 

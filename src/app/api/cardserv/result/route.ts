@@ -1,134 +1,73 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getCardServStatus } from "@/lib/cardserv";
+import { NextResponse } from 'next/server';
+import { syncCardServOrder } from '@/lib/payment';
 
-export type CardServCurrency = "GBP" | "EUR" | "USD";
+function getAppUrl(request: Request): string {
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.VERCEL_URL;
 
-export async function POST(req: Request) {
+  if (!configured) {
+    return new URL('/', request.url).origin;
+  }
+
+  return configured.startsWith('http') ? configured : `https://${configured}`;
+}
+
+function getOrderMerchantId(request: Request, form: FormData) {
+  const { searchParams } = new URL(request.url);
+
+  return (
+    form.get('MD')?.toString() ||
+    form.get('threeDSSessionData')?.toString() ||
+    searchParams.get('order') ||
+    searchParams.get('orderId') ||
+    searchParams.get('orderMerchantId') ||
+    form.get('order')?.toString() ||
+    form.get('orderId')?.toString() ||
+    null
+  );
+}
+
+function buildProcessingRedirect(appUrl: string, orderMerchantId: string | null) {
+  if (!orderMerchantId) {
+    return `${appUrl}/payment/processing`;
+  }
+
+  return `${appUrl}/payment/processing?order=${encodeURIComponent(orderMerchantId)}`;
+}
+
+export async function POST(request: Request) {
   try {
-    const form = await req.formData();
-    const { searchParams } = new URL(req.url);
+    const form = await request.formData();
+    const appUrl = getAppUrl(request);
+    const orderMerchantId = getOrderMerchantId(request, form);
 
-    // 3DS fields (gateway-dependent naming)
-    const md = form.get("MD")?.toString();
-    const threeDSSessionData = form.get("threeDSSessionData")?.toString();
-
-    const orderMerchantId =
-      md ||
-      threeDSSessionData ||
-      searchParams.get("order") ||
-      searchParams.get("orderId") ||
-      searchParams.get("orderMerchantId") ||
-      form.get("order")?.toString() ||
-      form.get("orderId")?.toString();
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
-
-    if (!orderMerchantId) {
-      console.error("❌ Missing orderMerchantId in 3DS callback");
-      return NextResponse.redirect(`${appUrl}/payment/processing`, 302);
-    }
-
-    // ✅ 1. Забираємо order з БД (ЦЕ КЛЮЧОВЕ)
-    const order = await db.order.findFirst({
-      where: { orderMerchantId },
-    });
-
-    if (!order) {
-      console.error("❌ Order not found:", orderMerchantId);
-      return NextResponse.redirect(
-        `${appUrl}/payment/processing?order=${encodeURIComponent(orderMerchantId)}`,
-        302
-      );
-    }
-
-    // ✅ 2. Перевіряємо статус у CardServ (З ВАЛЮТОЮ)
-    const status = await getCardServStatus(
-      orderMerchantId,
-      order.currency as CardServCurrency,
-      order.orderSystemId,
-    );
-
-
-    // ✅ 3. Оновлюємо order
-    const existingResponse =
-      order.response && typeof order.response === "object"
-        ? (order.response as Record<string, unknown>)
-        : {};
-
-    await db.order.update({
-      where: { id: order.id },
-      data: {
-        status: status.orderState,
-        response: {
-          ...existingResponse,
-          result: status.raw,
-        },
-      },
-    });
-
-    // ✅ 4. Якщо APPROVED → зараховуємо токени
-    if (status.orderState === "APPROVED" && order.tokens && order.userEmail) {
-      const user = await db.user.findUnique({
-        where: { email: order.userEmail },
-      });
-
-      if (user) {
-        const newBalance = user.tokenBalance + order.tokens;
-
-        await db.user.update({
-          where: { id: user.id },
-          data: { tokenBalance: newBalance },
-        });
-
-        await db.ledgerEntry.create({
-          data: {
-            userId: user.id,
-            type: "Top-up",
-            delta: order.tokens,
-            balanceAfter: newBalance,
-            currency: order.currency,
-            amount: Math.round(order.amount * 100),
-          },
-        });
-
-        console.log(
-          `✅ Tokens credited: ${user.email} +${order.tokens}`
-        );
+    if (orderMerchantId) {
+      try {
+        await syncCardServOrder(orderMerchantId);
+      } catch (error) {
+        console.error('[CARDSERV_RESULT_SYNC_ERROR]', error);
       }
     }
 
-    // ✅ 5. Редірект користувача назад у frontend
-    const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(
-      orderMerchantId
-    )}`;
-
-    console.log("🔁 Redirecting to:", redirectUrl);
-    return NextResponse.redirect(redirectUrl, 302);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("❌ /api/cardserv/result POST error:", message);
+    return NextResponse.redirect(buildProcessingRedirect(appUrl, orderMerchantId), 302);
+  } catch (error) {
+    console.error('[CARDSERV_RESULT_POST_ERROR]', error);
     return NextResponse.json(
-      { ok: false, error: message },
-      { status: 500 }
+      { ok: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 },
     );
   }
 }
 
-// 🔹 fallback якщо CardServ робить GET
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const orderId =
-    searchParams.get("order") ||
-    searchParams.get("orderId") ||
-    searchParams.get("orderMerchantId");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const appUrl = getAppUrl(request);
+  const orderMerchantId =
+    searchParams.get('order') ||
+    searchParams.get('orderId') ||
+    searchParams.get('orderMerchantId');
 
-  if (!orderId) {
-    return NextResponse.redirect(`${appUrl}/payment/processing`, 302);
-  }
-
-  const redirectUrl = `${appUrl}/payment/processing?order=${encodeURIComponent(orderId)}`;
-
-  return NextResponse.redirect(redirectUrl, 302);
+  return NextResponse.redirect(buildProcessingRedirect(appUrl, orderMerchantId), 302);
 }

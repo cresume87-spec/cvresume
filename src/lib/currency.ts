@@ -1,19 +1,26 @@
-// Currency conversion system with GBP as base currency
-// 1.00 GBP = 100 tokens
+// Currency conversion system with GBP as the base currency.
+// 1.00 GBP = 100 tokens.
 
-export type Currency = 'GBP' | 'EUR' | 'USD' | 'AUD' | 'CAD' | 'NZD';
+export const SUPPORTED_CURRENCIES = ['GBP', 'EUR', 'USD', 'AUD', 'CAD', 'NZD'] as const;
 
-// Exchange rates relative to GBP (base currency)
+export type Currency = (typeof SUPPORTED_CURRENCIES)[number];
+
+export const DEFAULT_CURRENCY: Currency = 'GBP';
+
+export function isSupportedCurrency(value: string | null | undefined): value is Currency {
+  return !!value && SUPPORTED_CURRENCIES.includes(value as Currency);
+}
+
+// Exchange rates relative to GBP (base currency).
 export const EXCHANGE_RATES: Record<Currency, number> = {
-  GBP: 1.0,    // Base currency
-  EUR: 1.15,   // 1 GBP = 1.15 EUR (approximate)
-  USD: 1.27,   // 1 GBP = 1.27 USD (approximate, updated Jan 2025)
-  AUD: 1.91,   // 1 GBP = 1.91 AUD (approximate, updated Jan 2026)
-  CAD: 1.85,   // 1 GBP = 1.85 CAD (approximate, updated Jan 2026)
-  NZD: 2.27,   // 1 GBP = 2.27 NZD (approximate, updated Jan 2026)
+  GBP: 1.0,
+  EUR: 1.15,
+  USD: 1.27,
+  AUD: 1.91,
+  CAD: 1.85,
+  NZD: 2.27,
 };
 
-// Token conversion rate
 export const TOKENS_PER_GBP = 100;
 
 export interface CurrencyConversion {
@@ -23,19 +30,10 @@ export interface CurrencyConversion {
   gbpEquivalent: number;
 }
 
-/**
- * Convert any currency amount to tokens based on GBP as base currency
- * @param amount - Amount in the specified currency
- * @param currency - Source currency
- * @returns CurrencyConversion object with tokens and GBP equivalent
- */
 export function convertToTokens(amount: number, currency: Currency): CurrencyConversion {
-  // Convert to GBP first
   const gbpAmount = amount / EXCHANGE_RATES[currency];
-  
-  // Calculate tokens (1 GBP = 100 tokens)
   const tokens = Math.floor(gbpAmount * TOKENS_PER_GBP);
-  
+
   return {
     amount,
     currency,
@@ -44,101 +42,95 @@ export function convertToTokens(amount: number, currency: Currency): CurrencyCon
   };
 }
 
-/**
- * Convert tokens back to currency amount
- * @param tokens - Number of tokens
- * @param currency - Target currency
- * @returns Amount in the specified currency
- */
 export function convertTokensToCurrency(tokens: number, currency: Currency): number {
   const gbpAmount = tokens / TOKENS_PER_GBP;
   return gbpAmount * EXCHANGE_RATES[currency];
 }
 
-/**
- * Format currency amount with proper symbol and decimals
- * @param amount - Amount to format
- * @param currency - Currency code
- * @returns Formatted currency string
- */
 export function formatCurrency(amount: number, currency: Currency): string {
-  const symbols: Record<Currency, string> = {
-    GBP: '£',
-    EUR: '€',
-    USD: '$',
-    AUD: 'A$',
-    CAD: 'C$',
-    NZD: 'NZ$',
-  };
-  
-  return `${symbols[currency]}${amount.toFixed(2)}`;
+  const locale =
+    currency === 'GBP'
+      ? 'en-GB'
+      : currency === 'EUR'
+      ? 'en-IE'
+      : currency === 'USD'
+      ? 'en-US'
+      : currency === 'AUD'
+      ? 'en-AU'
+      : currency === 'CAD'
+      ? 'en-CA'
+      : 'en-NZ';
+
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
-/**
- * Get pricing plans with proper currency conversion
- */
+export function getTokenRateText(currency: Currency): string {
+  const amount = convertTokensToCurrency(TOKENS_PER_GBP, currency);
+  return `${formatCurrency(amount, currency)} = ${TOKENS_PER_GBP} tokens`;
+}
+
+export function getPlanDisplayAmount(baseGbpAmount: number, currency: Currency): number {
+  const tokens = convertToTokens(baseGbpAmount, 'GBP').tokens;
+  return convertTokensToCurrency(tokens, currency);
+}
+
 export const PRICING_PLANS = [
   {
     id: 'plan-starter',
     name: 'Starter',
-    gbpAmount: 5.00,
-    tokens: convertToTokens(5.00, 'GBP').tokens,
+    gbpAmount: 5.0,
+    tokens: convertToTokens(5.0, 'GBP').tokens,
     popular: false,
     cta: 'Request top-up',
     bullets: [
       'Top up 500 tokens (~50 documents)',
       'No subscription',
-      'Draft and preview for free',
+      'Prices include VAT',
     ],
   },
   {
     id: 'plan-pro',
     name: 'Pro',
-    gbpAmount: 15.00,
-    tokens: convertToTokens(15.00, 'GBP').tokens,
+    gbpAmount: 15.0,
+    tokens: convertToTokens(15.0, 'GBP').tokens,
     popular: true,
     cta: 'Request top-up',
     bullets: [
       'Top up 1,500 tokens (~150 documents)',
-      'Templates and branding',
-      'Collaboration tools',
-      'Read receipts',
+      'Branding options',
+      'Prices include VAT',
     ],
   },
   {
     id: 'plan-business',
     name: 'Business',
-    gbpAmount: 30.00,
-    tokens: convertToTokens(30.00, 'GBP').tokens,
+    gbpAmount: 30.0,
+    tokens: convertToTokens(30.0, 'GBP').tokens,
     popular: false,
     cta: 'Request top-up',
     bullets: [
       'Top up 3,000 tokens (~300 documents)',
-      'Team management and roles',
-      'API and webhooks',
       'Priority support',
+      'Prices include VAT',
     ],
   },
-];
+] as const;
 
-export type Plan = (typeof PRICING_PLANS)[0];
+export type Plan = (typeof PRICING_PLANS)[number];
 
-/**
- * Service costs in tokens
- */
 export const SERVICE_COSTS = {
-  CREATE_DRAFT: 10,        // Create CV/resume draft
-  EXPORT_PDF: 5,           // Export to PDF
-  EXPORT_DOCX: 5,          // Export to DOCX
-  AI_IMPROVE: 20,          // Improve with AI
-  PERSONAL_MANAGER: 80,    // Send to personal manager
+  CREATE_DRAFT: 100,
+  EXPORT_PDF: 50,
+  EXPORT_DOCX: 50,
+  AI_IMPROVE: 200,
+  PERSONAL_MANAGER: 800,
 } as const;
 
-/**
- * Calculate total cost for a service combination
- * @param services - Array of service keys
- * @returns Total tokens required
- */
 export function calculateServiceCost(services: (keyof typeof SERVICE_COSTS)[]): number {
   return services.reduce((total, service) => total + SERVICE_COSTS[service], 0);
 }

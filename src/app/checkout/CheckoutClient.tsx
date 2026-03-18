@@ -6,6 +6,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { ALLOWED_COUNTRIES } from "@/lib/countries";
 
 export default function CheckoutClient() {
   const router = useRouter();
@@ -53,6 +54,7 @@ export default function CheckoutClient() {
     address: Yup.string().required("Required"),
     city: Yup.string().required("Required"),
     postalCode: Yup.string().required("Required"),
+    countryCode: Yup.string().required("Required"),
   });
 
   // 🔢 Форматування
@@ -119,7 +121,11 @@ export default function CheckoutClient() {
     try {
       setLoading(true);
       setPaymentError(null);
-      const payload = { ...checkout, card: values };
+      const payload = {
+        ...checkout,
+        countryCode: values.countryCode,
+        card: values,
+      };
 
       const res = await fetch("/api/cardserv/sale", {
         method: "POST",
@@ -233,6 +239,7 @@ export default function CheckoutClient() {
               address: "",
               city: "",
               postalCode: "",
+              countryCode: "",
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
@@ -303,6 +310,22 @@ export default function CheckoutClient() {
                     placeholder="E1 6AN"
                     className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 transition"
                   />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Country</label>
+                  <Field
+                    as="select"
+                    name="countryCode"
+                    className="border border-gray-300 p-3 mt-1 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 transition"
+                  >
+                    <option value="">Select country</option>
+                    {ALLOWED_COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="countryCode" component="div" className="text-red-500 text-xs mt-1" />
                 </div>
 
                 <Button
