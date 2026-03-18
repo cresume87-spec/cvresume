@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { sendRegistrationConfirmationEmail } from '@/lib/registrationEmail';
 import { normalizeSignupProfile, signupProfileSchema } from '@/lib/signupProfile';
 
 export async function POST(request: Request) {
@@ -47,10 +48,23 @@ export async function POST(request: Request) {
       select: {
         id: true,
         email: true,
+        name: true,
       },
     });
 
-    return NextResponse.json({ user: newUser });
+    void sendRegistrationConfirmationEmail({
+      email: input.email,
+      name: newUser.name,
+    }).catch((error) => {
+      console.error('[REGISTER_CONFIRMATION_EMAIL_ERROR]', error);
+    });
+
+    return NextResponse.json({
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+      },
+    });
   } catch (error) {
     console.error('[REGISTER_ERROR]', error);
     return NextResponse.json(
