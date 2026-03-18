@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { getCardServStatus } from '@/lib/cardserv';
 import type { CardServCurrency } from '@/lib/config';
+import { sendOrderConfirmationEmail } from '@/lib/orderConfirmationEmail';
+import { buildOrderInvoiceNumber } from '@/lib/orderInvoice';
 
 type PaymentSyncResult =
   | {
@@ -23,6 +25,33 @@ type PaymentSyncResult =
       status: number;
       error: string;
     };
+
+function getRecipientName(
+  user:
+    | {
+        firstName: string | null;
+        lastName: string | null;
+        name: string | null;
+      }
+    | null,
+  email: string,
+) {
+  const fullName = [user?.firstName?.trim(), user?.lastName?.trim()]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  if (fullName) {
+    return fullName;
+  }
+
+  if (user?.name?.trim()) {
+    return user.name.trim();
+  }
+
+  const localPart = email.split('@')[0]?.trim();
+  return localPart || 'there';
+}
 
 export async function syncCardServOrder(orderMerchantId: string): Promise<PaymentSyncResult> {
   const order = await db.order.findFirst({
@@ -91,9 +120,13 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         userEmail: true,
         amount: true,
         currency: true,
+        description: true,
         tokens: true,
         orderSystemId: true,
+        invoiceNumber: true,
+        confirmationEmailSentAt: true,
         creditedAt: true,
+        createdAt: true,
       },
     });
 
@@ -119,9 +152,21 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         : null;
 
       return {
+        orderId: currentOrder.id,
         credited: false,
         alreadyCredited: true,
         tokenBalance: existingUser?.tokenBalance,
+        userEmail: currentOrder.userEmail,
+        description: currentOrder.description,
+        amount: currentOrder.amount,
+        currency: currentOrder.currency,
+        tokens: currentOrder.tokens,
+        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        invoiceNumber: currentOrder.invoiceNumber,
+        confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
+        createdAt: currentOrder.createdAt,
+        paidAt: currentOrder.creditedAt,
+        recipientName: null,
       };
     }
 
@@ -136,12 +181,26 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
       });
 
       return {
+        orderId: currentOrder.id,
         credited: false,
         alreadyCredited: false,
         tokenBalance: undefined,
+        userEmail: currentOrder.userEmail,
+        description: currentOrder.description,
+        amount: currentOrder.amount,
+        currency: currentOrder.currency,
+        tokens: currentOrder.tokens,
+        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        invoiceNumber: currentOrder.invoiceNumber,
+        confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
+        createdAt: currentOrder.createdAt,
+        paidAt: null,
+        recipientName: null,
       };
     }
 
+    const invoiceNumber =
+      currentOrder.invoiceNumber ?? buildOrderInvoiceNumber(currentOrder.id, currentOrder.createdAt);
     const claimedAt = new Date();
     const claim = await tx.order.updateMany({
       where: { id: currentOrder.id, creditedAt: null },
@@ -150,6 +209,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
         response: mergedResponse,
         creditedAt: claimedAt,
+        invoiceNumber,
       },
     });
 
@@ -160,15 +220,27 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
       });
 
       return {
+        orderId: currentOrder.id,
         credited: false,
         alreadyCredited: true,
         tokenBalance: existingUser?.tokenBalance,
+        userEmail: currentOrder.userEmail,
+        description: currentOrder.description,
+        amount: currentOrder.amount,
+        currency: currentOrder.currency,
+        tokens: currentOrder.tokens,
+        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        invoiceNumber,
+        confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
+        createdAt: currentOrder.createdAt,
+        paidAt: currentOrder.creditedAt,
+        recipientName: null,
       };
     }
 
     const user = await tx.user.findUnique({
       where: { email: currentOrder.userEmail },
-      select: { id: true, tokenBalance: true },
+      select: { id: true, tokenBalance: true, name: true, firstName: true, lastName: true },
     });
 
     if (!user) {
@@ -191,21 +263,72 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         currency: currentOrder.currency,
         amount: Math.round(currentOrder.amount * 100),
         receiptUrl: `order:${orderMerchantId}`,
+        invoiceNumber,
       },
     });
 
     return {
+      orderId: currentOrder.id,
       credited: true,
       alreadyCredited: false,
       tokenBalance: newBalance,
+      userEmail: currentOrder.userEmail,
+      description: currentOrder.description,
+      amount: currentOrder.amount,
+      currency: currentOrder.currency,
+      tokens: currentOrder.tokens,
+      orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+      invoiceNumber,
+      confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
+      createdAt: currentOrder.createdAt,
+      paidAt: claimedAt,
+      recipientName: getRecipientName(user, currentOrder.userEmail),
     };
   });
+
+  if (
+    approved.credited &&
+    approved.userEmail &&
+    approved.tokens &&
+    approved.invoiceNumber &&
+    approved.paidAt &&
+    !approved.confirmationEmailSentAt
+  ) {
+    try {
+      await sendOrderConfirmationEmail({
+        recipientName: approved.recipientName || approved.userEmail,
+        invoiceNumber: approved.invoiceNumber,
+        issueDate: approved.createdAt,
+        paidDate: approved.paidAt,
+        customerName: approved.recipientName || approved.userEmail,
+        customerEmail: approved.userEmail,
+        orderMerchantId,
+        orderSystemId: approved.orderSystemId ?? null,
+        description:
+          approved.description?.trim() || `CareerZen token top-up (${approved.tokens} tokens)`,
+        tokens: approved.tokens,
+        amount: approved.amount,
+        currency: approved.currency,
+      });
+
+      await db.order.update({
+        where: { id: approved.orderId },
+        data: { confirmationEmailSentAt: new Date() },
+      });
+    } catch (error) {
+      console.error('[ORDER_CONFIRMATION_EMAIL_ERROR]', {
+        orderMerchantId,
+        invoiceNumber: approved.invoiceNumber,
+      });
+      console.error(error);
+    }
+  }
 
   return {
     ok: true,
     state: 'APPROVED',
     orderMerchantId,
-    orderSystemId: status.orderSystemId ?? order.orderSystemId ?? null,
+    orderSystemId: approved.orderSystemId ?? status.orderSystemId ?? order.orderSystemId ?? null,
     redirectUrl: status.redirectUrl,
     threeDSAuth: status.threeDSAuth as Record<string, unknown> | null,
     raw: status.raw,

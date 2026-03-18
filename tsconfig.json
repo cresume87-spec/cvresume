@@ -38,6 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "registration_confirmation_sample.tsx"
+    "registration_confirmation_sample.tsx",
+    "InvoicePdf.tsx"
   ]
 }

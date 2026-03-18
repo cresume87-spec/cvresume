@@ -146,9 +146,11 @@ model Order {
   tokens          Int?
   orderMerchantId String?  @unique
   orderSystemId   String?
+  invoiceNumber   String?  @unique
   status          String   @default("PROCESSING")
   response        Json?
   creditedAt      DateTime?
+  confirmationEmailSentAt DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

@@ -1,0 +1,16 @@
+
+> invoicegen@0.1.0 build
+> node scripts/prisma-deploy.js && next build
+
+[prisma-deploy] Running prisma migrate deploy...
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-round-moon-abww1cek-pooler.eu-west-2.aws.neon.tech"
+
+16 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+   ▲ Next.js 15.0.7
+   - Environments: .env.local, .env
+
