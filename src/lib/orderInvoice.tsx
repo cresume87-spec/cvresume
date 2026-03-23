@@ -1,7 +1,6 @@
-import React from 'react';
 import { renderToBuffer, Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { Currency } from '@prisma/client';
-import { getInvoiceSellerDetails, type InvoiceSellerDetails } from '@/lib/invoiceSeller';
+import { getInvoiceSellerDetails } from '@/lib/invoiceSeller';
 
 export type OrderInvoiceData = {
   invoiceNumber: string;
@@ -171,21 +170,7 @@ export function buildOrderInvoiceNumber(orderId: string, createdAt: Date) {
   return `CZ-${datePart}-${orderId.slice(-8).toUpperCase()}`;
 }
 
-function InvoiceSellerBlock({ seller }: { seller: InvoiceSellerDetails }) {
-  return (
-    <View style={styles.rightColumn}>
-      <Text style={[styles.text, styles.strong]}>{seller.legalName}</Text>
-      <Text style={styles.text}>Trading name: {seller.tradingName}</Text>
-      <Text style={styles.text}>Company No: {seller.companyNumber}</Text>
-      {seller.vatNumber ? <Text style={styles.text}>VAT No: {seller.vatNumber}</Text> : null}
-      <Text style={styles.text}>{seller.address}</Text>
-      {seller.phone ? <Text style={styles.text}>{seller.phone}</Text> : null}
-      <Text style={styles.text}>{seller.billingEmail}</Text>
-    </View>
-  );
-}
-
-function OrderInvoiceDocument(data: OrderInvoiceData) {
+function buildOrderInvoiceDocument(data: OrderInvoiceData) {
   const seller = getInvoiceSellerDetails();
   const lineDescription = buildDescription(data);
 
@@ -202,7 +187,15 @@ function OrderInvoiceDocument(data: OrderInvoiceData) {
             <Text style={styles.subtitle}>Status: Paid</Text>
           </View>
 
-          <InvoiceSellerBlock seller={seller} />
+          <View style={styles.rightColumn}>
+            <Text style={[styles.text, styles.strong]}>{seller.legalName}</Text>
+            <Text style={styles.text}>Trading name: {seller.tradingName}</Text>
+            <Text style={styles.text}>Company No: {seller.companyNumber}</Text>
+            {seller.vatNumber ? <Text style={styles.text}>VAT No: {seller.vatNumber}</Text> : null}
+            <Text style={styles.text}>{seller.address}</Text>
+            {seller.phone ? <Text style={styles.text}>{seller.phone}</Text> : null}
+            <Text style={styles.text}>{seller.billingEmail}</Text>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -259,5 +252,5 @@ function OrderInvoiceDocument(data: OrderInvoiceData) {
 }
 
 export async function renderOrderInvoicePdfBuffer(data: OrderInvoiceData) {
-  return renderToBuffer(<OrderInvoiceDocument {...data} />);
+  return renderToBuffer(buildOrderInvoiceDocument(data));
 }
