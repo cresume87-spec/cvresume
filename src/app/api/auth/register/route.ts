@@ -59,6 +59,7 @@ export async function POST(request: Request) {
         email: input.email,
         name: newUser.name,
       });
+      console.log('[REGISTER_CONFIRMATION_EMAIL_SENT]', { email: input.email, userId: newUser.id });
     } catch (error) {
       console.error('[REGISTER_CONFIRMATION_EMAIL_ERROR]', error);
     }

@@ -34,6 +34,7 @@ export default function PlanCard({
                                    currency = "GBP",
                                    vatRatePercent = 0,
                                    tokens,
+                                   onAction,
                                  }: PlanCardProps) {
   const reduceMotion = useReducedMotion();
   const router = useRouter();
@@ -69,6 +70,11 @@ export default function PlanCard({
 
   // --- Redirect on click
   const handleTopUp = () => {
+    if (onAction) {
+      onAction();
+      return;
+    }
+
     if (status !== "authenticated") {
       toast.info("Please log in to continue");
       router.push("/auth/signin?mode=login");

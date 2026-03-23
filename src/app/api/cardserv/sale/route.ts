@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createCardServOrder } from '@/lib/cardserv';
 import { isAllowedCountryCode } from '@/lib/countries';
+import { finalizeApprovedOrder } from '@/lib/payment';
+import { buildBypassedPaymentResponse, isWithoutPaymentEnabled } from '@/lib/paymentMode';
 import { pickRedirectUrl } from '@/lib/pickRedirectUrl';
 
 export async function POST(request: Request) {
@@ -27,6 +29,59 @@ export async function POST(request: Request) {
         { ok: false, error: 'Unsupported billing country' },
         { status: 400 },
       );
+    }
+
+    if (isWithoutPaymentEnabled()) {
+      const approvedAt = new Date().toISOString();
+      const bypassResponse = buildBypassedPaymentResponse({
+        reason: 'WITHOUT_PAYMENT enabled',
+        approvedAt,
+        orderMerchantId,
+      });
+
+      const createdOrder = await db.order.create({
+        data: {
+          userEmail: body.email,
+          amount: chargedAmount,
+          currency: body.currency,
+          description: body.description,
+          tokens: body.tokens ?? 0,
+          orderMerchantId,
+          status: 'APPROVED',
+          response: bypassResponse,
+        },
+        select: { id: true },
+      });
+
+      const finalized = await finalizeApprovedOrder({
+        orderId: createdOrder.id,
+        orderMerchantId,
+        orderSystemId: null,
+        mergedResponse: bypassResponse,
+      });
+
+      console.log('[CARDSERV_SALE_BYPASSED]', {
+        orderMerchantId,
+        credited: finalized.credited,
+        email: body.email,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        orderMerchantId,
+        orderSystemId: null,
+        state: 'APPROVED',
+        redirectUrl: null,
+        threeDSAuth: null,
+        raw: bypassResponse,
+        errorCode: null,
+        errorMessage: null,
+        transientNotFound: false,
+        credited: finalized.credited,
+        alreadyCredited: finalized.alreadyCredited,
+        tokenBalance: finalized.tokenBalance,
+        bypassedGateway: true,
+      });
     }
 
     const sale = await createCardServOrder({

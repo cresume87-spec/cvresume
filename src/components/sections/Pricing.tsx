@@ -66,7 +66,7 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          <CustomPlanCard currency={currency} onRequest={handleTopUpRequest} />
+          <CustomPlanCard currency={currency} onRequest={(_amount) => handleTopUpRequest()} />
         </motion.div>
       </div>
 

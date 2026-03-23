@@ -1,28 +1,38 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCardServStatus } from "@/lib/cardserv";
+import { isBypassedGatewayResponse } from "@/lib/paymentMode";
 import { pickRedirectUrl } from "@/lib/pickRedirectUrl";
 
 export async function POST(req: Request) {
   try {
     const { orderMerchantId } = await req.json();
 
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("🔁 [STATUS CHECK START]", orderMerchantId);
+    console.log("[STATUS CHECK START]", orderMerchantId);
 
     const order = await db.order.findFirst({ where: { orderMerchantId } });
     if (!order) {
-      console.log("❌ [STATUS] ORDER NOT FOUND");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("[STATUS] ORDER NOT FOUND");
       return NextResponse.json({ ok: false }, { status: 404 });
     }
 
-    console.log("📦 [STATUS] Order found:", {
-      id: order.id,
-      currency: order.currency,
-      amount: order.amount,
-      currentStatus: order.status,
-    });
+    if (isBypassedGatewayResponse(order.response)) {
+      const response = {
+        ok: true,
+        orderMerchantId,
+        orderSystemId: order.orderSystemId ?? null,
+        state: "APPROVED",
+        redirectUrl: null,
+        threeDSAuth: null,
+        raw: order.response,
+        errorCode: null,
+        errorMessage: null,
+        transientNotFound: false,
+      };
+
+      console.log("[STATUS] Returning bypassed payment state", response);
+      return NextResponse.json(response);
+    }
 
     const status = await getCardServStatus(
       orderMerchantId,
@@ -30,19 +40,7 @@ export async function POST(req: Request) {
       order.orderSystemId,
     );
 
-    console.log("🔵 [STATUS RESPONSE]");
-    console.log("📊 Status state:", status.orderState);
-    console.log("📄 Raw status data:", JSON.stringify(status.raw, null, 2));
-    console.log("🔐 3DS Auth:", JSON.stringify(status.threeDSAuth, null, 2));
-
     const redirectUrl = status.redirectUrl || pickRedirectUrl(status.raw);
-
-    console.log("🔗 [REDIRECT URL]:", redirectUrl);
-    console.log("All redirect fields:", {
-      outputRedirectToUrl: status.raw?.outputRedirectToUrl,
-      redirectData: status.raw?.redirectData,
-      redirectUrl: status.raw?.redirectUrl,
-    });
 
     const existingResponse =
       order.response && typeof order.response === "object"
@@ -60,8 +58,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("💾 [DB] Order updated");
-
     const response = {
       ok: true,
       orderMerchantId,
@@ -76,21 +72,14 @@ export async function POST(req: Request) {
         status.orderState === "UNKNOWN" && Number(status.raw?.errorCode) === -27,
     };
 
-    console.log("📤 [RESPONSE TO FRONTEND]");
-    console.log(JSON.stringify(response, null, 2));
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
+    console.log("[STATUS RESPONSE]", response);
     return NextResponse.json(response);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Unknown error";
-    const stack = e instanceof Error ? e.stack : undefined;
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.error("❌ [STATUS ERROR]:", message);
-    if (stack) console.error("Stack:", stack);
-    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[STATUS ERROR]", message);
     return NextResponse.json(
       { ok: false, error: message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

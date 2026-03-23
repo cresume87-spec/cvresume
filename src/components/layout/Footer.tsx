@@ -148,6 +148,13 @@ export default function Footer() {
                 height={24}
                 className="h-6 w-auto"
               />
+              <Image
+                src="/pci-dss-logo.svg"
+                alt="PCI DSS"
+                width={72}
+                height={24}
+                className="h-6 w-auto"
+              />
             </div>
           </div>
         </div>

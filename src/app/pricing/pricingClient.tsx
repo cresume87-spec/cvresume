@@ -3,11 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Section from "@/components/layout/Section";
-import { Currency } from "@/lib/currency";
-import {
-  convertToTokens,
-  convertTokensToCurrency,
-} from "@/lib/currency";
+import { convertToTokens, convertTokensToCurrency } from "@/lib/currency";
 import { usePreferredCurrency } from "@/lib/currencyPreference";
 import { PRICING_PLANS } from "@/lib/data";
 import PlanCard from "@/components/pricing/PlanCard";
@@ -15,11 +11,16 @@ import CustomPlanCard from "@/components/pricing/CustomPlanCard";
 
 type PricingPlanSelection = {
   name: string;
-  price: string;
+  gbpAmount: number;
 };
 
+function parsePlanAmount(price: string) {
+  const amount = parseFloat(price.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
 export default function PricingClient() {
-  const [currency, setCurrency] = usePreferredCurrency();
+  const [currency] = usePreferredCurrency();
   const { status, data: session } = useSession();
   const router = useRouter();
   const signedIn = status === "authenticated";
@@ -30,14 +31,13 @@ export default function PricingClient() {
       return;
     }
 
-    const gbpAmount = parseFloat(plan.price.replace(/[£,]/g, ""));
-    const tokens = convertToTokens(gbpAmount, "GBP").tokens;
+    const tokens = convertToTokens(plan.gbpAmount, "GBP").tokens;
     const convertedAmount = convertTokensToCurrency(tokens, currency);
 
-    // For AUD/CAD/NZD: convert to GBP for checkout (CardServ doesn't support them)
+    // AUD/CAD/NZD are display-only currencies. CardServ checkout still uses GBP.
     const displayOnlyCurrency = currency === "AUD" || currency === "CAD" || currency === "NZD";
     const checkoutCurrency = displayOnlyCurrency ? "GBP" : currency;
-    const checkoutAmount = displayOnlyCurrency ? gbpAmount : convertedAmount;
+    const checkoutAmount = displayOnlyCurrency ? plan.gbpAmount : convertedAmount;
 
     const checkoutData = {
       email: session?.user?.email || "",
@@ -65,39 +65,36 @@ export default function PricingClient() {
           <p className="mt-2 text-slate-600">
             Choose a plan and proceed to secure checkout.
           </p>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
-            >
-              <option value="GBP">GBP (£)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="USD">USD ($)</option>
-              <option value="AUD">AUD (A$)</option>
-              <option value="CAD">CAD (C$)</option>
-              <option value="NZD">NZD (NZ$)</option>
-            </select>
-          </div>
         </div>
 
         <div className="mt-10 grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {PRICING_PLANS.map((plan) => (
-            <PlanCard
-              key={plan.name}
-              name={plan.name}
-              popular={plan.popular}
-              bullets={plan.points}
-              cta="Choose Plan"
-              amount={parseFloat(plan.price.replace(/[£,]/g, ""))}
-              currency={currency}
-              onAction={() => handlePlanRequest(plan)}
-            />
-          ))}
+          {PRICING_PLANS.map((plan) => {
+            const gbpAmount = parsePlanAmount(plan.price);
+            const tokens = convertToTokens(gbpAmount, "GBP").tokens;
+            const displayAmount = convertTokensToCurrency(tokens, currency);
+
+            return (
+              <PlanCard
+                key={plan.name}
+                name={plan.name}
+                popular={plan.popular}
+                bullets={plan.points}
+                cta="Choose Plan"
+                amount={displayAmount}
+                currency={currency}
+                tokens={tokens}
+                onAction={() => handlePlanRequest({ name: plan.name, gbpAmount })}
+              />
+            );
+          })}
           <CustomPlanCard
             currency={currency}
-            onRequest={() => handlePlanRequest({ name: "Custom", price: "£5" })}
+            onRequest={(customAmount) =>
+              handlePlanRequest({
+                name: "Custom",
+                gbpAmount: convertToTokens(customAmount, currency).gbpEquivalent,
+              })
+            }
           />
         </div>
       </Section>

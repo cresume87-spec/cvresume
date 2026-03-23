@@ -1,8 +1,10 @@
 import { db } from '@/lib/db';
 import { getCardServStatus } from '@/lib/cardserv';
 import type { CardServCurrency } from '@/lib/config';
+import type { Prisma } from '@prisma/client';
 import { sendOrderConfirmationEmail } from '@/lib/orderConfirmationEmail';
 import { buildOrderInvoiceNumber } from '@/lib/orderInvoice';
+import { isBypassedGatewayResponse } from '@/lib/paymentMode';
 
 type PaymentSyncResult =
   | {
@@ -53,68 +55,84 @@ function getRecipientName(
   return localPart || 'there';
 }
 
-export async function syncCardServOrder(orderMerchantId: string): Promise<PaymentSyncResult> {
-  const order = await db.order.findFirst({
-    where: { orderMerchantId },
-    select: {
-      id: true,
-      userEmail: true,
-      amount: true,
-      currency: true,
-      tokens: true,
-      orderMerchantId: true,
-      orderSystemId: true,
-      status: true,
-      response: true,
-      creditedAt: true,
-    },
-  });
+type ApprovedFinalizeInput = {
+  orderId: string;
+  orderMerchantId: string;
+  orderSystemId?: string | null;
+  mergedResponse: Prisma.InputJsonValue;
+};
 
-  if (!order) {
-    return { ok: false, status: 404, error: 'Order not found' };
+async function sendApprovedOrderEmailIfNeeded(approved: {
+  orderId: string;
+  credited: boolean;
+  userEmail: string | null;
+  tokens: number | null;
+  invoiceNumber: string | null;
+  paidAt: Date | null;
+  confirmationEmailSentAt: Date | null;
+  recipientName: string | null;
+  createdAt: Date;
+  description: string | null;
+  amount: number;
+  currency: 'GBP' | 'EUR' | 'USD';
+  orderSystemId: string | null;
+}, orderMerchantId: string) {
+  if (
+    !approved.credited ||
+    !approved.userEmail ||
+    !approved.tokens ||
+    !approved.invoiceNumber ||
+    !approved.paidAt ||
+    approved.confirmationEmailSentAt
+  ) {
+    return;
   }
 
-  const status = await getCardServStatus(
-    orderMerchantId,
-    order.currency as CardServCurrency,
-    order.orderSystemId,
-  );
-
-  const mergedResponse =
-    order.response && typeof order.response === 'object'
-      ? { ...(order.response as Record<string, unknown>), latestStatus: status.raw }
-      : { latestStatus: status.raw };
-
-  if (status.orderState !== 'APPROVED') {
-    await db.order.update({
-      where: { id: order.id },
-      data: {
-        status: status.orderState,
-        orderSystemId: status.orderSystemId ?? order.orderSystemId,
-        response: mergedResponse,
-      },
+  try {
+    await sendOrderConfirmationEmail({
+      recipientName: approved.recipientName || approved.userEmail,
+      invoiceNumber: approved.invoiceNumber,
+      issueDate: approved.createdAt,
+      paidDate: approved.paidAt,
+      customerName: approved.recipientName || approved.userEmail,
+      customerEmail: approved.userEmail,
+      orderMerchantId,
+      orderSystemId: approved.orderSystemId ?? null,
+      description:
+        approved.description?.trim() || `CareerZen token top-up (${approved.tokens} tokens)`,
+      tokens: approved.tokens,
+      amount: approved.amount,
+      currency: approved.currency,
     });
 
-    return {
-      ok: true,
-      state: status.orderState,
-      orderMerchantId,
-      orderSystemId: status.orderSystemId ?? order.orderSystemId ?? null,
-      redirectUrl: status.redirectUrl,
-      threeDSAuth: status.threeDSAuth as Record<string, unknown> | null,
-      raw: status.raw,
-      errorCode: status.errorCode ?? null,
-      errorMessage: status.errorMessage ?? null,
-      transientNotFound:
-        status.orderState === 'UNKNOWN' && Number((status.raw as { errorCode?: unknown } | null)?.errorCode) === -27,
-      credited: false,
-      alreadyCredited: Boolean(order.creditedAt),
-    };
-  }
+    await db.order.update({
+      where: { id: approved.orderId },
+      data: { confirmationEmailSentAt: new Date() },
+    });
 
+    console.log('[ORDER_CONFIRMATION_EMAIL_SENT]', {
+      orderMerchantId,
+      invoiceNumber: approved.invoiceNumber,
+      recipient: approved.userEmail,
+    });
+  } catch (error) {
+    console.error('[ORDER_CONFIRMATION_EMAIL_ERROR]', {
+      orderMerchantId,
+      invoiceNumber: approved.invoiceNumber,
+    });
+    console.error(error);
+  }
+}
+
+export async function finalizeApprovedOrder({
+  orderId,
+  orderMerchantId,
+  orderSystemId,
+  mergedResponse,
+}: ApprovedFinalizeInput) {
   const approved = await db.$transaction(async (tx) => {
     const currentOrder = await tx.order.findUnique({
-      where: { id: order.id },
+      where: { id: orderId },
       select: {
         id: true,
         userEmail: true,
@@ -139,7 +157,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         where: { id: currentOrder.id },
         data: {
           status: 'APPROVED',
-          orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+          orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
           response: mergedResponse,
         },
       });
@@ -161,7 +179,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         amount: currentOrder.amount,
         currency: currentOrder.currency,
         tokens: currentOrder.tokens,
-        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
         invoiceNumber: currentOrder.invoiceNumber,
         confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
         createdAt: currentOrder.createdAt,
@@ -175,7 +193,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         where: { id: currentOrder.id },
         data: {
           status: 'APPROVED',
-          orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+          orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
           response: mergedResponse,
         },
       });
@@ -190,7 +208,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         amount: currentOrder.amount,
         currency: currentOrder.currency,
         tokens: currentOrder.tokens,
-        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
         invoiceNumber: currentOrder.invoiceNumber,
         confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
         createdAt: currentOrder.createdAt,
@@ -206,7 +224,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
       where: { id: currentOrder.id, creditedAt: null },
       data: {
         status: 'APPROVED',
-        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
         response: mergedResponse,
         creditedAt: claimedAt,
         invoiceNumber,
@@ -229,7 +247,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
         amount: currentOrder.amount,
         currency: currentOrder.currency,
         tokens: currentOrder.tokens,
-        orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+        orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
         invoiceNumber,
         confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
         createdAt: currentOrder.createdAt,
@@ -277,7 +295,7 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
       amount: currentOrder.amount,
       currency: currentOrder.currency,
       tokens: currentOrder.tokens,
-      orderSystemId: status.orderSystemId ?? currentOrder.orderSystemId,
+      orderSystemId: orderSystemId ?? currentOrder.orderSystemId,
       invoiceNumber,
       confirmationEmailSentAt: currentOrder.confirmationEmailSentAt,
       createdAt: currentOrder.createdAt,
@@ -286,43 +304,100 @@ export async function syncCardServOrder(orderMerchantId: string): Promise<Paymen
     };
   });
 
-  if (
-    approved.credited &&
-    approved.userEmail &&
-    approved.tokens &&
-    approved.invoiceNumber &&
-    approved.paidAt &&
-    !approved.confirmationEmailSentAt
-  ) {
-    try {
-      await sendOrderConfirmationEmail({
-        recipientName: approved.recipientName || approved.userEmail,
-        invoiceNumber: approved.invoiceNumber,
-        issueDate: approved.createdAt,
-        paidDate: approved.paidAt,
-        customerName: approved.recipientName || approved.userEmail,
-        customerEmail: approved.userEmail,
-        orderMerchantId,
-        orderSystemId: approved.orderSystemId ?? null,
-        description:
-          approved.description?.trim() || `CareerZen token top-up (${approved.tokens} tokens)`,
-        tokens: approved.tokens,
-        amount: approved.amount,
-        currency: approved.currency,
-      });
+  await sendApprovedOrderEmailIfNeeded(approved, orderMerchantId);
+  return approved;
+}
 
-      await db.order.update({
-        where: { id: approved.orderId },
-        data: { confirmationEmailSentAt: new Date() },
-      });
-    } catch (error) {
-      console.error('[ORDER_CONFIRMATION_EMAIL_ERROR]', {
-        orderMerchantId,
-        invoiceNumber: approved.invoiceNumber,
-      });
-      console.error(error);
-    }
+export async function syncCardServOrder(orderMerchantId: string): Promise<PaymentSyncResult> {
+  const order = await db.order.findFirst({
+    where: { orderMerchantId },
+    select: {
+      id: true,
+      userEmail: true,
+      amount: true,
+      currency: true,
+      tokens: true,
+      orderMerchantId: true,
+      orderSystemId: true,
+      status: true,
+      response: true,
+      creditedAt: true,
+    },
+  });
+
+  if (!order) {
+    return { ok: false, status: 404, error: 'Order not found' };
   }
+
+  if (isBypassedGatewayResponse(order.response)) {
+    const approved = await finalizeApprovedOrder({
+      orderId: order.id,
+      orderMerchantId,
+      orderSystemId: order.orderSystemId,
+      mergedResponse: (order.response ?? {}) as Prisma.InputJsonValue,
+    });
+
+    return {
+      ok: true,
+      state: 'APPROVED',
+      orderMerchantId,
+      orderSystemId: approved.orderSystemId ?? order.orderSystemId ?? null,
+      redirectUrl: null,
+      threeDSAuth: null,
+      raw: order.response,
+      errorCode: null,
+      errorMessage: null,
+      transientNotFound: false,
+      credited: approved.credited,
+      alreadyCredited: approved.alreadyCredited,
+      tokenBalance: approved.tokenBalance,
+    };
+  }
+
+  const status = await getCardServStatus(
+    orderMerchantId,
+    order.currency as CardServCurrency,
+    order.orderSystemId,
+  );
+
+  const mergedResponse =
+    order.response && typeof order.response === 'object'
+      ? { ...(order.response as Record<string, unknown>), latestStatus: status.raw }
+      : { latestStatus: status.raw };
+
+  if (status.orderState !== 'APPROVED') {
+    await db.order.update({
+      where: { id: order.id },
+      data: {
+        status: status.orderState,
+        orderSystemId: status.orderSystemId ?? order.orderSystemId,
+        response: mergedResponse,
+      },
+    });
+
+    return {
+      ok: true,
+      state: status.orderState,
+      orderMerchantId,
+      orderSystemId: status.orderSystemId ?? order.orderSystemId ?? null,
+      redirectUrl: status.redirectUrl,
+      threeDSAuth: status.threeDSAuth as Record<string, unknown> | null,
+      raw: status.raw,
+      errorCode: status.errorCode ?? null,
+      errorMessage: status.errorMessage ?? null,
+      transientNotFound:
+        status.orderState === 'UNKNOWN' && Number((status.raw as { errorCode?: unknown } | null)?.errorCode) === -27,
+      credited: false,
+      alreadyCredited: Boolean(order.creditedAt),
+    };
+  }
+
+  const approved = await finalizeApprovedOrder({
+    orderId: order.id,
+    orderMerchantId,
+    orderSystemId: status.orderSystemId ?? order.orderSystemId,
+    mergedResponse: mergedResponse as Prisma.InputJsonValue,
+  });
 
   return {
     ok: true,
