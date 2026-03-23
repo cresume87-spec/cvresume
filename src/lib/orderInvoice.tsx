@@ -1,3 +1,4 @@
+import React from 'react';
 import { renderToBuffer, Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { Currency } from '@prisma/client';
 import { getInvoiceSellerDetails } from '@/lib/invoiceSeller';
@@ -173,81 +174,104 @@ export function buildOrderInvoiceNumber(orderId: string, createdAt: Date) {
 function buildOrderInvoiceDocument(data: OrderInvoiceData) {
   const seller = getInvoiceSellerDetails();
   const lineDescription = buildDescription(data);
+  const e = React.createElement;
 
-  return (
-    <Document title={`Invoice ${data.invoiceNumber}`}>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.row}>
-          <View style={styles.leftColumn}>
-            <Text style={styles.title}>Invoice</Text>
-            <Text style={styles.subtitle}>{seller.tradingName}</Text>
-            <Text style={styles.subtitle}>Invoice No: {data.invoiceNumber}</Text>
-            <Text style={styles.subtitle}>Issue date: {formatDate(data.issueDate)}</Text>
-            <Text style={styles.subtitle}>Paid date: {formatDate(data.paidDate)}</Text>
-            <Text style={styles.subtitle}>Status: Paid</Text>
-          </View>
-
-          <View style={styles.rightColumn}>
-            <Text style={[styles.text, styles.strong]}>{seller.legalName}</Text>
-            <Text style={styles.text}>Trading name: {seller.tradingName}</Text>
-            <Text style={styles.text}>Company No: {seller.companyNumber}</Text>
-            {seller.vatNumber ? <Text style={styles.text}>VAT No: {seller.vatNumber}</Text> : null}
-            <Text style={styles.text}>{seller.address}</Text>
-            {seller.phone ? <Text style={styles.text}>{seller.phone}</Text> : null}
-            <Text style={styles.text}>{seller.billingEmail}</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bill To</Text>
-          <Text style={[styles.text, styles.strong]}>{data.customerName}</Text>
-          <Text style={styles.text}>{data.customerEmail}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Reference</Text>
-          <Text style={styles.text}>Merchant reference: {data.orderMerchantId}</Text>
-          {data.orderSystemId ? (
-            <Text style={styles.text}>Gateway reference: {data.orderSystemId}</Text>
-          ) : null}
-        </View>
-
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.cell, styles.cellWide, styles.strong]}>Description</Text>
-            <Text style={[styles.cell, styles.cellMedium, styles.strong]}>Qty</Text>
-            <Text style={[styles.cell, styles.cellNarrow, styles.strong]}>Unit</Text>
-            <Text style={[styles.cell, styles.cellNarrow, styles.strong]}>Total</Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text style={[styles.cell, styles.cellWide]}>{lineDescription}</Text>
-            <Text style={[styles.cell, styles.cellMedium]}>1</Text>
-            <Text style={[styles.cell, styles.cellNarrow]}>{formatMoney(data.amount, data.currency)}</Text>
-            <Text style={[styles.cell, styles.cellNarrow]}>{formatMoney(data.amount, data.currency)}</Text>
-          </View>
-        </View>
-
-        <View style={styles.totalBox}>
-          <View style={styles.totalRow}>
-            <Text>Subtotal</Text>
-            <Text>{formatMoney(data.amount, data.currency)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text>VAT included</Text>
-            <Text>Included in total</Text>
-          </View>
-          <View style={[styles.totalRow, styles.totalFinal]}>
-            <Text>Total paid</Text>
-            <Text>{formatMoney(data.amount, data.currency)}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.footer}>
-          Thank you for your purchase. This invoice confirms successful payment for your CareerZen order.
-          All displayed prices are VAT-inclusive where applicable.
-        </Text>
-      </Page>
-    </Document>
+  return e(
+    Document,
+    { title: `Invoice ${data.invoiceNumber}` },
+    e(
+      Page,
+      { size: 'A4', style: styles.page },
+      e(
+        View,
+        { style: styles.row },
+        e(
+          View,
+          { style: styles.leftColumn },
+          e(Text, { style: styles.title }, 'Invoice'),
+          e(Text, { style: styles.subtitle }, seller.tradingName),
+          e(Text, { style: styles.subtitle }, `Invoice No: ${data.invoiceNumber}`),
+          e(Text, { style: styles.subtitle }, `Issue date: ${formatDate(data.issueDate)}`),
+          e(Text, { style: styles.subtitle }, `Paid date: ${formatDate(data.paidDate)}`),
+          e(Text, { style: styles.subtitle }, 'Status: Paid'),
+        ),
+        e(
+          View,
+          { style: styles.rightColumn },
+          e(Text, { style: [styles.text, styles.strong] }, seller.legalName),
+          e(Text, { style: styles.text }, `Trading name: ${seller.tradingName}`),
+          e(Text, { style: styles.text }, `Company No: ${seller.companyNumber}`),
+          seller.vatNumber ? e(Text, { style: styles.text }, `VAT No: ${seller.vatNumber}`) : null,
+          e(Text, { style: styles.text }, seller.address),
+          seller.phone ? e(Text, { style: styles.text }, seller.phone) : null,
+          e(Text, { style: styles.text }, seller.billingEmail),
+        ),
+      ),
+      e(
+        View,
+        { style: styles.section },
+        e(Text, { style: styles.sectionTitle }, 'Bill To'),
+        e(Text, { style: [styles.text, styles.strong] }, data.customerName),
+        e(Text, { style: styles.text }, data.customerEmail),
+      ),
+      e(
+        View,
+        { style: styles.section },
+        e(Text, { style: styles.sectionTitle }, 'Payment Reference'),
+        e(Text, { style: styles.text }, `Merchant reference: ${data.orderMerchantId}`),
+        data.orderSystemId
+          ? e(Text, { style: styles.text }, `Gateway reference: ${data.orderSystemId}`)
+          : null,
+      ),
+      e(
+        View,
+        { style: styles.table },
+        e(
+          View,
+          { style: styles.tableHeader },
+          e(Text, { style: [styles.cell, styles.cellWide, styles.strong] }, 'Description'),
+          e(Text, { style: [styles.cell, styles.cellMedium, styles.strong] }, 'Qty'),
+          e(Text, { style: [styles.cell, styles.cellNarrow, styles.strong] }, 'Unit'),
+          e(Text, { style: [styles.cell, styles.cellNarrow, styles.strong] }, 'Total'),
+        ),
+        e(
+          View,
+          { style: styles.tableRow },
+          e(Text, { style: [styles.cell, styles.cellWide] }, lineDescription),
+          e(Text, { style: [styles.cell, styles.cellMedium] }, '1'),
+          e(Text, { style: [styles.cell, styles.cellNarrow] }, formatMoney(data.amount, data.currency)),
+          e(Text, { style: [styles.cell, styles.cellNarrow] }, formatMoney(data.amount, data.currency)),
+        ),
+      ),
+      e(
+        View,
+        { style: styles.totalBox },
+        e(
+          View,
+          { style: styles.totalRow },
+          e(Text, null, 'Subtotal'),
+          e(Text, null, formatMoney(data.amount, data.currency)),
+        ),
+        e(
+          View,
+          { style: styles.totalRow },
+          e(Text, null, 'VAT included'),
+          e(Text, null, 'Included in total'),
+        ),
+        e(
+          View,
+          { style: [styles.totalRow, styles.totalFinal] },
+          e(Text, null, 'Total paid'),
+          e(Text, null, formatMoney(data.amount, data.currency)),
+        ),
+      ),
+      e(
+        Text,
+        { style: styles.footer },
+        'Thank you for your purchase. This invoice confirms successful payment for your CareerZen order. ',
+        'All displayed prices are VAT-inclusive where applicable.',
+      ),
+    ),
   );
 }
 
