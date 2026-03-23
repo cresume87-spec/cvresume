@@ -8,26 +8,37 @@ export type InvoiceSellerDetails = {
   billingEmail: string;
 };
 
-function readRequiredInvoiceEnv(name: string): string {
+const DEFAULT_INVOICE_SELLER: InvoiceSellerDetails = {
+  tradingName: 'CareerZen',
+  legalName: 'EVERFINA LTD',
+  companyNumber: '15645711',
+  vatNumber: null,
+  address: '20 Wenlock Road, London, England, N1 7GU',
+  phone: '+44 7782 334922',
+  billingEmail: 'info@careerzen.co.uk',
+};
+
+function readInvoiceEnv(name: string, fallback: string | null): string | null {
   const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required invoice configuration: ${name}`);
+  if (value) {
+    return value;
   }
 
-  return value;
+  return fallback;
 }
 
 export function getInvoiceSellerDetails(): InvoiceSellerDetails {
   return {
-    tradingName: process.env.COMPANY_TRADING_NAME?.trim() || 'CareerZen',
-    legalName: readRequiredInvoiceEnv('COMPANY_LEGAL_NAME'),
-    companyNumber: readRequiredInvoiceEnv('COMPANY_NUMBER'),
-    vatNumber: process.env.COMPANY_VAT_NUMBER?.trim() || null,
-    address: readRequiredInvoiceEnv('COMPANY_ADDRESS'),
-    phone: process.env.COMPANY_PHONE?.trim() || null,
+    tradingName: readInvoiceEnv('COMPANY_TRADING_NAME', DEFAULT_INVOICE_SELLER.tradingName) || 'CareerZen',
+    legalName: readInvoiceEnv('COMPANY_LEGAL_NAME', DEFAULT_INVOICE_SELLER.legalName) || DEFAULT_INVOICE_SELLER.legalName,
+    companyNumber:
+      readInvoiceEnv('COMPANY_NUMBER', DEFAULT_INVOICE_SELLER.companyNumber) || DEFAULT_INVOICE_SELLER.companyNumber,
+    vatNumber: readInvoiceEnv('COMPANY_VAT_NUMBER', DEFAULT_INVOICE_SELLER.vatNumber),
+    address: readInvoiceEnv('COMPANY_ADDRESS', DEFAULT_INVOICE_SELLER.address) || DEFAULT_INVOICE_SELLER.address,
+    phone: readInvoiceEnv('COMPANY_PHONE', DEFAULT_INVOICE_SELLER.phone),
     billingEmail:
-      process.env.COMPANY_BILLING_EMAIL?.trim() ||
+      readInvoiceEnv('COMPANY_BILLING_EMAIL', DEFAULT_INVOICE_SELLER.billingEmail) ||
       process.env.EMAIL_FROM?.trim() ||
-      'info@careerzen.co.uk',
+      DEFAULT_INVOICE_SELLER.billingEmail,
   };
 }
