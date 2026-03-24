@@ -3,6 +3,8 @@ import { renderToBuffer, Document, Page, StyleSheet, Text, View } from '@react-p
 import type { Currency } from '@prisma/client';
 import { getInvoiceSellerDetails } from '@/lib/invoiceSeller';
 
+export const ORDER_INVOICE_RENDERER_VERSION = '2026-03-24-r3';
+
 export type OrderInvoiceData = {
   invoiceNumber: string;
   issueDate: Date;
@@ -174,11 +176,23 @@ export function buildOrderInvoiceNumber(orderId: string, createdAt: Date) {
 function buildOrderInvoiceDocument(data: OrderInvoiceData) {
   const seller = getInvoiceSellerDetails();
   const lineDescription = buildDescription(data);
+  const invoiceTitle = `Invoice ${data.invoiceNumber}`;
+  const issueDateLabel = `Issue date: ${formatDate(data.issueDate)}`;
+  const paidDateLabel = `Paid date: ${formatDate(data.paidDate)}`;
+  const invoiceNumberLabel = `Invoice No: ${data.invoiceNumber}`;
+  const tradingNameLabel = `Trading name: ${seller.tradingName}`;
+  const companyNumberLabel = `Company No: ${seller.companyNumber}`;
+  const vatNumberLabel = seller.vatNumber ? `VAT No: ${seller.vatNumber}` : null;
+  const merchantReferenceLabel = `Merchant reference: ${data.orderMerchantId}`;
+  const gatewayReferenceLabel = data.orderSystemId
+    ? `Gateway reference: ${data.orderSystemId}`
+    : null;
+  const totalPaidLabel = formatMoney(data.amount, data.currency);
   const e = React.createElement;
 
   return e(
     Document,
-    { title: `Invoice ${data.invoiceNumber}` },
+    { title: invoiceTitle },
     e(
       Page,
       { size: 'A4', style: styles.page },
@@ -190,18 +204,18 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
           { style: styles.leftColumn },
           e(Text, { style: styles.title }, 'Invoice'),
           e(Text, { style: styles.subtitle }, seller.tradingName),
-          e(Text, { style: styles.subtitle }, `Invoice No: ${data.invoiceNumber}`),
-          e(Text, { style: styles.subtitle }, `Issue date: ${formatDate(data.issueDate)}`),
-          e(Text, { style: styles.subtitle }, `Paid date: ${formatDate(data.paidDate)}`),
+          e(Text, { style: styles.subtitle }, invoiceNumberLabel),
+          e(Text, { style: styles.subtitle }, issueDateLabel),
+          e(Text, { style: styles.subtitle }, paidDateLabel),
           e(Text, { style: styles.subtitle }, 'Status: Paid'),
         ),
         e(
           View,
           { style: styles.rightColumn },
           e(Text, { style: [styles.text, styles.strong] }, seller.legalName),
-          e(Text, { style: styles.text }, `Trading name: ${seller.tradingName}`),
-          e(Text, { style: styles.text }, `Company No: ${seller.companyNumber}`),
-          seller.vatNumber ? e(Text, { style: styles.text }, `VAT No: ${seller.vatNumber}`) : null,
+          e(Text, { style: styles.text }, tradingNameLabel),
+          e(Text, { style: styles.text }, companyNumberLabel),
+          vatNumberLabel ? e(Text, { style: styles.text }, vatNumberLabel) : null,
           e(Text, { style: styles.text }, seller.address),
           seller.phone ? e(Text, { style: styles.text }, seller.phone) : null,
           e(Text, { style: styles.text }, seller.billingEmail),
@@ -218,10 +232,8 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
         View,
         { style: styles.section },
         e(Text, { style: styles.sectionTitle }, 'Payment Reference'),
-        e(Text, { style: styles.text }, `Merchant reference: ${data.orderMerchantId}`),
-        data.orderSystemId
-          ? e(Text, { style: styles.text }, `Gateway reference: ${data.orderSystemId}`)
-          : null,
+        e(Text, { style: styles.text }, merchantReferenceLabel),
+        gatewayReferenceLabel ? e(Text, { style: styles.text }, gatewayReferenceLabel) : null,
       ),
       e(
         View,
@@ -239,8 +251,8 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
           { style: styles.tableRow },
           e(Text, { style: [styles.cell, styles.cellWide] }, lineDescription),
           e(Text, { style: [styles.cell, styles.cellMedium] }, '1'),
-          e(Text, { style: [styles.cell, styles.cellNarrow] }, formatMoney(data.amount, data.currency)),
-          e(Text, { style: [styles.cell, styles.cellNarrow] }, formatMoney(data.amount, data.currency)),
+          e(Text, { style: [styles.cell, styles.cellNarrow] }, totalPaidLabel),
+          e(Text, { style: [styles.cell, styles.cellNarrow] }, totalPaidLabel),
         ),
       ),
       e(
@@ -250,7 +262,7 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
           View,
           { style: styles.totalRow },
           e(Text, null, 'Subtotal'),
-          e(Text, null, formatMoney(data.amount, data.currency)),
+          e(Text, null, totalPaidLabel),
         ),
         e(
           View,
@@ -262,7 +274,7 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
           View,
           { style: [styles.totalRow, styles.totalFinal] },
           e(Text, null, 'Total paid'),
-          e(Text, null, formatMoney(data.amount, data.currency)),
+          e(Text, null, totalPaidLabel),
         ),
       ),
       e(
@@ -275,6 +287,37 @@ function buildOrderInvoiceDocument(data: OrderInvoiceData) {
   );
 }
 
+function buildOrderInvoiceRenderDiagnostics(data: OrderInvoiceData) {
+  const seller = getInvoiceSellerDetails();
+
+  return {
+    rendererVersion: ORDER_INVOICE_RENDERER_VERSION,
+    deployedCommit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+    invoiceNumber: data.invoiceNumber,
+    orderMerchantId: data.orderMerchantId,
+    customerNameType: typeof data.customerName,
+    customerEmailType: typeof data.customerEmail,
+    descriptionType: typeof data.description,
+    amountType: typeof data.amount,
+    currencyType: typeof data.currency,
+    hasOrderSystemId: Boolean(data.orderSystemId),
+    hasVatNumber: Boolean(seller.vatNumber),
+  };
+}
+
 export async function renderOrderInvoicePdfBuffer(data: OrderInvoiceData) {
-  return renderToBuffer(buildOrderInvoiceDocument(data));
+  const diagnostics = buildOrderInvoiceRenderDiagnostics(data);
+  console.log('[ORDER_INVOICE_PDF_RENDER_START]', diagnostics);
+
+  try {
+    const buffer = await renderToBuffer(buildOrderInvoiceDocument(data));
+    console.log('[ORDER_INVOICE_PDF_RENDER_SUCCESS]', {
+      ...diagnostics,
+      size: buffer.length,
+    });
+    return buffer;
+  } catch (error) {
+    console.error('[ORDER_INVOICE_PDF_RENDER_ERROR]', diagnostics);
+    throw error;
+  }
 }

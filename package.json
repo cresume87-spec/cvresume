@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
+    "check:order-invoice-pdf": "tsx scripts/verify-order-invoice-pdf.ts",
     "vercel:link": "vercel link --yes --project invoicegen",
     "vercel:prod": "vercel deploy --prod --yes",
     "deploy:vercel": "npm run vercel:link && npm run vercel:prod"
@@ -55,6 +56,7 @@
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.0",
     "prisma": "^5.19.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0"
   }
 }
