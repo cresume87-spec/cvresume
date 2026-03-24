@@ -2,10 +2,9 @@ import { authOptions } from '@/lib/auth';
 import { getAppOrigin } from '@/lib/appUrl';
 import { getDefaultEmailFrom, getResendClient } from '@/lib/emailClient';
 import { prisma } from '@/lib/prisma';
+import { renderPdfFromAppRoute } from '@/lib/serverPdf';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
 
 export async function POST(req: Request) {
   try {
@@ -43,43 +42,18 @@ export async function POST(req: Request) {
     const printUrl = `${getAppOrigin()}/print/${doc.id}`;
     console.log(`[DOC_SEND] Print URL: ${printUrl}`);
 
-    const isLocal = process.env.NODE_ENV === 'development';
-    const execPath = isLocal ? undefined : await chromium.executablePath();
-
-    const browser = await puppeteer.launch({
-      args: isLocal ? [] : chromium.args,
-      defaultViewport: { width: 1240, height: 1754, deviceScaleFactor: 2 },
-      executablePath: execPath,
-      headless: chromium.headless,
-    });
-
     let pdfBuffer: Buffer;
     try {
-      const page = await browser.newPage();
-      console.log(`[DOC_SEND] Navigating to: ${printUrl}`);
-      await page.goto(printUrl, {
-        waitUntil: ['domcontentloaded', 'networkidle0'],
-        timeout: 30000,
+      pdfBuffer = await renderPdfFromAppRoute({
+        label: 'invoice-email-attachment',
+        url: printUrl,
       });
-      console.log('[DOC_SEND] Page loaded, generating PDF...');
-
-      pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '14mm', right: '14mm', bottom: '16mm', left: '14mm' },
-        preferCSSPageSize: true,
-      });
-
       console.log(`[DOC_SEND] PDF generated, size: ${pdfBuffer.length} bytes`);
     } catch (pdfError) {
       console.error('[DOC_SEND] PDF generation error:', pdfError);
       throw new Error(
         `Failed to generate PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`,
       );
-    } finally {
-      try {
-        await browser.close();
-      } catch {}
     }
 
     const resend = getResendClient();

@@ -281,7 +281,10 @@ export default function DashboardClient() {
     try {
       const res = await fetch(downloadPath);
 
-      if (!res.ok) throw new Error('Server PDF failed');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        throw new Error(payload?.error || payload?.message || 'Server PDF failed');
+      }
 
       const blob = await res.blob();
 
@@ -295,7 +298,8 @@ export default function DashboardClient() {
 
     } catch (e) {
 
-      alert('Failed to download PDF');
+      const message = e instanceof Error ? e.message : 'Failed to download PDF';
+      alert(message);
 
     }
 
